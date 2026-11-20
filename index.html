@@ -163,6 +163,7 @@ h3.sec { margin: 0; font: 700 1.18rem/1.3 var(--font-display) }
 .rows > .prow:first-child { border-top: 0 }
 .prow:hover { background: var(--sunk) }
 .pr-top { display: flex; align-items: center; gap: 8px }
+.pr-next { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; color: var(--muted); font-size: .8rem; overflow-wrap: anywhere }
 .pr-top b { flex: 1 1 auto; min-width: 0; font-weight: 500; overflow-wrap: anywhere }
 
 /* module header & links */
@@ -180,6 +181,7 @@ h3.sec { margin: 0; font: 700 1.18rem/1.3 var(--font-display) }
 .lcard:hover { border-color: var(--ac) }
 .lcard b { font-weight: 500; overflow-wrap: anywhere }
 .lcard span { color: var(--muted); font-size: .78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.lcard.kid span { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical }
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 14px }
 .seg { display: inline-flex; flex-wrap: wrap; gap: 4px }
 .seg button { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 3px 11px; font-size: .82rem; color: var(--muted) }
@@ -370,6 +372,12 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
   .row-edit { padding-left: 14px }
   .tl-row { grid-template-columns: 120px minmax(0, 1fr) }
   .mrow { padding-left: 14px }
+  /* 手機：考試倒數排成一排三格，讓「今天」清單早一點出現 */
+  .countdowns { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 6px }
+  .cd { grid-template-columns: minmax(0, 1fr); max-width: none; padding: 6px 8px; gap: 2px }
+  .cd b { grid-row: auto; font-size: 1.2rem }
+  .cd span { font-size: .74rem }
+  .cd small { display: none }
 }
 </style>
 <script>window.DT_APP = "daily";</script>
@@ -463,8 +471,9 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     workbenchApp: { label: "工作台", desc: "月曆、甘特圖、IG 發文、讀書進度與清單（原本的赫滋與羊工作台）。", src: "apps/workbench/index.html" },
     vocabApp: { label: "單字練習", desc: "閃卡、不熟清單、每天 10 個今日複習、考試和發音。", src: "apps/vocab/index.html" },
     nsysuApp: { label: "考古題練習", desc: "中山資管 94–115 學年度考古題：依年度、依章節、錯題本、英文術語。", src: "apps/nsysu/index.html" },
-    osNotesApp: { label: "作業系統筆記", desc: "空大作業系統的白話筆記、考試重點、小測驗和互動示範。", src: "apps/os-notes/index.html" },
-    genaiApp: { label: "生成式 AI 講義", desc: "一講一頁的課程講義、名詞對照和自我檢核。", src: "apps/genai/index.html" },
+    // group：預設收進同一區的這種模組頁裡（不佔分頁），可在「擴充」改成獨立分頁
+    osNotesApp: { label: "作業系統筆記", desc: "空大作業系統的白話筆記、考試重點、小測驗和互動示範。", src: "apps/os-notes/index.html", group: "notes" },
+    genaiApp: { label: "生成式 AI 講義", desc: "一講一頁的課程講義、名詞對照和自我檢核。", src: "apps/genai/index.html", group: "notes" },
   };
   const DEFAULT_CFG = {
     areas: [{ id: "work", name: "工作", color: 1 }, { id: "learn", name: "學習", color: 2 }],
@@ -499,6 +508,17 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
   const areaOf = id => cfg().areas.find(a => a.id === id);
   const modById = id => cfg().mods.find(m => m.id === id);
   const modsOfArea = aid => cfg().mods.filter(m => m.area === aid && !m.hidden);
+  // 收在別的模組頁裡的模組（例如課程講義收在「筆記」）：m.parent 有設就照設定，"" 代表獨立分頁
+  function parentOf(m) {
+    if (!m) return null;
+    const ok = id => { const p = id && modById(id); return p && !p.hidden && p.area === m.area && p.id !== m.id ? p.id : null; };
+    if (m.parent !== undefined) return ok(m.parent);
+    const g = (TYPES[m.type] || {}).group;
+    return g ? ok((cfg().mods.find(x => x.area === m.area && x.type === g && !x.hidden) || {}).id) : null;
+  }
+  const topModsOfArea = aid => modsOfArea(aid).filter(m => !parentOf(m));
+  // 可以收進哪個模組頁（類型有 group 時才有）
+  const nestTarget = m => { const g = (TYPES[m.type] || {}).group; return g ? (cfg().mods.find(x => x.area === m.area && x.type === g && !x.hidden && x.id !== m.id) || {}).id || null : null; };
   const acol = a => "var(--c" + ((a && a.color) || 6) + ")";
   const acolByArea = aid => acol(areaOf(aid));
   const pcol = p => "var(--c" + ((p && p.c) || 1) + ")";
@@ -595,8 +615,8 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     o = o || {};
     const c = taskCtx(t), done = t.st === "done", id = esc(t.id), k = o.k || "";
     const meta = (o.noCtx ? "" : '<span class="chip ctx" style="--ac:' + c.ac + '">' + esc(c.label) + "</span>")
-      + dueChip(t.due, done)
-      + (t.st === "doing" ? '<span class="chip doing">進行中</span>' : t.st === "wait" ? '<span class="chip">等待中</span>' : "")
+      + (o.noDue ? "" : dueChip(t.due, done))
+      + (o.noSt || done ? "" : t.st === "doing" ? '<span class="chip doing">進行中</span>' : t.st === "wait" ? '<span class="chip">等待中</span>' : "")
       + (t.pri ? '<span class="chip bad">重要</span>' : "");
     const note = t.note ? '<span class="row-note">' + esc(String(t.note).split(/\n/)[0]) + "</span>" : "";
     const open = ui.tedit === t.id;
@@ -632,52 +652,202 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
   function msRow(m) {
     const id = "ms-" + esc(m.pid) + "-" + esc(m.id);
     return '<div class="row' + (m.done ? " is-done" : "") + '"><input type="checkbox" id="' + id + '" data-act="msdone" data-p="' + esc(m.pid) + '" data-id="' + esc(m.id) + '"' + chk(m.done) + ' aria-label="里程碑完成：' + esc(m.t) + '">'
-      + '<label class="row-main" for="' + id + '"><span class="row-title">◆ ' + esc(m.t) + '</span><span class="row-meta"><span class="chip ctx" style="--ac:' + pcol(m) + '">' + esc(m.pname) + '</span><span class="chip">里程碑</span></span></label></div>';
+      + '<label class="row-main" for="' + id + '"><span class="row-title">◆ ' + esc(m.t) + '</span><span class="row-meta"><span class="chip ctx" style="--ac:' + pcol(m) + '">' + esc(m.pname) + "</span></span></label></div>";
   }
   function examRow(e) {
     return '<div class="row"><span class="ms-dot" aria-hidden="true">考</span><a class="row-main" href="#m-' + esc(e.mod) + '" style="text-decoration:none;color:inherit"><span class="row-title">' + esc(e.name) + '</span><span class="row-meta"><span class="chip bad">考試</span>' + (e.place ? '<span class="chip">' + esc(e.place) + "</span>" : "") + "</span></a></div>";
   }
   const upcomingExams = () => { const t0 = today(); return arr("exams").filter(e => isDate(e.date) && (isDate(e.end) ? e.end : e.date) >= t0).sort(byDate); };
 
+  /* ═════════ 工作台資料（今天頁直接讀，不再另外列一份） ═════════ */
+  let wbMemo = null;
+  const wbModId = () => (cfg().mods.find(x => x.type === "workbenchApp" && !x.hidden) || {}).id || "";
+  function wbData() {
+    const docs = S.wbDocs; if (!docs || !wbModId()) return null;
+    if (wbMemo && wbMemo.docs === docs) return wbMemo;
+    const byDate = {}, items = [], dayMeta = {};
+    Object.keys(docs).forEach(id => {
+      if (!id.startsWith("m-")) return;
+      Object.assign(dayMeta, docs[id].days || {});
+      const its = docs[id].items || {};
+      Object.keys(its).forEach(iid => {
+        const it = its[iid]; if (!it || it.deleted || !isDate(it.date)) return;
+        const x = Object.assign({ id: iid, bucket: id }, it); items.push(x); (byDate[it.date] = byDate[it.date] || []).push(x);
+      });
+    });
+    const posts = Object.entries(((docs.posts || {}).posts) || {}).map(([id, p]) => Object.assign({ id }, p)).filter(p => p && !p.deleted && isDate(p.date));
+    wbMemo = { docs, items, byDate, dayMeta, posts, habits: ((docs.ref || {}).habits) || [] };
+    return wbMemo;
+  }
+  const wbItem = id => { const W = wbData(); return W ? W.items.find(x => x.id === id) : null; };
+  const habitState = d => ((((S.wbDocs || {})["h-" + d.slice(0, 7)] || {}).d) || {})[d] || {};
+  function wbWrite(docId, p) {
+    if (!wbDb) { toast("工作台還沒連上，這次沒有存到"); return; }
+    const cur = S.wbDocs || {};
+    S.wbDocs = Object.assign({}, cur, { [docId]: merge(clone(cur[docId] || {}), clone(p)) });
+    wbDb.doc("plan/" + docId).update(p).catch(() => toast("工作台沒有存到，請稍後再試"));
+    schedule();
+  }
+  const wbSetDone = (it, done) => wbWrite(it.bucket, { items: { [it.id]: { done, doneAt: done ? today() : null } } });
+
+  // 同一天、名稱相近的工作台事項和平台任務／里程碑＝同一件事：只顯示平台那一列，勾一次兩邊都完成
+  function normT(s) {
+    s = String(s || "").toLowerCase();
+    const t = s.replace(/[（(][^）)]*[）)]/g, "");
+    return (t.trim() ? t : s).replace(/[^0-9a-z㐀-鿿]/g, "");
+  }
+  function similarT(a, b) {
+    const x = normT(a), y = normT(b);
+    if (x.length < 2 || y.length < 2) return false;
+    if (x.includes(y) || y.includes(x)) return true;
+    const bg = s => { const o = {}; for (let i = 0; i < s.length - 1; i++) { const k = s.slice(i, i + 2); o[k] = (o[k] || 0) + 1; } return o; };
+    const A = bg(x), B = bg(y); let n = 0;
+    Object.keys(A).forEach(k => { if (B[k]) n += Math.min(A[k], B[k]); });
+    return (2 * n) / (x.length - 1 + y.length - 1) >= 0.45;
+  }
+  let twinMemo = { k: null, m: {} };
+  function twinsOn(d) {
+    const W = wbData(); if (!W) return new Map();
+    if (twinMemo.k !== W.docs || twinMemo.t !== S.tasks || twinMemo.p !== S.projects) twinMemo = { k: W.docs, t: S.tasks, p: S.projects, m: {} };
+    if (twinMemo.m[d]) return twinMemo.m[d];
+    const ts = arr("tasks").filter(t => t.due === d), ms = milestones().filter(m => m.date === d), out = new Map();
+    (W.byDate[d] || []).forEach(it => {
+      const t = ts.find(x => similarT(x.t, it.title)); if (t) { out.set(it.id, "t:" + t.id); return; }
+      const m = ms.find(x => similarT(x.t, it.title)); if (m) out.set(it.id, "m:" + m.pid + ":" + m.id);
+    });
+    return (twinMemo.m[d] = out);
+  }
+  function twinItems(key, d) { const tw = twinsOn(d), W = wbData(); return W ? (W.byDate[d] || []).filter(it => tw.get(it.id) === key) : []; }
+  const twinDone = (key, d) => { const xs = twinItems(key, d); return xs.length > 0 && xs.every(it => it.done); };
+  // 平台這一列看起來完成＝自己完成，或工作台那邊已經勾掉
+  const effTask = t => (t.st !== "done" && isDate(t.due) && twinDone("t:" + t.id, t.due) ? Object.assign({}, t, { st: "done", done: t.due }) : t);
+  const effMs = m => (!m.done && twinDone("m:" + m.pid + ":" + m.id, m.date) ? Object.assign({}, m, { done: true }) : m);
+  function syncTwins(key, d, done) { twinItems(key, d).forEach(it => { if (!!it.done !== done) wbSetDone(it, done); }); }
+
+  // 每週固定時段：工作台當天已經排了同一條讀書線（或同一個時段的課），就不再重複列
+  const TRACK_HINT = [["多益", /多益|toeic|tsl/i], ["iPAS", /ipas|資安/i], ["碩班", /中山|碩班|計概|資管/i]];
+  const routineTrack = r => r.track || (TRACK_HINT.find(x => x[1].test(r.t || "")) || [])[0] || "";
+  function timeKey(s) {
+    const m = /(\d{1,2})(?::(\d{2}))?\s*[–\-~～至]\s*(\d{1,2})(?::(\d{2}))?/.exec(String(s || ""));
+    return m ? (+m[1] * 60 + +(m[2] || 0)) + "-" + (+m[3] * 60 + +(m[4] || 0)) : "";
+  }
+
+  // 某一天要做的所有事：平台任務、里程碑、考試、工作台事項、固定時段、每天固定、IG 發文
+  function dayPlan(d) {
+    const W = wbData(), tw = twinsOn(d);
+    const tasks = arr("tasks").filter(t => t.due === d || (t.st === "done" && t.done === d && isDate(t.due) && t.due < d)).map(effTask);
+    const ms = milestones().filter(m => m.date === d).map(effMs);
+    const exams = upcomingExams().filter(e => e.date === d);
+    const wb = W ? (W.byDate[d] || []).filter(it => !tw.has(it.id)) : [];
+    const wd = dow(d), rlog = dayLog(d).r || {}, links = {}, routines = [];
+    cfg().mods.filter(m => m.type === "studyPlan" && !m.hidden).forEach(m => (modDoc(m.id).routine || []).forEach(r => {
+      if (!(r.days || []).includes(wd)) return;
+      const tr = routineTrack(r), tk = timeKey(r.time);
+      const cover = wb.filter(it => (tr && it.tag === "讀" && it.track === tr) || (tk && timeKey(it.title) === tk));
+      if (cover.length) { if (r.to && modById(r.to) && !links[cover[0].id]) links[cover[0].id] = r.to; return; }
+      routines.push(Object.assign({ mod: m.id, done: !!rlog[r.id] }, r));
+    }));
+    routines.sort((a, b) => String(a.time || "99").localeCompare(String(b.time || "99")));
+    const hs = habitState(d), habits = (W ? W.habits : []).map((x, i) => ({ i, name: x.name, desc: x.desc, done: !!hs["h" + i] }));
+    const posts = W ? W.posts.filter(p => p.date === d && p.status !== "取消") : [];
+    const checks = [].concat(tasks.map(t => t.st === "done"), ms.map(m => m.done), wb.map(it => !!it.done), routines.map(r => r.done), habits.map(h => h.done), posts.map(p => p.status === "已發布"));
+    return { d, tasks, ms, exams, wb, links, routines, habits, posts, total: checks.length, done: checks.filter(Boolean).length, meta: W ? W.dayMeta[d] || null : null };
+  }
+
+  const WB_TAG = { "★": "里程碑", "交": "截止", "課": "課程", "讀": "讀書" };
+  function wbRow(it, o) {
+    o = o || {};
+    const id = esc(it.id), k = o.k || "", to = o.link && modById(o.link);
+    const meta = (o.tag && WB_TAG[it.tag] && it.tag !== "★" ? '<span class="chip">' + WB_TAG[it.tag] + "</span>" : "")
+      + (it.track ? '<span class="chip">' + esc(it.track) + (it.hours ? " " + esc(it.hours) + " 小時" : "") + "</span>" : it.hours ? '<span class="chip">' + esc(it.hours) + " 小時</span>" : "")
+      + (o.late ? '<span class="chip bad">逾期・' + mdw(it.date) + "</span>" : "")
+      + (it.moved ? '<span class="chip warn">延後過 ' + esc(it.moved) + " 次</span>" : "");
+    const note = it.detail && it.tag === "讀" ? '<span class="row-note">' + esc(String(it.detail).split(/\n/)[0]) + "</span>" : "";
+    const acts = (to ? '<a class="btn ghost sm" href="#m-' + esc(to.id) + '">打開' + esc(to.name) + "</a>" : "") + (o.acts || "");
+    return '<div class="row' + (it.done ? " is-done" : "") + '"><input type="checkbox" id="wb-' + id + k + '" data-act="wbdone" data-id="' + id + '"' + chk(it.done) + ' aria-label="完成：' + esc(it.title) + '">'
+      + '<label class="row-main" for="wb-' + id + k + '"><span class="row-title">' + (it.tag === "★" ? "◆ " : "") + esc(it.title) + "</span>" + note + (meta ? '<span class="row-meta">' + meta + "</span>" : "") + "</label>"
+      + (acts ? '<span class="row-acts">' + acts + "</span>" : "") + "</div>";
+  }
+  const wbMoveBtns = (it, t0) => (it.date < t0 ? '<button class="btn sm" data-act="wbmove" data-id="' + esc(it.id) + '" data-to="' + t0 + '">移到今天</button>' : "")
+    + '<button class="btn ghost sm" data-act="wbmove" data-id="' + esc(it.id) + '" data-to="' + addDays(it.date < t0 ? t0 : it.date, 1) + '">' + (it.date < t0 ? "明天" : "延到明天") + "</button>";
+  function routineRow(r, d) {
+    const id = esc(r.id), to = r.to && modById(r.to);
+    return '<div class="row' + (r.done ? " is-done" : "") + '"><input type="checkbox" id="rt-' + id + '" data-act="rtdone" data-id="' + id + '" data-date="' + d + '"' + chk(r.done) + ">"
+      + '<label class="row-main" for="rt-' + id + '"><span class="row-title">' + esc(r.t) + '</span><span class="row-meta"><span class="chip">每週固定</span>' + (r.time ? '<span class="chip mono">' + esc(r.time) + "</span>" : "") + (r.min ? '<span class="chip">' + esc(r.min) + " 分鐘</span>" : "") + "</span></label>"
+      + (to ? '<span class="row-acts"><a class="btn ghost sm" href="#m-' + esc(to.id) + '">打開' + esc(to.name) + "</a></span>" : safeUrl(r.url) ? '<span class="row-acts"><a class="btn ghost sm" href="' + esc(r.url) + '" target="_blank" rel="noopener">開啟 ↗</a></span>' : "") + "</div>";
+  }
+  function habitRow(h, d) {
+    return '<div class="row' + (h.done ? " is-done" : "") + '"><input type="checkbox" id="hb-' + h.i + '" data-act="habit" data-i="' + h.i + '" data-date="' + d + '"' + chk(h.done) + ">"
+      + '<label class="row-main" for="hb-' + h.i + '"><span class="row-title">' + esc(h.name) + "</span>" + (h.desc ? '<span class="row-note">' + esc(h.desc) + "</span>" : "") + "</label></div>";
+  }
+  function postRow(p, wbMod, late) {
+    return '<div class="row' + (p.status === "已發布" ? " is-done" : "") + '"><span class="ms-dot" aria-hidden="true">IG</span><a class="row-main" href="#m-' + esc(wbMod) + "/ig" + '" style="text-decoration:none;color:inherit"><span class="row-title">' + esc(p.title || "IG 發文") + '</span><span class="row-meta"><span class="chip' + (p.status === "已發布" ? " ok" : "") + '">' + esc(p.status || "未開始") + "</span>"
+      + (p.time || p.fmt ? '<span class="chip">' + esc([p.time, p.fmt].filter(Boolean).join(" ")) + "</span>" : "") + (late ? '<span class="chip bad">過了發文日・' + mdw(p.date) + "</span>" : "") + "</span></a></div>";
+  }
+
   /* ═════════ 今天 ═════════ */
   function vToday() {
-    const t0 = today(), wk = addDays(t0, 7);
-    const tasks = arr("tasks"), open = tasks.filter(t => t.st !== "done");
-    const overdue = open.filter(t => isDate(t.due) && t.due < t0).sort(byDue);
-    const dueToday = tasks.filter(t => t.due === t0 || (t.st === "done" && t.done === t0 && isDate(t.due) && t.due < t0))
-      .sort((a, b) => (a.st === "done") - (b.st === "done") || (b.pri || 0) - (a.pri || 0));
-    const doing = open.filter(t => t.st === "doing" && !(isDate(t.due) && t.due <= t0)).sort(byDue);
-    const ms = milestones(), msToday = ms.filter(m => m.date === t0);
-    const exams = upcomingExams(), exToday = exams.filter(e => e.date === t0);
-    const upTasks = open.filter(t => t.st !== "doing" && isDate(t.due) && t.due > t0 && t.due <= wk);
-    const upCount = upTasks.length + ms.filter(m => !m.done && m.date > t0 && m.date <= wk).length;
-    const left = dueToday.filter(t => t.st !== "done").length + msToday.filter(m => !m.done).length;
-    const d = parse(t0);
+    const t0 = today(), W = wbData(), wbMod = wbModId();
+    const tasks = arr("tasks"), P = dayPlan(t0), tl = P.links;
+    // 逾期：平台任務＋工作台的截止與讀書進度＋過了發文日的 IG（工作台那邊勾掉的就不算）
+    const overdue = tasks.filter(t => t.st !== "done" && isDate(t.due) && t.due < t0).map(effTask).filter(t => t.st !== "done").sort(byDue);
+    const wbLate = W ? W.items.filter(it => it.date < t0 && !it.done && (it.tag === "交" || it.tag === "讀") && !twinsOn(it.date).has(it.id)).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0)) : [];
+    const postLate = W ? W.posts.filter(p => p.date < t0 && p.status !== "已發布" && p.status !== "取消") : [];
+    const lateN = overdue.length + wbLate.length + postLate.length;
+    // 接下來 7 天：只列有日期的承諾（考試、里程碑、截止、課程、任務、發文）；讀書進度太細，留在工作台
+    const exams = upcomingExams();
+    let up = "", upCount = 0;
+    for (let i = 1; i <= 7; i++) {
+      const dd = addDays(t0, i), tw = twinsOn(dd);
+      const ex = exams.filter(e => e.date === dd);
+      const msd = milestones().filter(m => m.date === dd).map(effMs).filter(m => !m.done);
+      const td = tasks.filter(t => t.due === dd && t.st !== "done" && t.st !== "doing").map(effTask).filter(t => t.st !== "done").sort(byDue);
+      const wd = W ? (W.byDate[dd] || []).filter(it => it.tag !== "讀" && !it.done && !tw.has(it.id)) : [];
+      const pd = W ? W.posts.filter(p => p.date === dd && p.status !== "已發布" && p.status !== "取消") : [];
+      const n = ex.length + msd.length + td.length + wd.length + pd.length;
+      if (!n) continue;
+      upCount += n;
+      up += '<div class="dgroup">' + mdw(dd) + (i === 1 ? "・明天" : "") + "</div>" + ex.map(examRow).join("")
+        + wd.filter(it => it.tag === "課").map(it => wbRow(it, { k: "-u", tag: true })).join("") + msd.map(msRow).join("")
+        + wd.filter(it => it.tag !== "課").map(it => wbRow(it, { k: "-u", tag: true })).join("")
+        + td.map(t => taskRow(t, { k: "-u", noDue: true })).join("") + pd.map(p => postRow(p, wbMod)).join("");
+    }
+    const doing = tasks.filter(t => t.st === "doing" && !(isDate(t.due) && t.due <= t0)).sort(byDue);
+
+    const d = parse(t0), M = P.meta || {};
+    const badges = [M.ph, M.pp ? "休養期・讀書減半" : "", M.rest ? "複習日" : "", M.nou ? "空大 " + M.nou + " 小時" : ""].filter(Boolean);
     let h = '<section class="hero"><div><div class="hero-date"><span class="d">' + (d.getMonth() + 1) + "月" + d.getDate() + '日</span><span class="w">星期' + WD[d.getDay()] + "</span></div>"
-      + '<div class="hero-sum">今天還有 <b>' + left + "</b> 件" + (overdue.length ? "・逾期 <b>" + overdue.length + "</b> 件" : "") + "・接下來 7 天 <b>" + upCount + "</b> 件</div></div>"
+      + '<div class="hero-sum">今天還有 <b>' + (P.total - P.done) + "</b> 件" + (lateN ? "・逾期 <b>" + lateN + "</b> 件" : "") + "・接下來 7 天 <b>" + upCount + "</b> 件</div>"
+      + (badges.length ? '<div class="btnrow" style="margin-top:8px">' + badges.map(b => '<span class="chip">' + esc(b) + "</span>").join("") + "</div>" : "")
+      + (M.notes && M.notes.length ? M.notes.map(n => '<p class="muted small" style="margin:6px 0 0">' + esc(n) + "</p>").join("") : "") + "</div>"
       + '<div class="countdowns">' + exams.slice(0, 3).map(e => {
         const n = Math.max(0, diff(t0, e.date));
         return '<a class="cd' + (n <= 14 ? " soon" : "") + '" href="#m-' + esc(e.mod) + '"><b>' + n + "</b><span>" + esc(e.name) + "</span><small>" + (n === 0 ? "就是今天" : "天後・" + mdw(e.date)) + "</small></a>";
       }).join("") + "</div></section>";
 
     h += '<div class="today-grid"><div class="stack">';
-    if (overdue.length) {
+    if (lateN) {
+      const LIM = 8, wl = wbLate.slice(-LIM);
       h += '<section class="panel"><div class="ph bad"><h3>逾期還沒完成</h3><span class="sum">勾掉，或改到今天、明天</span></div><div class="rows">'
         + overdue.map(t => taskRow(t, { k: "-o", acts: '<button class="btn sm" data-act="tmove" data-id="' + esc(t.id) + '" data-to="' + t0 + '">移到今天</button><button class="btn ghost sm" data-act="tmove" data-id="' + esc(t.id) + '" data-to="' + addDays(t0, 1) + '">明天</button>' })).join("")
+        + wl.map(it => wbRow(it, { k: "-o", late: true, tag: true, acts: wbMoveBtns(it, t0) })).join("")
+        + (wbLate.length > LIM ? '<div class="empty small">還有 ' + (wbLate.length - LIM) + ' 項更早的工作台進度沒勾，<a href="#m-' + esc(wbMod) + '/study">到工作台把整條讀書線往後挪</a></div>' : "")
+        + postLate.map(p => postRow(p, wbMod, true)).join("")
         + "</div></section>";
     }
-    const todayRows = exToday.map(examRow).join("") + msToday.map(msRow).join("") + dueToday.map(t => taskRow(t)).join("");
-    h += '<section class="panel"><div class="ph"><h3>今天</h3><span class="sum">完成 ' + (dueToday.filter(t => t.st === "done").length + msToday.filter(m => m.done).length) + " / " + (dueToday.length + msToday.length) + "</span></div>"
-      + '<div class="rows">' + (todayRows || '<div class="empty"><b>今天沒有排到期的事</b>在下面新增一件，或到各模組排日期。</div>') + "</div>" + quickAdd() + "</section>";
-    if (doing.length) h += '<section class="panel"><div class="ph"><h3>進行中</h3><span class="sum">' + doing.length + " 件，還沒到期</span></div><div class=\"rows\">" + doing.map(t => taskRow(t, { k: "-g" })).join("") + "</div></section>";
-    let up = "";
-    for (let i = 1; i <= 7; i++) {
-      const dd = addDays(t0, i);
-      const rows = exams.filter(e => e.date === dd).map(examRow).join("") + ms.filter(m => m.date === dd && !m.done).map(msRow).join("") + upTasks.filter(t => t.due === dd).sort(byDue).map(t => taskRow(t, { k: "-u" })).join("");
-      if (rows) up += '<div class="dgroup">' + mdw(dd) + (i === 1 ? "・明天" : "") + "</div>" + rows;
-    }
+    const grp = (title, rows) => (rows ? '<div class="dgroup">' + title + "</div>" + rows : "");
+    const mv = it => (it.done ? "" : wbMoveBtns(it, t0));
+    const trackOrder = it => { const i = ["碩班", "多益", "iPAS"].indexOf(it.track); return i < 0 ? 9 : i; };
+    const body = grp("行程", P.exams.map(examRow).join("") + P.wb.filter(it => it.tag === "課").map(it => wbRow(it, { link: tl[it.id] })).join("") + P.routines.filter(r => r.time).map(r => routineRow(r, t0)).join(""))
+      + grp("要交・里程碑", P.wb.filter(it => it.tag !== "課" && it.tag !== "讀").map(it => wbRow(it, { link: tl[it.id], acts: mv(it) })).join("") + P.ms.map(msRow).join("")
+        + P.tasks.slice().sort((a, b) => (a.st === "done") - (b.st === "done") || (b.pri || 0) - (a.pri || 0)).map(t => taskRow(t, { noDue: true })).join("") + P.posts.map(p => postRow(p, wbMod)).join(""))
+      + grp("讀書", P.wb.filter(it => it.tag === "讀").sort((a, b) => trackOrder(a) - trackOrder(b)).map(it => wbRow(it, { link: tl[it.id], acts: mv(it) })).join("") + P.routines.filter(r => !r.time).map(r => routineRow(r, t0)).join(""))
+      + grp("每天固定", P.habits.map(x => habitRow(x, t0)).join(""));
+    h += '<section class="panel"><div class="ph"><h3>今天</h3><span class="sum">完成 ' + P.done + " / " + P.total + (wbMod ? '・<a href="#m-' + esc(wbMod) + "/day-" + t0 + '">在工作台看這天</a>' : "") + "</span></div>"
+      + '<div class="rows">' + (body || '<div class="empty"><b>今天沒有排事情</b>在下面新增一件，或到各模組排日期。</div>') + "</div>" + quickAdd() + "</section>";
+    if (doing.length) h += '<section class="panel"><div class="ph"><h3>進行中</h3><span class="sum">' + doing.length + " 件，還沒到期</span></div><div class=\"rows\">" + doing.map(t => taskRow(t, { k: "-g", noSt: true })).join("") + "</div></section>";
     h += '<section class="panel"><div class="ph"><h3>接下來 7 天</h3><span class="sum">' + upCount + ' 件</span></div><div class="rows">' + (up || '<div class="empty">這週後面還沒有排到期的事。</div>') + "</div></section>";
-    h += '</div><div class="stack">' + sideWorkbench() + sideRoutine() + sideApps() + sideVocab() + sideProjects() + sideLinks() + "</div></div>";
+    h += '</div><div class="stack">' + sideProjects() + sideApps() + sideVocab() + sideLinks() + "</div></div>";
     return (signedOut ? '<div class="signin"><p>用 Google 登入後，任務、專案和工作台會存到你的帳號，手機和電腦會同步。</p><button class="btn primary" data-act="signin">用 Google 登入</button></div>' : "") + h;
   }
   /* 今天頁：直接讀內建網站的進度（同一個網域，資料在這台裝置的瀏覽器裡） */
@@ -696,37 +866,23 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     Object.keys(s).forEach(pid => Object.values((s[pid] && s[pid].q) || {}).forEach(q => { if (q && c[q.s] != null) c[q.s]++; }));
     return c;
   }
+  // 單字、考古題：只在有東西要做（或有紀錄可看）時出現；沒紀錄就不佔位置
   function sideApps() {
     let h = "";
-    const vm = cfg().mods.find(x => x.type === "vocabApp" && !x.hidden);
-    if (vm) {
-      const v = vocabProgress(), pct = v && v.total ? Math.round(v.done / v.total * 100) : 0;
-      h += '<section class="panel" style="--ac:' + acolByArea(vm.area) + '"><div class="ph"><h3>單字・今日複習</h3><span class="sum">' + (v && v.streak ? "連續 " + v.streak + " 天" : "") + '</span></div><div class="pb stack" style="gap:10px">'
-        + (v && v.started && v.total ? '<div class="vbig"><b>' + v.done + '</b><span class="muted">/ ' + v.total + " 個</span>" + (v.complete ? '<span class="chip ok">今天完成</span>' : "") + '</div><span class="meter' + (v.complete ? " full" : "") + '"><i style="width:' + pct + '%"></i></span>'
-          : '<p class="muted small" style="margin:0">' + (!v ? "這台裝置還沒有單字練習紀錄。" : !v.stars ? "不熟清單是空的，今天沒有要複習的字。" : "今天還沒開始複習。") + "</p>")
-        + (v && v.stars ? '<p class="muted small" style="margin:0">不熟清單 ' + v.stars + " 個</p>" : "")
-        + '<div><a class="btn" href="#m-' + esc(vm.id) + '">' + (v && v.started && v.total && !v.complete ? "繼續複習" : "開始練習") + "</a></div></div></section>";
+    const vm = cfg().mods.find(x => x.type === "vocabApp" && !x.hidden), v = vm ? vocabProgress() : null;
+    if (vm && v && ((v.started && v.total) || v.stars)) {
+      const pct = v.total ? Math.round(v.done / v.total * 100) : 0, going = v.started && v.total;
+      h += '<section class="panel" style="--ac:' + acolByArea(vm.area) + '"><div class="ph"><h3>單字・今日複習</h3><span class="sum">' + (v.streak ? "連續 " + v.streak + " 天" : "") + '</span></div><div class="pb stack" style="gap:10px">'
+        + (going ? '<div class="vbig"><b>' + v.done + '</b><span class="muted">/ ' + v.total + " 個</span>" + (v.complete ? '<span class="chip ok">今天完成</span>' : "") + '</div><span class="meter' + (v.complete ? " full" : "") + '"><i style="width:' + pct + '%"></i></span>'
+          : '<p class="muted small" style="margin:0">不熟清單 ' + v.stars + " 個，今天還沒開始複習。</p>")
+        + (v.complete ? "" : '<div><a class="btn" href="#m-' + esc(vm.id) + '">' + (going ? "繼續複習" : "開始複習") + "</a></div>") + "</div></section>";
     }
-    const em = cfg().mods.find(x => x.type === "nsysuApp" && !x.hidden);
-    if (em) {
-      const q = nsysuProgress(), any = q && q.ok + q.bad + q.idk;
+    const em = cfg().mods.find(x => x.type === "nsysuApp" && !x.hidden), q = em ? nsysuProgress() : null;
+    if (em && q && q.ok + q.bad + q.idk) {
       h += '<section class="panel" style="--ac:' + acolByArea(em.area) + '"><div class="ph"><h3>考古題</h3><span class="sum"><a href="#m-' + esc(em.id) + '">練習</a></span></div><div class="pb">'
-        + (any ? '<div class="btnrow"><span class="chip ok">會 ' + q.ok + '</span><span class="chip bad">錯 ' + q.bad + '</span><span class="chip warn">不會 ' + q.idk + "</span></div>" : '<p class="muted small" style="margin:0">這台裝置還沒有作答紀錄。</p>') + "</div></section>";
+        + '<div class="btnrow"><span class="chip ok">會 ' + q.ok + '</span><span class="chip bad">錯 ' + q.bad + '</span><span class="chip warn">不會 ' + q.idk + "</span></div></div></section>";
     }
     return h;
-  }
-  const WB_TAG = { "★": "里程碑", "交": "截止", "課": "課程", "讀": "讀書", "IG": "IG" };
-  function sideWorkbench() {
-    const m = cfg().mods.find(x => x.type === "workbenchApp" && !x.hidden);
-    if (!m || !wbDb) return "";
-    const t0 = today(), order = { "★": 0, "交": 1, "課": 2, "讀": 3 };
-    const items = Object.entries((S.wb && S.wb.items) || {}).map(([id, it]) => Object.assign({ id }, it)).filter(it => !it.deleted && it.date === t0)
-      .sort((a, b) => (order[a.tag] != null ? order[a.tag] : 9) - (order[b.tag] != null ? order[b.tag] : 9));
-    let h = '<section class="panel"><div class="ph"><h3>工作台的今天</h3><span class="sum">' + items.filter(x => x.done).length + " / " + items.length + '・<a href="#m-' + esc(m.id) + '">打開</a></span></div>';
-    if (!S.wbReady) return h + '<div class="empty">讀取中…</div></section>';
-    if (!items.length) return h + '<div class="empty">工作台今天沒有排事項。</div></section>';
-    return h + '<div class="rows">' + items.map(it => '<div class="row wb-row' + (it.done ? " is-done" : "") + '"><input type="checkbox" id="wb-' + esc(it.id) + '" data-act="wbdone" data-id="' + esc(it.id) + '"' + chk(it.done) + ' aria-label="完成：' + esc(it.title) + '">'
-      + '<label class="row-main" for="wb-' + esc(it.id) + '"><span class="row-title">' + esc(it.title) + (it.track ? "<small>" + esc(it.track) + (it.hours ? " " + esc(it.hours) + " 小時" : "") + "</small>" : "") + '</span><span class="row-meta"><span class="chip">' + esc(WB_TAG[it.tag] || it.tag || "") + "</span></span></label></div>").join("") + "</div></section>";
   }
   function addTargets() {
     let h = "";
@@ -749,20 +905,6 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     const opts = addTargets();
     if (!opts) return '<div class="qadd muted small">到「擴充」加一個任務清單或專案管理模組，就能在這裡快速新增。</div>';
     return '<div class="qadd" data-form><input type="text" id="qa-t" placeholder="新增一件事…" data-enter="qadd" aria-label="任務名稱"><select id="qa-to" aria-label="放到哪裡">' + opts + '</select><input type="date" id="qa-d" value="' + today() + '" aria-label="期限"><button class="btn primary" data-act="qadd">加入</button></div>';
-  }
-  function sideRoutine() {
-    const t0 = today(), wd = dow(t0), st = dayLog(t0).r || {};
-    const mods = cfg().mods.filter(m => m.type === "studyPlan" && !m.hidden);
-    if (!mods.length) return "";
-    const items = [];
-    mods.forEach(m => (modDoc(m.id).routine || []).forEach(r => { if ((r.days || []).includes(wd)) items.push(Object.assign({ mod: m.id }, r)); }));
-    items.sort((a, b) => String(a.time || "99").localeCompare(String(b.time || "99")));
-    const n = items.filter(r => st[r.id]).length;
-    let h = '<section class="panel" style="--ac:' + acolByArea(mods[0].area) + '"><div class="ph"><h3>今日學習時段</h3><span class="sum">' + n + " / " + items.length + "</span></div>";
-    if (!items.length) return h + '<div class="empty"><b>今天沒有固定時段</b>到 <a href="#m-' + esc(mods[0].id) + '">' + esc(mods[0].name) + "</a> 排每週固定時段。</div></section>";
-    return h + '<div class="rows">' + items.map(r => '<div class="row' + (st[r.id] ? " is-done" : "") + '"><input type="checkbox" id="rt-' + esc(r.id) + '" data-act="rtdone" data-id="' + esc(r.id) + '" data-date="' + t0 + '"' + chk(st[r.id]) + '>'
-      + '<label class="row-main" for="rt-' + esc(r.id) + '"><span class="row-title">' + esc(r.t) + '</span><span class="row-meta">' + (r.time ? '<span class="chip mono">' + esc(r.time) + "</span>" : "") + (r.min ? '<span class="chip">' + esc(r.min) + " 分鐘</span>" : "") + "</span></label>"
-      + (r.to && modById(r.to) ? '<a class="btn ghost sm" href="#m-' + esc(r.to) + '">打開' + esc(modById(r.to).name) + "</a>" : safeUrl(r.url) ? '<a class="btn ghost sm" href="' + esc(r.url) + '" target="_blank" rel="noopener">開啟 ↗</a>' : "") + "</div>").join("") + "</div></section>";
   }
   const vTarget = mid => Number(modDoc(mid).target) || 50;
   const vCount = (mid, d) => Number((dayLog(d).vc || {})[mid]) || 0;
@@ -787,13 +929,17 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
         + "</div></section>";
     }).join("");
   }
+  // 進行中的專案：專案經理每天要看的是「下一個里程碑」和「有沒有逾期」
   function sideProjects() {
     const ps = arr("projects").filter(p => p.st === "active").sort((a, b) => ((a.end || "9") < (b.end || "9") ? -1 : 1));
     if (!ps.length) return "";
-    const tasks = arr("tasks");
+    const tasks = arr("tasks"), t0 = today();
     return '<section class="panel"><div class="ph"><h3>進行中的專案</h3><span class="sum">' + ps.length + ' 個</span></div><div class="rows">' + ps.slice(0, 6).map(p => {
-      const ts = tasks.filter(t => t.proj === p.id), dn = ts.filter(t => t.st === "done").length, pct = ts.length ? Math.round(dn / ts.length * 100) : 0;
-      return '<button class="prow" data-act="popen" data-id="' + esc(p.id) + '" style="--pc:' + pcol(p) + ";--ac:" + pcol(p) + '"><span class="pr-top"><span class="dot"></span><b>' + esc(p.name) + '</b><span class="muted mono small">' + dn + "/" + ts.length + '</span></span><span class="meter"><i style="width:' + pct + '%"></i></span></button>';
+      const ts = tasks.filter(t => t.proj === p.id).map(effTask), dn = ts.filter(t => t.st === "done").length, pct = ts.length ? Math.round(dn / ts.length * 100) : 0;
+      const late = ts.filter(t => t.st !== "done" && isDate(t.due) && t.due < t0).length;
+      const next = (p.ms || []).map(x => effMs(Object.assign({ pid: p.id }, x))).filter(x => !x.done && isDate(x.date)).sort(byDate)[0];
+      return '<button class="prow" data-act="popen" data-id="' + esc(p.id) + '" style="--pc:' + pcol(p) + ";--ac:" + pcol(p) + '"><span class="pr-top"><span class="dot"></span><b>' + esc(p.name) + '</b><span class="muted mono small">' + dn + "/" + ts.length + '</span></span><span class="meter"><i style="width:' + pct + '%"></i></span>'
+        + (next || late ? '<span class="pr-next">' + (next ? "◆ " + esc(next.t) + "・" + mdw(next.date) : "") + (late ? '<span class="chip bad">逾期 ' + late + "</span>" : "") + "</span>" : "") + "</button>";
     }).join("") + "</div></section>";
   }
   function sideLinks() {
@@ -804,18 +950,21 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
   }
 
   /* ═════════ 模組頁共用：標題與相關網站 ═════════ */
+  // 模組頁標題：上方分頁已經標出現在在哪一頁，就不再重複寫一次名稱；相關網站只在有設定時出現（在「擴充」管理）
   function modHead(m) {
-    const T = TYPES[m.type], links = modLinks(m.id), editing = ui.ledit === m.id;
-    let h = '<div class="mhead"><h2>' + esc(m.name) + '</h2><span class="type">' + esc(T ? T.label : m.type) + '</span><div class="mlinks">'
-      + (m.type === "links" ? "" : links.map(l => linkChip(l)).join(""))
-      + '<button class="btn ghost sm" data-act="ledit" data-mod="' + esc(m.id) + '" aria-expanded="' + editing + '">' + (m.type === "links" ? "管理連結" : links.length ? "管理連結" : "＋ 加相關網站") + "</button></div></div>";
-    if (editing) {
-      h += '<section class="panel" style="margin-bottom:18px"><div class="ph"><h3>' + (m.type === "links" ? "連結" : "相關網站") + '</h3><span class="sum">改完按 Enter 或點別處就會儲存</span></div><div class="ledit">'
-        + links.map((l, i) => '<div class="lrow"><input type="text" id="lt-' + i + '" value="' + esc(l.t) + '" data-act="lfield" data-mod="' + esc(m.id) + '" data-i="' + i + '" data-k="t" aria-label="名稱"><input type="url" id="lu-' + i + '" value="' + esc(l.url) + '" data-act="lfield" data-mod="' + esc(m.id) + '" data-i="' + i + '" data-k="url" aria-label="網址"><button class="btn ghost sm" data-act="ldel" data-mod="' + esc(m.id) + '" data-i="' + i + '">移除</button></div>').join("")
-        + '<div class="lrow" data-form><input type="text" id="ln-t" placeholder="名稱，例如：作業系統筆記" data-enter="ladd" aria-label="新連結名稱"><input type="url" id="ln-u" placeholder="https://…" data-enter="ladd" aria-label="新連結網址"><button class="btn primary sm" data-act="ladd" data-mod="' + esc(m.id) + '">加入</button></div>'
-        + '<div><button class="btn sm" data-act="ledit" data-mod="' + esc(m.id) + '">完成</button></div></div></section>';
-    }
+    const links = modLinks(m.id), isLinks = m.type === "links", solo = topModsOfArea(m.area).length < 2;
+    const chips = isLinks ? "" : links.map(l => linkChip(l)).join("");
+    const btn = isLinks ? '<button class="btn ghost sm" data-act="ledit" data-mod="' + esc(m.id) + '" aria-expanded="' + (ui.ledit === m.id) + '">管理連結</button>' : "";
+    let h = solo || chips || btn ? '<div class="mhead">' + (solo ? "<h2>" + esc(m.name) + "</h2>" : "") + (chips || btn ? '<div class="mlinks">' + chips + btn + "</div>" : "") + "</div>" : "";
+    if (ui.ledit === m.id) h += linkEditor(m);
     return h;
+  }
+  function linkEditor(m) {
+    const links = modLinks(m.id);
+    return '<section class="panel" style="margin:8px 0 18px"><div class="ph"><h3>' + (m.type === "links" ? "連結" : "「" + esc(m.name) + "」的相關網站") + '</h3><span class="sum">改完按 Enter 或點別處就會儲存</span></div><div class="ledit">'
+      + links.map((l, i) => '<div class="lrow"><input type="text" id="lt-' + i + '" value="' + esc(l.t) + '" data-act="lfield" data-mod="' + esc(m.id) + '" data-i="' + i + '" data-k="t" aria-label="名稱"><input type="url" id="lu-' + i + '" value="' + esc(l.url) + '" data-act="lfield" data-mod="' + esc(m.id) + '" data-i="' + i + '" data-k="url" aria-label="網址"><button class="btn ghost sm" data-act="ldel" data-mod="' + esc(m.id) + '" data-i="' + i + '">移除</button></div>').join("")
+      + '<div class="lrow" data-form><input type="text" id="ln-t" placeholder="名稱" data-enter="ladd" aria-label="新連結名稱"><input type="url" id="ln-u" placeholder="https://…" data-enter="ladd" aria-label="新連結網址"><button class="btn primary sm" data-act="ladd" data-mod="' + esc(m.id) + '">加入</button></div>'
+      + '<div><button class="btn sm" data-act="ledit" data-mod="' + esc(m.id) + '">完成</button></div></div></section>';
   }
 
   /* ═════════ 時程條（專案總覽、專案任務共用） ═════════ */
@@ -850,16 +999,21 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     const projs = arr("projects").filter(p => p.area === m.area);
     if (ui.proj && S.projects[ui.proj] && S.projects[ui.proj].area === m.area) return projectDetail(m, ui.proj);
     const shown = projs.filter(p => ui.pstat === "all" || p.st === ui.pstat).sort((a, b) => ((a.start || "9") < (b.start || "9") ? -1 : 1));
-    let h = '<div class="toolbar"><div class="seg">' + [["all", "全部"], ["active", "進行中"], ["plan", "規劃中"], ["hold", "暫停"], ["done", "完成"]].map(([k, l]) =>
-      '<button data-act="pstat" data-k="' + k + '"' + prs(ui.pstat === k) + ">" + l + ' <span class="mono">' + (k === "all" ? projs.length : projs.filter(p => p.st === k).length) + "</span></button>").join("")
-      + '</div><span class="grow"></span><button class="btn primary" data-act="pnew" aria-expanded="' + ui.pnew + '">＋ 新專案</button></div>';
+    const pv = pview();
+    let h = '<div class="toolbar"><div class="seg">' + [["all", "全部"], ["active", "進行中"], ["plan", "規劃中"], ["hold", "暫停"], ["done", "完成"]].map(([k, l]) => {
+      const n = k === "all" ? projs.length : projs.filter(p => p.st === k).length;
+      return n || ui.pstat === k ? '<button data-act="pstat" data-k="' + k + '"' + prs(ui.pstat === k) + ">" + l + ' <span class="mono">' + n + "</span></button>" : "";
+    }).join("")
+      + '</div><span class="grow"></span>' + (projs.length ? '<div class="seg" role="group" aria-label="顯示方式"><button data-act="pview" data-k="tl"' + prs(pv === "tl") + '>時程圖</button><button data-act="pview" data-k="cards"' + prs(pv === "cards") + ">卡片</button></div>" : "")
+      + '<button class="btn primary" data-act="pnew" aria-expanded="' + ui.pnew + '">＋ 新專案</button></div>';
     if (ui.pnew) h += '<section class="panel" style="margin-bottom:16px"><div class="ph"><h3>新專案</h3><span class="sum">建立後再補目標、範圍和里程碑</span></div><div class="addline" data-form style="border-top:0"><input type="text" id="np-name" placeholder="專案名稱" data-enter="pcreate" aria-label="專案名稱"><label class="inline">開始 <input type="date" id="np-start" value="' + today() + '"></label><label class="inline">結束 <input type="date" id="np-end" value="' + addDays(today(), 30) + '"></label><button class="btn primary" data-act="pcreate" data-area="' + esc(m.area) + '">建立</button><button class="btn ghost" data-act="pnew">取消</button></div></section>';
     if (!projs.length) return h + '<div class="panel empty"><b>還沒有專案</b>按「新專案」寫下名稱和起訖日期，之後再補目標、範圍和里程碑。</div>';
-    h += timeline(shown.map(p => ({ id: p.id, label: p.name, start: p.start, end: p.end, c: pcol(p), done: p.st === "done", ms: (p.ms || []).filter(x => isDate(x.date)), act: "popen" })), "專案時程");
+    if (!shown.length) return h + '<p class="empty">這個狀態沒有專案。</p>';
+    const tl = pv === "tl" ? timeline(shown.map(p => ({ id: p.id, label: p.name, start: p.start, end: p.end, c: pcol(p), done: p.st === "done", ms: (p.ms || []).filter(x => isDate(x.date)), act: "popen" })), "專案時程") : "";
     const tasks = arr("tasks");
-    h += shown.length ? '<div class="pgrid">' + shown.map(p => pcard(p, tasks)).join("") + "</div>" : '<p class="empty">這個狀態沒有專案。</p>';
-    return h;
+    return h + (tl ? tl + '<p class="muted small" style="margin:8px 2px 0">◆ 是里程碑，點專案名稱打開專案。</p>' : '<div class="pgrid">' + shown.map(p => pcard(p, tasks)).join("") + "</div>");
   }
+  const pview = () => { if (ui.pviewMem) return ui.pviewMem; try { return localStorage.getItem("dt-pview") === "cards" ? "cards" : "tl"; } catch (e) { return "tl"; } };
   function endLabel(end, done) {
     if (!isDate(end) || done) return "";
     const n = diff(today(), end);
@@ -872,7 +1026,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
       + '<span class="pc-top"><span class="dot"></span><b>' + esc(p.name) + '</b><span class="pill st-' + esc(p.st || "plan") + '">' + (PROJ_ST[p.st] || "規劃中") + "</span></span>"
       + '<span class="pc-line mono"><span>' + (isDate(p.start) ? mdy(p.start) : "?") + " – " + (isDate(p.end) ? mdy(p.end) : "?") + "</span><span>" + endLabel(p.end, p.st === "done") + "</span></span>"
       + '<span class="meter"><i style="width:' + pct + '%"></i></span>'
-      + '<span class="pc-line"><span>' + dn + " / " + ts.length + " 個任務</span><span>" + pct + "%</span></span>"
+      + '<span class="pc-line"><span>' + dn + " / " + ts.length + " 個任務完成</span></span>"
       + (next ? '<span class="pc-line"><span>下個里程碑：' + esc(next.t) + '</span><span class="mono">' + mdy(next.date) + "</span></span>" : "")
       + "</button>";
   }
@@ -917,7 +1071,8 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     const projOpts = sv => projs.filter(p => p.st !== "done" || p.id === sv).map(p => '<option value="' + esc(p.id) + '"' + sel(sv === p.id) + ">" + esc(p.name) + "</option>").join("");
     let h = '<div class="toolbar"><label class="inline">看 <select id="bf-' + mid + '" data-act="bfilter" data-mod="' + mid + '"><option value="">全部專案</option><option value="none"' + sel(f === "none") + ">不分專案</option>" + projs.map(p => '<option value="' + esc(p.id) + '"' + sel(f === p.id) + ">" + esc(p.name) + "</option>").join("") + "</select></label>"
       + '<span class="grow"></span><span class="muted small">拖拉卡片換欄，或用 ‹ › 移動</span></div>';
-    h += '<section class="panel" style="margin-bottom:14px"><div class="addline" data-form style="border-top:0"><input type="text" id="ba-t-' + mid + '" placeholder="新增任務到「待辦」" data-enter="badd" aria-label="任務名稱"><select id="ba-p-' + mid + '" aria-label="所屬專案"><option value="">不分專案</option>' + projOpts(f && f !== "none" ? f : "") + '</select><input type="date" id="ba-d-' + mid + '" aria-label="期限"><button class="btn primary" data-act="badd" data-mod="' + mid + '">加入</button></div></section>';
+    const pickP = f ? '<input type="hidden" id="ba-p-' + mid + '" value="' + (f === "none" ? "" : esc(f)) + '">' : '<select id="ba-p-' + mid + '" aria-label="所屬專案"><option value="">不分專案</option>' + projOpts("") + "</select>";
+    h += '<section class="panel" style="margin-bottom:14px"><div class="addline" data-form style="border-top:0"><input type="text" id="ba-t-' + mid + '" placeholder="新增任務到「待辦」' + (f && f !== "none" && S.projects[f] ? "（" + esc(S.projects[f].name) + "）" : "") + '" data-enter="badd" aria-label="任務名稱">' + pickP + '<input type="date" id="ba-d-' + mid + '" aria-label="期限"><button class="btn primary" data-act="badd" data-mod="' + mid + '">加入</button></div></section>';
     const later = addDays(today(), 30), showLater = ui.showLater[m.id], colOn = ui.bcol[m.id] || "todo";
     const counts = {};
     ST_ORDER.forEach(k => { counts[k] = ts.filter(t => (t.st || "todo") === k).length; });
@@ -931,14 +1086,14 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
       if (k === "done") more = hidden ? '<button class="btn ghost sm" data-act="showdone" data-mod="' + mid + '">再顯示 ' + hidden + " 張較早完成的</button>" : showAll ? '<button class="btn ghost sm" data-act="showdone" data-mod="' + mid + '">只看最近兩週</button>' : "";
       if (k === "todo") more = hidden ? '<button class="btn ghost sm" data-act="showlater" data-mod="' + mid + '">再顯示 ' + hidden + " 張 30 天後才到期的</button>" : showLater ? '<button class="btn ghost sm" data-act="showlater" data-mod="' + mid + '">只看 30 天內到期</button>' : "";
       h += '<section class="col" data-drop="' + k + '" aria-label="' + TASK_ST[k] + '"><div class="col-h">' + TASK_ST[k] + ' <span class="n">' + counts[k] + "</span></div>"
-        + items.map(t => card(t, m)).join("")
+        + items.map(t => card(t, m, f)).join("")
         + (!items.length ? '<p class="col-empty">' + (hidden ? "近期沒有卡片" : "沒有卡片") + "</p>" : "")
         + more + "</section>";
     });
     return h + "</div>";
   }
-  function card(t, m) {
-    const p = t.proj && S.projects[t.proj], open = ui.tedit === t.id, i = ST_ORDER.indexOf(t.st || "todo"), id = esc(t.id);
+  function card(t, m, f) {
+    const p = t.proj && t.proj !== f && S.projects[t.proj], open = ui.tedit === t.id, i = ST_ORDER.indexOf(t.st || "todo"), id = esc(t.id);
     let h = '<article class="card" draggable="' + (open ? "false" : "true") + '" data-drag="' + id + '">'
       + '<button class="card-t" data-act="tedit" data-id="' + id + '" aria-expanded="' + open + '">' + (t.pri ? '<span class="pri" title="重要"></span>' : "") + "<span>" + esc(t.t) + "</span></button>"
       + '<div class="card-b">' + (p ? '<span class="chip ctx" style="--ac:' + pcol(p) + '">' + esc(p.name) + "</span>" : "") + dueChip(t.due, t.st === "done")
@@ -980,7 +1135,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
   function routinePanel(m) {
     const rt = modDoc(m.id).routine || [], t0 = today(), mon = mondayOf(t0), mid = esc(m.id);
     const order = [1, 2, 3, 4, 5, 6, 0];
-    let h = '<div class="toolbar" style="margin-top:26px"><h3 class="sec">每週固定時段</h3><span class="muted small">勾選會一起記在「今天」頁</span><span class="grow"></span><button class="btn" data-act="rnew" aria-expanded="' + ui.rnew + '">＋ 新時段</button></div>';
+    let h = '<div class="toolbar" style="margin-top:26px"><h3 class="sec">每週固定時段</h3><span class="muted small">會列在「今天」頁；工作台那天已經排了同一條讀書線（多益、碩班、iPAS）就只列工作台的進度</span><span class="grow"></span><button class="btn" data-act="rnew" aria-expanded="' + ui.rnew + '">＋ 新時段</button></div>';
     if (ui.rnew) {
       h += '<section class="panel" style="margin-bottom:14px"><div class="pb stack" style="gap:10px" data-form><div class="btnrow"><input type="text" id="r-t" placeholder="要做什麼，例如：多益單字 50 個" style="flex:2 1 220px" aria-label="時段內容"><input type="text" id="r-time" placeholder="時間，例如 20:00" style="flex:0 1 130px" aria-label="時間"><label class="inline"><input type="number" id="r-min" min="5" max="600" step="5" style="width:80px" aria-label="分鐘"> 分鐘</label></div>'
         + '<div class="daypick">' + order.map(wd => '<label><input type="checkbox" id="rd-' + wd + '"' + chk(wd === dow(t0)) + ">週" + WD[wd] + "</label>").join("") + "</div>"
@@ -1027,9 +1182,11 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     const q = ui.nq.toLowerCase(), rv = all.filter(n => n.review).length;
     const list = all.filter(n => (!ui.ncourse || n.course === ui.ncourse) && (!ui.nreview || n.review) && (!q || [n.title, n.body, n.course, (n.tags || []).join(" ")].join(" ").toLowerCase().includes(q)))
       .sort((a, b) => (b.pin ? 1 : 0) - (a.pin ? 1 : 0) || ((b.up || "") > (a.up || "") ? 1 : (b.up || "") < (a.up || "") ? -1 : 0));
-    let h = '<div class="toolbar"><input type="search" id="n-q" value="' + esc(ui.nq) + '" placeholder="搜尋標題、內容、標籤" data-act="nq" aria-label="搜尋筆記" style="flex:1 1 220px"><button class="btn primary" data-act="nnew" data-mod="' + esc(m.id) + '">＋ 新筆記</button></div>';
+    const kids = cfg().mods.filter(x => !x.hidden && parentOf(x) === m.id);
+    let h = kids.length ? '<h3 class="sec" style="margin:0 0 10px">課程講義</h3><div class="lgrid" style="margin-bottom:24px">' + kids.map(x => '<a class="lcard kid" href="#m-' + esc(x.id) + '" style="--ac:' + acolByArea(x.area) + '"><b>' + esc(x.name) + "</b><span>" + esc((TYPES[x.type] || {}).desc || "") + "</span></a>").join("") + '</div><h3 class="sec" style="margin:0 0 10px">我的筆記</h3>' : "";
+    h += '<div class="toolbar"><input type="search" id="n-q" value="' + esc(ui.nq) + '" placeholder="搜尋標題、內容、標籤" data-act="nq" aria-label="搜尋筆記" style="flex:1 1 220px"><button class="btn primary" data-act="nnew" data-mod="' + esc(m.id) + '">＋ 新筆記</button></div>';
     if (all.length) h += '<div class="toolbar"><div class="seg"><button data-act="ncourse" data-k=""' + prs(!ui.ncourse) + ">全部 " + all.length + "</button>" + courses.map(c => '<button data-act="ncourse" data-k="' + esc(c) + '"' + prs(ui.ncourse === c) + ">" + esc(c) + "</button>").join("") + '<button data-act="nreview"' + prs(ui.nreview) + ">需複習 " + rv + "</button></div></div>";
-    if (!all.length) return h + '<div class="panel empty"><b>還沒有筆記</b>按「新筆記」開始。上面的連結可以直接打開你已經整理好的筆記網站。</div>';
+    if (!all.length) return h + '<div class="panel empty"><b>還沒有自己的筆記</b>按「新筆記」開始，可以依課程分類、標記需複習。</div>';
     h += list.length ? '<div class="ngrid">' + list.map(n => '<button class="ncard" data-act="nopen" data-id="' + esc(n.id) + '"><span class="nc-top">' + (n.pin ? '<span class="chip mark">置頂</span>' : "") + (n.course ? '<span class="chip ctx">' + esc(n.course) + "</span>" : "") + (n.review ? '<span class="chip warn">需複習</span>' : "") + "</span>"
       + '<span class="nc-title">' + esc(n.title || "未命名筆記") + '</span><span class="nc-body">' + esc(snippet(n.body)) + '</span><span class="nc-date">' + (isDate(n.up) ? mdy(n.up) + " 更新" : "") + "</span></button>").join("") + "</div>" : '<p class="empty">沒有符合的筆記。</p>';
     return h;
@@ -1075,7 +1232,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
       + '<div class="exam-body"><h3>' + esc(e.name) + (e.kind ? '<span class="chip">' + esc(e.kind) + "</span>" : "") + "</h3>"
       + '<div class="row-meta"><span class="chip mono">' + ymd(e.date) + "（" + WD[dow(e.date)] + "）" + (isDate(e.end) && e.end !== e.date ? " – " + (e.end.slice(0, 4) !== e.date.slice(0, 4) ? ymd(e.end) : md(e.end)) : "") + "</span>" + (e.place ? '<span class="chip">' + esc(e.place) + "</span>" : "") + (e.score ? '<span class="chip ok">成績 ' + esc(e.score) + "</span>" : "") + (safeUrl(e.url) ? linkChip({ t: "練習", url: e.url }) : "") + "</div>"
       + (e.note ? '<p class="muted small">' + esc(e.note) + "</p>" : "")
-      + (prep.length ? '<div class="pc-line"><span>準備進度 ' + pd + " / " + prep.length + "</span><span>" + pct + '%</span></div><span class="meter' + (pct === 100 ? " full" : "") + '"><i style="width:' + pct + '%"></i></span>' : "")
+      + (prep.length ? '<div class="pc-line"><span>準備進度 ' + pd + " / " + prep.length + '</span></div><span class="meter' + (pct === 100 ? " full" : "") + '"><i style="width:' + pct + '%"></i></span>' : "")
       + '<div><button class="btn sm" data-act="eopen" data-id="' + esc(e.id) + '" aria-expanded="' + open + '">' + (open ? "收起" : "準備清單與編輯") + "</button></div></div>"
       + (open ? '<div class="exam-edit">' + examEditor(e) + "</div>" : "") + "</section>";
   }
@@ -1166,8 +1323,11 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
         h += '<div class="mrow"><input type="text" id="mn-' + mid + '" value="' + esc(m.name) + '" data-act="mname" data-id="' + mid + '" aria-label="模組名稱"><span class="type">' + esc((TYPES[m.type] || {}).label || m.type) + "</span>"
           + '<select id="ma-' + mid + '" data-act="marea" data-id="' + mid + '" aria-label="移到哪個區域">' + c.areas.map(x => '<option value="' + esc(x.id) + '"' + sel(x.id === m.area) + ">" + esc(x.name) + "</option>").join("") + "</select>"
           + '<label class="inline"><input type="checkbox" id="mh-' + mid + '" data-act="mhide" data-id="' + mid + '"' + chk(m.hidden) + "> 隱藏</label>"
+          + (nestTarget(m) ? '<label class="inline"><input type="checkbox" id="mp-' + mid + '" data-act="mnest" data-id="' + mid + '"' + chk(parentOf(m)) + "> 收進「" + esc(modById(nestTarget(m)).name) + "」</label>" : "")
+          + (TYPES[m.type] && !TYPES[m.type].src && m.type !== "links" ? '<button class="btn ghost sm" data-act="ledit" data-mod="' + mid + '" aria-expanded="' + (ui.ledit === m.id) + '">相關網站' + (modLinks(m.id).length ? " " + modLinks(m.id).length : "") + "</button>" : "")
           + '<button class="btn ghost sm" data-act="mmove" data-id="' + mid + '" data-d="-1"' + (mi === 0 ? " disabled" : "") + ' aria-label="模組上移">↑</button><button class="btn ghost sm" data-act="mmove" data-id="' + mid + '" data-d="1"' + (mi === ms.length - 1 ? " disabled" : "") + ' aria-label="模組下移">↓</button>'
-          + confirmBtn("moddel:" + m.id, "刪除", "刪除這個模組？裡面的資料會保留，但不再顯示") + "</div>";
+          + confirmBtn("moddel:" + m.id, "刪除", "刪除這個模組？裡面的資料會保留，但不再顯示") + "</div>"
+          + (ui.ledit === m.id ? linkEditor(m) : "");
       });
       if (!ms.length) h += '<div class="mrow muted small">這個區域還沒有模組，從右邊或下面新增。</div>';
     });
@@ -1191,7 +1351,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     let mm;
     if (h === "manage") return { v: "manage" };
     if ((mm = /^type-([A-Za-z]+)$/.exec(h))) { const m = cfg().mods.find(x => x.type === mm[1]); if (m) return { v: "mod", id: m.id }; }
-    if ((mm = /^m-([A-Za-z0-9-]+)$/.exec(h))) return { v: "mod", id: mm[1] };
+    if ((mm = /^m-([A-Za-z0-9-]+)(?:\/(.+))?$/.exec(h))) return { v: "mod", id: mm[1], sub: mm[2] || "" };
     if ((mm = /^a-([A-Za-z0-9-]+)$/.exec(h))) return { v: "area", id: mm[1] };
     return { v: "today" };
   }
@@ -1199,13 +1359,13 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     const c = cfg();
     const curArea = r.v === "mod" ? (modById(r.id) || {}).area : r.v === "area" ? r.id : null;
     let h = '<a href="#today"' + cur(r.v === "today") + ">今天</a>";
-    c.areas.forEach(a => { const first = modsOfArea(a.id)[0]; h += '<a href="#' + (first ? "m-" + esc(first.id) : "a-" + esc(a.id)) + '" style="--ac:' + acol(a) + '"' + cur(curArea === a.id) + '><span class="sw"></span>' + esc(a.name) + "</a>"; });
+    c.areas.forEach(a => { const first = topModsOfArea(a.id)[0]; h += '<a href="#' + (first ? "m-" + esc(first.id) : "a-" + esc(a.id)) + '" style="--ac:' + acol(a) + '"' + cur(curArea === a.id) + '><span class="sw"></span>' + esc(a.name) + "</a>"; });
     h += '<span class="spacer"></span><a href="#manage"' + cur(r.v === "manage") + ">擴充</a>";
     tabsEl.innerHTML = h;
-    const ms = curArea ? modsOfArea(curArea) : [];
+    const ms = curArea ? topModsOfArea(curArea) : [], open = r.v === "mod" ? modById(r.id) : null, top = open ? parentOf(open) || open.id : null;
     subEl.hidden = ms.length < 2;
     subEl.style.setProperty("--ac", acolByArea(curArea));
-    subEl.innerHTML = ms.map(m => '<a href="#m-' + esc(m.id) + '"' + cur(r.v === "mod" && r.id === m.id) + ">" + esc(m.name) + "</a>").join("");
+    subEl.innerHTML = ms.map(m => '<a href="#m-' + esc(m.id) + '"' + cur(top === m.id) + ">" + esc(m.name) + "</a>").join("");
   }
   function view(r) {
     if (r.v === "manage") return vManage();
@@ -1231,7 +1391,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     const r = route();
     renderNav(r);
     const am = r.v === "mod" ? modById(r.id) : null;
-    if (showApp(am && TYPES[am.type] && TYPES[am.type].src ? am : null)) return;
+    if (showApp(am && TYPES[am.type] && TYPES[am.type].src ? am : null, r.sub)) return;
     const ae = document.activeElement, aid = ae && main.contains(ae) ? ae.id : null;
     let range = null;
     try { if (aid && typeof ae.selectionStart === "number") range = [ae.selectionStart, ae.selectionEnd]; } catch (e) { range = null; }
@@ -1251,15 +1411,20 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
   // 內建網站：每個模組一個 iframe，開過就留著（切回來時保留原本的進度與捲動位置）
   const apphost = document.getElementById("apphost");
   const setNavH = () => document.documentElement.style.setProperty("--navh", document.querySelector(".navbar").offsetHeight + "px");
-  function showApp(m) {
+  function showApp(m, sub) {
     const frames = [...apphost.querySelectorAll("iframe")];
     frames.forEach(f => { f.hidden = !m || f.dataset.mod !== m.id; });
     if (!m) { apphost.hidden = true; main.hidden = false; return false; }
-    if (!frames.some(f => f.dataset.mod === m.id)) {
-      const f = document.createElement("iframe");
-      f.className = "appframe"; f.dataset.mod = m.id; f.title = m.name; f.src = TYPES[m.type].src;
+    let f = frames.find(x => x.dataset.mod === m.id);
+    if (!f) {
+      f = document.createElement("iframe");
+      f.className = "appframe"; f.dataset.mod = m.id; f.title = m.name; f.src = TYPES[m.type].src + (sub ? "#" + sub : "");
       apphost.appendChild(f);
+    } else if (sub) {
+      try { f.contentWindow.location.hash = sub; } catch (e) { f.src = TYPES[m.type].src + "#" + sub; }
     }
+    // 子頁只套用一次：網址改回模組本身，之後重畫不會把使用者在網站裡的位置拉回來，再點同一個連結也有效
+    if (sub) history.replaceState(null, "", "#m-" + m.id);
     apphost.hidden = false; main.hidden = true; setNavH();
     return true;
   }
@@ -1370,6 +1535,11 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
       if (newTask(val("qa-t"), to, val("qa-d"))) { const f = document.getElementById("qa-t"); if (f) { f.value = ""; f.focus(); } } else return false;
     },
     tmove: el => { patch("tasks", el.dataset.id, { due: el.dataset.to }); toast("已改到 " + mdw(el.dataset.to)); },
+    wbmove: el => {
+      const it = wbItem(el.dataset.id), to = el.dataset.to; if (!it || !isDate(to) || to === it.date) return false;
+      wbWrite(it.bucket, { items: { [it.id]: { date: to, moved: (it.moved || 0) + 1, orig: it.orig || it.date } } });
+      toast("工作台事項移到 " + mdw(to));
+    },
     tedit: el => { ui.tedit = ui.tedit === el.dataset.id ? null : el.dataset.id; ui.confirm = null; },
     tst: el => setTaskStatus(el.dataset.id, el.dataset.st),
     showdone: el => { ui.showDone[el.dataset.mod] = !ui.showDone[el.dataset.mod]; },
@@ -1387,6 +1557,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
       const f = document.getElementById("ba-t-" + mid); if (f) { f.value = ""; f.focus(); }
     },
     pstat: el => { ui.pstat = el.dataset.k; },
+    pview: el => { try { localStorage.setItem("dt-pview", el.dataset.k); } catch (e) { /* 只是記住顯示方式 */ } ui.pviewMem = el.dataset.k; },
     pnew: () => { ui.pnew = !ui.pnew; },
     pcreate: el => {
       const name = val("np-name"); if (!name) { toast("先寫專案名稱"); return false; }
@@ -1536,8 +1707,17 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     if (n && n.body !== ta.value) patch("notes", id, { body: ta.value, up: today() }, true);
   }
   const CHANGE = {
-    tdone: el => toggleTask(el.dataset.id),
-    msdone: el => { const ms = arrOf("projects", el.dataset.p, "ms").map(x => (x.id === el.dataset.id ? Object.assign(x, { done: el.checked }) : x)); patch("projects", el.dataset.p, { ms }); },
+    tdone: el => {
+      const t = S.tasks[el.dataset.id]; if (!t) return;
+      if (el.checked) setTaskStatus(el.dataset.id, "done"); else if (t.st === "done") setTaskStatus(el.dataset.id, "todo");
+      if (isDate(t.due)) syncTwins("t:" + el.dataset.id, t.due, el.checked);
+    },
+    msdone: el => {
+      const ms = arrOf("projects", el.dataset.p, "ms"), x = ms.find(m => m.id === el.dataset.id); if (!x) return;
+      x.done = el.checked; patch("projects", el.dataset.p, { ms });
+      if (isDate(x.date)) syncTwins("m:" + el.dataset.p + ":" + x.id, x.date, el.checked);
+    },
+    habit: el => { const d = el.dataset.date || today(); wbWrite("h-" + d.slice(0, 7), { d: { [d]: { ["h" + el.dataset.i]: el.checked } } }); },
     rtdone: el => setDay(el.dataset.date || today(), { r: { [el.dataset.id]: el.checked } }),
     lfield: el => {
       const links = arrOf("mods", el.dataset.mod, "links"), l = links[Number(el.dataset.i)]; if (!l) return;
@@ -1575,13 +1755,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
       if (k === "url" && v && !safeUrl(v)) { toast("網址要以 https:// 開頭"); return; }
       patch("goals", id, { [k]: v });
     },
-    wbdone: el => {
-      const id = el.dataset.id, mon = today().slice(0, 7), it = ((S.wb && S.wb.items) || {})[id];
-      if (!wbDb || !it) return;
-      const p = { items: { [id]: { done: el.checked, doneAt: el.checked ? today() : null } } };
-      S.wb = merge(clone(S.wb), p);
-      wbDb.doc("plan/m-" + mon).update(p).catch(() => toast("工作台沒有存到，請稍後再試"));
-    },
+    wbdone: el => { const it = wbItem(el.dataset.id); if (it) wbSetDone(it, el.checked); },
     imp: el => { const f = el.files && el.files[0]; el.value = ""; if (f) doImport(f); },
     vtgt: el => { const n = Math.round(Number(el.value)); if (n >= 1 && n <= 999) patch("mods", el.dataset.mod, { target: n }); },
     bfilter: el => { ui.bproj[el.dataset.mod] = el.value; },
@@ -1589,6 +1763,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     mname: el => { const v = el.value.trim(); const c = clone(cfg()), m = c.mods.find(x => x.id === el.dataset.id); if (m && v && v !== m.name) { m.name = v; setCfg(c); } },
     marea: el => { const c = clone(cfg()), m = c.mods.find(x => x.id === el.dataset.id); if (m && areaOf(el.value)) { m.area = el.value; setCfg(c); } },
     mhide: el => { const c = clone(cfg()), m = c.mods.find(x => x.id === el.dataset.id); if (m) { m.hidden = el.checked; setCfg(c); } },
+    mnest: el => { const c = clone(cfg()), m = c.mods.find(x => x.id === el.dataset.id); if (m) { m.parent = el.checked ? nestTarget(m) || "" : ""; setCfg(c); } },
   };
 
   /* ═════════ 事件 ═════════ */
@@ -1681,12 +1856,14 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     el.innerHTML = u ? '<span class="who">' + esc(u.displayName || "已登入") + '</span><button class="btn ghost sm" data-act="signout">登出</button>'
       : '<button class="btn primary sm" data-act="signin">用 Google 登入</button>';
   }
-  let wbUnsub = null, wbMonth = null;
+  // 工作台整份讀進來（事項可能被延後到別的月份，所以不能只讀當月那一份）
+  let wbUnsub = null;
   function wbSubscribe() {
-    if (!wbDb) return;
-    const mon = today().slice(0, 7); if (mon === wbMonth) return;
-    wbMonth = mon; if (wbUnsub) wbUnsub();
-    wbUnsub = wbDb.doc("plan/m-" + mon).onSnapshot(s => { S.wb = s.exists ? s.data() : null; S.wbReady = true; schedule(); }, () => { S.wbReady = true; schedule(); });
+    if (!wbDb || wbUnsub) return;
+    wbUnsub = wbDb.collection("plan").onSnapshot(qs => {
+      const m = {}; qs.docs.forEach(x => { m[x.id] = x.data(); });
+      S.wbDocs = m; schedule();
+    }, () => schedule());
   }
   window.addEventListener("message", e => {
     if (e.origin !== location.origin || !e.data || !e.data.dt) return;

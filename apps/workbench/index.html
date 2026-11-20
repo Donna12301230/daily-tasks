@@ -193,6 +193,8 @@ table.t td.n { text-align: right; font-family: var(--font-mono) }
   .post { grid-template-columns: minmax(0, 1fr) }
 }
 @media (prefers-reduced-motion: no-preference) { .it, .cell { transition: background-color .15s } }
+/* 放在每日任務平台裡：平台的「今天」已經整合工作台的今天，標題和同步狀態也在平台上方，這裡不重複 */
+html.in-dt header.top, html.in-dt nav.tabs a[data-v="today"] { display: none }
 </style>
 
 <div class="wrap">
@@ -621,7 +623,9 @@ table.t td.n { text-align: right; font-family: var(--font-mono) }
 
   // ---------------- routing & render
   function route() {
-    const h = (location.hash || "#today").slice(1);
+    const inDt = document.documentElement.classList.contains("in-dt");
+    let h = (location.hash || (inDt ? "#cal" : "#today")).slice(1);
+    if (inDt && h === "today") h = "day-" + today();
     let v = "today";
     const md_ = /^day-(\d{4}-\d{2}-\d{2})$/.exec(h), mm = /^cal-(\d{4}-\d{2})$/.exec(h);
     if (md_) { v = "today"; ui.day = md_[1]; }
