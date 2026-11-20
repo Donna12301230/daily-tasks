@@ -459,7 +459,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
   // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
-  const BUILD = "20261120c";
+  const BUILD = "20261120d";
   const appSrc = (m, sub) => TYPES[m.type].src + "?v=" + BUILD + (sub ? "#" + sub : "");
   const TYPES = {
     projectPlan: { label: "專案計畫", desc: "每個專案的目標、範圍、里程碑，加上跨專案的時程總覽。", view: vProjectPlan },
@@ -904,7 +904,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
         + P.tasks.slice().sort((a, b) => (a.st === "done") - (b.st === "done") || (b.pri || 0) - (a.pri || 0)).map(t => taskRow(t, { noDue: true })).join("") + P.posts.map(p => postRow(p, wbMod)).join(""))
       + grp("讀書", P.wb.filter(it => it.tag === "讀").sort((a, b) => trackOrder(a) - trackOrder(b)).map(it => wbRow(it, { link: tl[it.id], acts: mv(it) })).join("") + P.routines.filter(r => !r.time).map(r => routineRow(r, t0)).join(""))
       + grp("每天固定", P.habits.map(x => habitRow(x, t0)).join(""));
-    h += '<section class="panel"><div class="ph"><h3>今天</h3><span class="sum">完成 ' + P.done + " / " + P.total + (wbMod ? '・<a href="#m-' + esc(wbMod) + "/day-" + t0 + '">在工作台看這天</a>' : "") + "</span></div>"
+    h += '<section class="panel"><div class="ph"><h3>今天</h3><span class="sum">完成 ' + P.done + " / " + P.total + "</span></div>"
       + '<div class="rows">' + (body || '<div class="empty"><b>今天沒有排事情</b>在下面新增一件，或到各模組排日期。</div>') + "</div>" + quickAdd() + "</section>";
     if (doing.length) h += '<section class="panel"><div class="ph"><h3>進行中</h3><span class="sum">' + doing.length + " 件，還沒到期</span></div><div class=\"rows\">" + doing.map(t => taskRow(t, { k: "-g", noSt: true })).join("") + "</div></section>";
     h += '<section class="panel"><div class="ph"><h3>接下來 7 天</h3><span class="sum">' + upCount + ' 件</span></div><div class="rows">' + (up || '<div class="empty">這週後面還沒有排到期的事。</div>') + "</div></section>";
@@ -1939,6 +1939,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
   }
   window.addEventListener("message", e => {
     if (e.origin !== location.origin || !e.data || !e.data.dt) return;
+    if (e.data.dt === "nav" && e.data.type === "today") { location.hash = "#today"; return; }
     if (e.data.dt === "nav") {
       const m = cfg().mods.find(x => x.type === e.data.type && !x.hidden) || cfg().mods.find(x => x.type === e.data.type);
       if (m) location.hash = "#m-" + m.id; else toast("平台裡沒有這個模組，可以到「擴充」加回來");

@@ -747,7 +747,10 @@ html.in-dt header.top, html.in-dt nav.tabs a[data-v="today"] { display: none }
   function route() {
     const inDt = document.documentElement.classList.contains("in-dt");
     let h = (location.hash || (inDt ? "#cal" : "#today")).slice(1);
-    if (inDt && h === "today") h = "day-" + today();
+    if (inDt && (h === "today" || h === "day-" + today())) {
+      parent.postMessage({ dt: "nav", type: "today" }, location.origin);
+      h = "cal"; history.replaceState(null, "", "#cal");
+    }
     let v = "today";
     const md_ = /^day-(\d{4}-\d{2}-\d{2})$/.exec(h), mm = /^cal-(\d{4}-\d{2})$/.exec(h);
     if (md_) { v = "today"; ui.day = md_[1]; }
