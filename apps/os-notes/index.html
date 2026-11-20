@@ -1,0 +1,1552 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>作業系統白話筆記</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column of study notes on cool graph-paper, sticky chapter tabs, highlighter marks for key terms */
+:root{
+  --bg:#f3f5f7;
+  --grid:#e4e9ee;
+  --surface:#ffffff;
+  --ink:#17212b;
+  --muted:#566373;
+  --rule:#d6dde5;
+  --accent:#0d6b67;
+  --accent-soft:#dff0ee;
+  --hl-bg:#ffe98a;
+  --hl-ink:#17212b;
+  --warn:#b0421c;
+  --warn-soft:#fbebe4;
+  --ok:#2c7a4c;
+  --ok-soft:#e3f3e8;
+  --f-display:"LXGW WenKai TC","Kaiti TC","DFKai-SB","Noto Sans TC",serif;
+  --f-body:"Noto Sans TC","Microsoft JhengHei","PingFang TC","Heiti TC",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,"Courier New",monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11161c; --grid:#18202a; --surface:#18212b; --ink:#e5eaf0; --muted:#9ba8b6; --rule:#2a3542;
+    --accent:#4fc4b9; --accent-soft:#15322f; --hl-bg:#6a5915; --hl-ink:#fff7d9;
+    --warn:#ff9470; --warn-soft:#3a2219; --ok:#72d49c; --ok-soft:#163323; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11161c; --grid:#18202a; --surface:#18212b; --ink:#e5eaf0; --muted:#9ba8b6; --rule:#2a3542;
+  --accent:#4fc4b9; --accent-soft:#15322f; --hl-bg:#6a5915; --hl-ink:#fff7d9;
+  --warn:#ff9470; --warn-soft:#3a2219; --ok:#72d49c; --ok-soft:#163323; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{
+  background-color:var(--bg);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;
+  color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.8;
+}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:840px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.35;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700}
+h2{font-size:clamp(1.55rem,4.5vw,2rem);font-weight:700}
+h3{font-size:1.25rem;font-weight:700;margin-top:8px}
+p{margin:0}
+.stack{display:flex;flex-direction:column;gap:16px}
+.stack-lg{display:flex;flex-direction:column;gap:28px}
+.muted{color:var(--muted)}
+.small{font-size:.9rem}
+mark,.hl{background:var(--hl-bg);color:var(--hl-ink);padding:0 .2em;border-radius:3px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.en{font-family:var(--f-mono);font-size:.86em;color:var(--muted);white-space:nowrap}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--accent-soft);color:var(--ink);padding:1px 5px;border-radius:4px}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+/* hero */
+.hero{padding-block:48px 28px}
+.hero .eyebrow{font-family:var(--f-mono);font-size:.8rem;letter-spacing:.08em;color:var(--accent);text-transform:uppercase}
+.hero p.sub{color:var(--muted);margin-top:10px;max-width:62ch}
+.paper{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:20px 22px}
+.tips{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:0;padding:0;list-style:none}
+.tips li{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;min-width:0}
+.tips b{display:block;font-family:var(--f-display);font-size:1.08rem;margin-bottom:2px}
+
+/* chapter nav */
+nav.chapnav{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border-bottom:1px solid var(--rule)}
+nav.chapnav .row{display:flex;gap:6px;overflow-x:auto;padding-block:10px;scrollbar-width:thin}
+nav.chapnav a{flex:0 0 auto;text-decoration:none;color:var(--muted);font-size:.88rem;padding:4px 12px;border-radius:999px;border:1px solid var(--rule);white-space:nowrap}
+nav.chapnav a.on{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+
+/* sections */
+section.ch{padding-block:44px 8px}
+.ch-head{display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
+.ch-no{font-family:var(--f-mono);font-size:.8rem;letter-spacing:.08em;color:var(--accent)}
+.lead{font-size:1.12rem;background:var(--surface);border-left:4px solid var(--accent);padding:14px 18px;border-radius:0 10px 10px 0}
+.lead::before{content:"一句話：";font-weight:700;color:var(--accent)}
+.box{border-radius:10px;padding:16px 18px;border:1px solid var(--rule);background:var(--surface)}
+.box .tag{display:inline-block;font-size:.78rem;font-weight:700;letter-spacing:.05em;padding:1px 10px;border-radius:999px;margin-bottom:8px}
+.analogy{background:var(--accent-soft);border-color:transparent}
+.analogy .tag{background:var(--accent);color:var(--surface)}
+.analogy p,.analogy li{font-family:var(--f-display);font-size:1.06rem}
+.trap{background:var(--warn-soft);border-color:transparent}
+.trap .tag{background:var(--warn);color:var(--surface)}
+.ok{background:var(--ok-soft);border-color:transparent}
+.ok .tag{background:var(--ok);color:var(--surface)}
+ul.clean{margin:0;padding-left:1.25em;display:flex;flex-direction:column;gap:4px}
+ol.clean{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:4px}
+
+/* tables */
+.tbl{overflow-x:auto;border:1px solid var(--rule);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--rule)}
+tr:last-child td{border-bottom:none}
+th{font-size:.85rem;color:var(--muted);font-weight:700;background:var(--bg);white-space:nowrap}
+td.ans{font-weight:700;color:var(--accent);white-space:nowrap}
+.kw caption{caption-side:top;text-align:left;padding:12px 12px 4px;font-family:var(--f-display);font-weight:700;font-size:1.08rem}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+/* grids */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.grid2>*{min-width:0}
+.card h4{margin:0 0 4px;font-size:1.02rem}
+.card .en{display:block;margin-bottom:6px}
+
+/* figures */
+.fig{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:16px;overflow-x:auto}
+.fig figcaption{font-size:.88rem;color:var(--muted);margin-top:8px}
+figure{margin:0}
+svg text{font-family:var(--f-body)}
+.s-node{fill:var(--surface);stroke:var(--ink);stroke-width:1.6}
+.s-node-a{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2}
+.s-node-w{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.6}
+.s-t{fill:var(--ink);font-size:15px;font-weight:700}
+.s-ts{fill:var(--muted);font-size:11px;font-family:var(--f-mono)}
+.s-lab{fill:var(--muted);font-size:12.5px}
+.s-lab-w{fill:var(--warn);font-size:12.5px;font-weight:700}
+.s-line{stroke:var(--muted);stroke-width:1.6;fill:none}
+.s-line-a{stroke:var(--accent);stroke-width:2;fill:none}
+.s-line-w{stroke:var(--warn);stroke-width:2;fill:none}
+.s-head{fill:var(--muted)}
+.s-head-a{fill:var(--accent)}
+.s-head-w{fill:var(--warn)}
+.s-fill-a{fill:var(--accent)}
+.s-fill-hl{fill:var(--hl-bg);stroke:var(--warn);stroke-width:1.5}
+.s-table{fill:var(--bg);stroke:var(--rule);stroke-width:2}
+.s-stick{stroke:var(--warn);stroke-width:5;stroke-linecap:round}
+
+/* layered stack */
+.layers{display:flex;flex-direction:column;gap:6px;max-width:460px}
+.layers div{border:1px solid var(--rule);border-radius:8px;padding:8px 14px;background:var(--surface);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.layers div.os{background:var(--accent-soft);border-color:var(--accent)}
+.layers b{font-weight:700}
+
+/* flow steps (a real sequence) */
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;counter-reset:step;list-style:none;margin:0;padding:0}
+.flow li{flex:1 1 150px;min-width:0;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:12px 14px;position:relative;counter-increment:step}
+.flow li::before{content:counter(step);font-family:var(--f-mono);font-size:.78rem;color:var(--surface);background:var(--accent);border-radius:999px;width:22px;height:22px;display:inline-grid;place-items:center;margin-right:6px}
+.flow li b{font-family:var(--f-display);font-size:1.08rem}
+.flow li p{font-size:.9rem;color:var(--muted);margin-top:4px}
+
+/* timeline */
+.gens{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.gens div{background:var(--surface);border:1px solid var(--rule);border-top:3px solid var(--accent);border-radius:8px;padding:10px 12px;min-width:0}
+.gens .yr{font-family:var(--f-mono);font-size:.82rem;color:var(--accent)}
+
+/* gantt */
+.ctrl{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;font-size:.92rem;cursor:pointer;border-radius:8px;border:1px solid var(--accent);background:var(--surface);color:var(--accent);padding:6px 14px}
+button.on,button.primary{background:var(--accent);color:var(--surface)}
+button:hover{filter:brightness(1.05)}
+.gantt{display:flex;height:46px;border-radius:6px;overflow:hidden;border:1px solid var(--ink);margin-top:14px;min-width:300px}
+.gantt div{display:grid;place-items:center;font-family:var(--f-mono);font-size:.8rem;font-weight:600;color:var(--ink);border-right:1px solid var(--ink);min-width:0;overflow:hidden}
+.gantt div:last-child{border-right:none}
+.ticks{position:relative;height:36px;min-width:300px;font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
+.ticks span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.ticks span.lo{top:18px}
+.ticks span.hi{top:2px}
+.ticks span.first{transform:none}
+.ticks span.last{transform:translateX(-100%)}
+.gwrap{overflow-x:auto}
+.avg{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.avg div{background:var(--bg);border-radius:8px;padding:10px 14px;min-width:0}
+.avg b{font-family:var(--f-mono);font-size:1.3rem;color:var(--accent);display:block}
+.avg small{font-family:var(--f-mono);color:var(--muted);font-size:.78rem;word-break:break-all}
+
+/* time bar */
+.tbar{display:flex;min-width:460px;height:34px;border-radius:6px;overflow:hidden;font-size:.82rem}
+.tbar div{display:grid;place-items:center;min-width:0}
+.tbar .w{background:var(--hl-bg);color:var(--hl-ink)}
+.tbar .r{background:var(--accent);color:var(--surface)}
+.brace{min-width:460px;display:flex;font-size:.82rem;color:var(--muted);margin-top:6px}
+.brace div{border-top:2px solid var(--muted);text-align:center;padding-top:2px}
+
+/* semaphore demo */
+.lot{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.slot{width:74px;height:52px;border:2px dashed var(--muted);border-radius:8px;display:grid;place-items:center;font-family:var(--f-mono);font-weight:600}
+.slot.full{border-style:solid;border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.semval{font-family:var(--f-mono);font-size:1.6rem;font-weight:600;color:var(--accent)}
+.queue{display:flex;gap:6px;flex-wrap:wrap;min-height:34px;align-items:center}
+.queue span{font-family:var(--f-mono);font-size:.85rem;background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn);border-radius:6px;padding:2px 8px}
+.log{font-size:.92rem;background:var(--bg);border-radius:8px;padding:10px 14px;min-height:3.4em}
+
+/* paging vs segmentation */
+.mem{display:flex;gap:3px;flex-wrap:wrap}
+.mem span{height:38px;border-radius:4px;display:grid;place-items:center;font-size:.78rem;padding:0 6px;border:1px solid var(--accent);background:var(--accent-soft);color:var(--ink)}
+.mem span.pg{width:58px}
+.mem span.part{background:linear-gradient(90deg,var(--accent-soft) 30%,var(--hl-bg) 30%)}
+.mem span.gap{background:transparent;border:1px dashed var(--warn);color:var(--warn)}
+
+/* pyramid */
+.pyr{display:flex;flex-direction:column;align-items:center;gap:4px}
+.pyr div{text-align:center;border-radius:6px;padding:6px 10px;font-size:.9rem;background:var(--accent-soft);border:1px solid var(--accent);max-width:100%}
+
+/* quiz */
+details.quiz{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:0}
+details.quiz summary{cursor:pointer;padding:12px 16px;list-style:none;display:flex;gap:10px}
+details.quiz summary::-webkit-details-marker{display:none}
+details.quiz summary::before{content:"Q";font-family:var(--f-mono);font-weight:600;color:var(--surface);background:var(--accent);border-radius:6px;min-width:24px;height:24px;display:inline-grid;place-items:center;margin-top:3px}
+details.quiz[open] summary{border-bottom:1px solid var(--rule)}
+details.quiz .a{padding:12px 16px 14px;display:flex;flex-direction:column;gap:6px}
+details.quiz .a b.key{color:var(--ok)}
+.qhint{font-size:.85rem;color:var(--muted)}
+td.ans.wrap{white-space:normal}
+.vid{display:inline-flex;align-items:center;gap:4px;font-family:var(--f-body);font-variant-numeric:tabular-nums;font-size:.72rem;font-weight:700;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent);border-radius:6px;padding:0 7px;line-height:1.6;vertical-align:middle;margin-left:6px;white-space:nowrap}
+.vid::before{content:"";border-left:6px solid currentColor;border-top:4px solid transparent;border-bottom:4px solid transparent}
+td .vid{margin-left:0;margin-top:4px}
+tr.chrow th{background:var(--accent-soft);color:var(--accent);font-family:var(--f-display);font-size:1rem;white-space:normal}
+td.none{color:var(--muted)}
+td.sec{white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:700}
+.badge{display:inline-block;font-family:var(--f-body);font-size:.72rem;font-weight:700;letter-spacing:.04em;line-height:1.6;padding:0 8px;border-radius:999px;background:var(--warn);color:var(--surface);vertical-align:middle;margin-left:6px;white-space:nowrap}
+.weights{display:flex;height:44px;border-radius:8px;overflow:hidden;min-width:320px;font-size:.8rem;font-weight:700}
+.weights div{display:grid;place-items:center;text-align:center;line-height:1.25;min-width:0;border-right:2px solid var(--surface)}
+.weights div:last-child{border-right:none}
+.dates{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.dates div{background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:10px 12px;min-width:0}
+.dates .d{font-family:var(--f-mono);font-size:.85rem;color:var(--accent);display:block}
+.dates .done{font-size:.75rem;color:var(--muted);border:1px solid var(--rule);border-radius:999px;padding:0 8px;margin-left:4px}
+
+footer{padding-block:48px 64px;color:var(--muted);font-size:.88rem}
+</style>
+
+<script>document.documentElement.dataset.dtApp="os-notes";if(window.parent!==window)document.documentElement.classList.add("in-dt")</script><style id="dt-theme">html.in-dt:root{--bg:#f3f5f9;--grid:#e9edf3;--surface:#ffffff;--ink:#1c2333;--muted:#5b6678;--rule:#d8dee8;--accent:#2b3f7a;--accent-soft:#e2e7f5}@media (prefers-color-scheme: dark){html.in-dt:root:not([data-theme="light"]){--bg:#12151c;--grid:#232a37;--surface:#1a1f29;--ink:#e3e7ef;--muted:#98a2b4;--rule:#2e3544;--accent:#9fb4f0;--accent-soft:#263055;color-scheme:dark}}html.in-dt:root[data-theme="dark"]{--bg:#12151c;--grid:#232a37;--surface:#1a1f29;--ink:#e3e7ef;--muted:#98a2b4;--rule:#2e3544;--accent:#9fb4f0;--accent-soft:#263055;color-scheme:dark}</style><link rel="stylesheet" href="../../apps/embed.css">
+</head>
+<body>
+<header class="wrap hero" id="intro">
+  <div class="stack">
+    <span class="eyebrow">空大 ZZZ102・作業系統的理論與實務</span>
+    <h1>作業系統白話筆記</h1>
+    <p class="sub">整理自課堂講義、補充講義、第一次面授資料、第 1～7 章練習題、兩次平時作業和期中考解答。每章都用「廚房」來比喻，先抓感覺，再看名詞；最後的「考試這樣問」直接對照題目關鍵字，標了 <span class="badge" style="margin-left:0">期中考</span> 的是期中考真的出過的；<span class="vid" style="margin-left:0">影片 3-1</span> 是對應的課程影片分節。</p>
+    <ul class="tips">
+      <li><b>看不懂很正常</b>老師講義第一頁就說：不要強迫自己第一次讀就弄懂，多看例子。</li>
+      <li><b>不用死背</b>但要「認得」專有名詞，中文和英文都要看得出是什麼。</li>
+      <li><b>面授講過才會考</b>老師說作業與考試不難，重點就是課堂上清楚說明的觀念。</li>
+      <li><b>讀法</b>每章先讀「一句話」和「廚房比喻」，再讀細節，最後點開小測驗自我檢查。</li>
+    </ul>
+  </div>
+</header>
+
+<nav class="chapnav" aria-label="章節">
+  <div class="wrap"><div class="row" id="navrow">
+    <a href="#overview">全貌</a>
+    <a href="#exam">考試重點</a>
+    <a href="#ch1">1 電腦系統</a>
+    <a href="#ch2">2 作業系統面面觀</a>
+    <a href="#ch3">3 處理元</a>
+    <a href="#ch4">4 CPU 排程</a>
+    <a href="#ch5">5 同步</a>
+    <a href="#ch6">6 死結</a>
+    <a href="#ch7">7 同步機制整理</a>
+    <a href="#hw2">第二次作業預習</a>
+    <a href="#videos">影片對照</a>
+    <a href="#glossary">名詞速查</a>
+  </div></div>
+</nav>
+
+<main class="wrap">
+
+<!-- ============ OVERVIEW ============ -->
+<section class="ch" id="overview">
+  <div class="stack-lg">
+    <div class="ch-head"><span class="ch-no">先看全貌</span><h2>作業系統就是電腦的「廚房經理」</h2></div>
+    <p class="lead">電腦裡有很多東西要搶 CPU、搶記憶體、搶硬碟，作業系統負責分配和管理，讓大家不打架，使用者也用得順手。</p>
+    <p>整份筆記都用同一個比喻。先把下面這張對照表記起來，後面每一章就容易懂了：</p>
+    <div class="tbl"><table>
+      <thead><tr><th>電腦裡的東西</th><th>廚房裡的角色</th></tr></thead>
+      <tbody>
+        <tr><td><b>CPU</b> 中央處理器</td><td>主廚。手很快，但一次只能炒一道菜</td></tr>
+        <tr><td><b>程式</b> <span class="en">program</span></td><td>食譜。放在書架上，自己不會動</td></tr>
+        <tr><td><b>處理元</b> <span class="en">process</span>（又叫行程）</td><td>正在照食譜做的那道菜：有進度、佔著鍋具</td></tr>
+        <tr><td><b>執行緒</b> <span class="en">thread</span></td><td>同一道菜裡分工的幫手，共用同一個料理台</td></tr>
+        <tr><td><b>主記憶體</b> RAM</td><td>料理台。很快但空間有限，打烊（關機）就清空</td></tr>
+        <tr><td><b>硬碟</b></td><td>倉庫、冰箱。很大、比較慢，東西不會不見</td></tr>
+        <tr><td><b>作業系統</b> <span class="en">OS</span></td><td>廚房經理：決定哪道菜先做、料理台怎麼分、倉庫怎麼管</td></tr>
+        <tr><td><b>PCB</b> 處理元控制方塊</td><td>每道菜的工單：做到第幾步、用了哪些鍋</td></tr>
+      </tbody>
+    </table></div>
+    <h3>作業系統管四件事（對應到各章） <span class="vid">影片 2-1</span></h3>
+    <div class="grid2">
+      <div class="box card"><h4>處理器管理</h4><span class="en">processor management</span>誰先用 CPU、用多久、怎麼不打架。<br><b>第 3～7 章</b>，這學期前半段的重點。</div>
+      <div class="box card"><h4>記憶體管理</h4><span class="en">memory management</span>料理台怎麼分給每道菜、不夠用怎麼辦。<br><b>第二次作業</b>的範圍。</div>
+      <div class="box card"><h4>檔案管理</h4><span class="en">file management</span>倉庫裡的東西怎麼分類、怎麼找。<br><b>第二次作業</b>的範圍。</div>
+      <div class="box card"><h4>裝置管理</h4><span class="en">device management</span>硬碟、印表機、USB 這些設備怎麼排隊使用。<br><b>第二次作業</b>的範圍。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EXAM ============ -->
+<section class="ch" id="exam">
+  <div class="stack-lg">
+    <div class="ch-head"><span class="ch-no">考試重點</span><h2>期中考怎麼考，期末考怎麼準備</h2></div>
+    <p class="lead">期中考 10 題選擇題全都是練習題和第一次作業出過的題目，4 題簡答題的參考解答幾乎就是補充講義的原文。</p>
+
+    <div class="stack">
+      <h3>考試形式</h3>
+      <div class="grid2">
+        <div class="box card"><h4>不是實體考試</h4>考前一週，題目會公布在 UU 平台的「作業／報告」區，大約有一週時間寫完再上傳。期中考範圍是課程影片（數位教材）第 1～7 章，加上第 1、2 次面授的內容。</div>
+        <div class="box card"><h4>選擇題＋簡答題</h4>期中考是 10 題選擇（每題 4 分）加 4 題簡答（每題 15 分）。簡答題每題原則上<mark>不超過 250 字</mark>。</div>
+        <div class="box card"><h4>討論區也會考</h4>老師說平時在討論區互動的內容，<mark>也會出現在期中、期末考</mark>。平時成績也看討論區：一學期至少貼 3 篇，12/21 前完成。</div>
+        <div class="box card"><h4>課本</h4>UU 平台有完整的數位教材。想讀紙本可以參考顏春煌編著《作業系統理論與實務》第二版（碁峯，2013）。</div>
+      </div>
+    </div>
+
+    <div class="stack">
+      <h3>成績比例和重要日期</h3>
+      <div style="overflow-x:auto">
+        <div class="weights" role="img" aria-label="成績比例：作業一 10%、作業二 10%、平時 10%、期中考 30%、期末考 40%">
+          <div style="flex:10;background:var(--accent-soft);color:var(--ink)">作業一<br>10%</div>
+          <div style="flex:10;background:var(--accent-soft);color:var(--ink)">作業二<br>10%</div>
+          <div style="flex:10;background:var(--accent-soft);color:var(--ink)">平時<br>10%</div>
+          <div style="flex:30;background:var(--accent);color:var(--surface)">期中考 30%</div>
+          <div style="flex:40;background:var(--hl-bg);color:var(--hl-ink)">期末考 40%</div>
+        </div>
+      </div>
+      <div class="dates">
+        <div><span class="d">9/21・10/19・11/23・12/21</span>視訊面授，14:00–15:40</div>
+        <div><span class="d">11/1–11/8</span>期中考<span class="done">已結束</span></div>
+        <div><span class="d">12/21 前</span>討論區至少 3 篇貼文</div>
+        <div><span class="d">12/28</span>平時作業繳交期限</div>
+        <div><span class="d">116/1/2–1/10</span>期末考，佔 40%</div>
+      </div>
+      <p class="small muted">日期取自第一次面授資料裡的課程大綱和繳交期限表。如果有異動，以 UU 平台公告為準。</p>
+    </div>
+
+    <div class="stack">
+      <h3>期中考題目對照</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>題目在問什麼</th><th>答案</th><th>筆記位置</th></tr></thead>
+        <tbody>
+          <tr><td>選 1：指令固定格式與長度、單一指令週期完成</td><td class="ans">RISC</td><td><a href="#ch1">第 1 章</a></td></tr>
+          <tr><td>選 2：資源依時間切割來共用</td><td class="ans">時間多工</td><td><a href="#ch2">第 2 章</a></td></tr>
+          <tr><td>選 3：處理元在作業系統中以哪種資料結構表示</td><td class="ans">PCB</td><td><a href="#ch3">第 3 章</a></td></tr>
+          <tr><td>選 4：不屬於作業系統管理的功能</td><td class="ans">人員的管理</td><td><a href="#ch2">第 2 章</a></td></tr>
+          <tr><td>選 5：同步 concurrency 的敘述，錯誤的是</td><td class="ans wrap">多工作業系統不容許多個行程同時執行</td><td><a href="#ch5">第 5 章</a></td></tr>
+          <tr><td>選 6：對系統資源使用比較沒有限制的 CPU 模式</td><td class="ans">kernel mode</td><td><a href="#ch2">第 2 章</a></td></tr>
+          <tr><td>選 7：讓取得 CPU 的處理元一直執行到結束</td><td class="ans">不可間斷</td><td><a href="#ch4">第 4 章</a></td></tr>
+          <tr><td>選 8：執行完成所需停留在 running 狀態的時間</td><td class="ans">服務時間</td><td><a href="#ch4">第 4 章</a></td></tr>
+          <tr><td>選 9：占有至少一個資源，同時等待另一個被占用的資源</td><td class="ans">占有與等待</td><td><a href="#ch6">第 6 章</a></td></tr>
+          <tr><td>選 10：臨界區域是用來解決什麼問題</td><td class="ans">處理元同步</td><td><a href="#ch5">第 5 章</a></td></tr>
+          <tr><td>簡 1：何謂編譯、直譯</td><td class="ans wrap">整份一次翻成執行檔／翻一行執行一行</td><td><a href="#ch1">第 1 章</a></td></tr>
+          <tr><td>簡 2：何謂處理元、執行緒</td><td class="ans wrap">資源分配的基本單位／運算排程的最小單位</td><td><a href="#ch3">第 3 章</a></td></tr>
+          <tr><td>簡 3：四種不可間斷的 CPU 排程方法</td><td class="ans wrap">FCFS、SJN、指定優先權、HRRN</td><td><a href="#ch4">第 4 章</a></td></tr>
+          <tr><td>簡 4：四種死結的解決方法</td><td class="ans wrap">預防、避免、偵測與復原、忽略</td><td><a href="#ch6">第 6 章</a></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="box ok"><span class="tag">簡答題的寫法</span>
+      <div class="stack" style="gap:8px">
+        <p>四題參考解答的結構都一樣，照這個順序寫就不容易漏：</p>
+        <ol class="clean">
+          <li><b>定義</b>：它是什麼，靠什麼工具或是什麼單位。例：「編譯是透過編譯器……」</li>
+          <li><b>怎麼運作</b>：過程或規則。例：「執行前先整份翻完，產生 .exe 檔」</li>
+          <li><b>比較或例子</b>：題目問兩個名詞就寫差別；問「四種」就每種寫一兩句，附上英文名稱。</li>
+        </ol>
+        <p class="small">每題控制在 250 字內，中英文名詞一起寫，例如「先來先服務（FCFS）」。</p>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="stack" style="gap:8px">
+        <h4 style="margin:0;font-size:1.05rem">補充講義裡還沒考過的主題</h4>
+        <p>期中考四題簡答題都出自補充講義。補充講義還有下面這些主題，筆記裡都有對應段落，準備期末考時值得照「簡答題的寫法」練習一遍：</p>
+        <ul class="clean">
+          <li>RISC 和 CISC → <a href="#ch1">第 1 章</a></li>
+          <li>程式從原始碼到執行的四個步驟 → <a href="#ch1">第 1 章</a></li>
+          <li>時間多工和空間多工 → <a href="#ch2">第 2 章</a></li>
+          <li>處理元的狀態與狀態轉換 → <a href="#ch3">第 3 章</a></li>
+          <li>號誌和監督器 → <a href="#ch5">第 5 章</a></li>
+          <li>哲學家用餐問題與解決方法 → <a href="#ch5">第 5 章</a></li>
+          <li>程式處理的三種時期 → <a href="#hw2">第二次作業預習</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="stack">
+      <p class="small muted"><b>章號別搞混</b>：課程影片（數位教材）的章號和講義、練習題、這份筆記一樣，例如處理元在第 3 章、死結在第 6 章。作業和期中考解答括號裡的節次（例如處理元標「2-2」、死結標「5-2-1」）對不上影片分節，可能是紙本課本或其他版本的編號。要找影片，請看筆記裡的 <span class="vid" style="margin-left:0">影片 3-1</span> 標籤，或最後的<a href="#videos">影片對照表</a>。</p>
+      <p class="small muted"><b>後半學期的主題</b>：課程影片第 8～18 章，包括記憶體管理、檔案系統、儲存裝置、輸出入系統、分散式系統、系統保護與安全。完整分節列在最後的<a href="#videos">影片對照表</a>。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CH1 ============ -->
+<section class="ch" id="ch1">
+  <div class="stack-lg">
+    <div class="ch-head"><span class="ch-no">第 1 章</span><h2>認識電腦系統</h2></div>
+    <p class="lead">電腦的硬體是固定的，「換程式就換功能」。作業系統是夾在硬體和使用者中間、讓兩邊好溝通的那一層。</p>
+
+    <div class="stack">
+      <h3>馮紐曼與「儲存程式電腦」 <span class="vid">影片 1-2</span></h3>
+      <p><mark>John von Neumann（馮紐曼）在 1945 年</mark>提出<b>儲存程式電腦</b> <span class="en">stored-program computer</span>：把程式和資料一起存在記憶體裡，硬體不用改，換一個程式就能做不同的事。這種電腦也叫 <span class="en">von Neumann machine</span> 或<b>通用型電腦</b> <span class="en">general-purpose computer</span>。</p>
+      <div class="box analogy"><span class="tag">廚房比喻</span><p>同一個廚房、同一個主廚，換一本食譜就能做出完全不同的菜。廚房（硬體）不用重蓋。</p></div>
+    </div>
+
+    <div class="stack">
+      <h3>電腦系統的四個部分 <span class="vid">影片 1-3</span></h3>
+      <p>從上到下一層一層疊起來，上層用下層提供的功能：</p>
+      <div class="layers">
+        <div><b>使用者</b><span class="en">users</span></div>
+        <div><b>應用程式</b><span class="en">application program</span></div>
+        <div class="os"><b>作業系統</b><span class="en">operating system</span></div>
+        <div><b>硬體</b><span class="en">hardware</span></div>
+      </div>
+      <p class="small muted">作業系統和組譯器、連結器、載入器、編譯器一樣都是「系統程式」，但作業系統要綜理整台電腦的資源，範圍比其他系統程式大得多。</p>
+    </div>
+
+    <div class="stack">
+      <h3>程式從原始碼到跑起來的四個步驟 <span class="vid">影片 1-5</span></h3>
+      <ol class="flow">
+        <li><b>編譯</b> <span class="en">compiling</span><p>把人看得懂的程式碼（C、C++）翻成目的碼 <span class="en">object code</span>。</p></li>
+        <li><b>連結</b> <span class="en">linking</span><p>把好幾個目的檔和函式庫 <span class="en">library</span> 接成一個執行檔。</p></li>
+        <li><b>載入</b> <span class="en">loading</span><p>把硬碟上的執行檔搬進記憶體（RAM）。</p></li>
+        <li><b>執行</b> <span class="en">executing</span><p>CPU 一條一條讀指令開始運算。</p></li>
+      </ol>
+      <div class="box trap"><span class="tag">考試陷阱</span><p>題目常問「原始程式處理時，下列哪一道程序會先發生？(a) 執行 (b) 連結 (c) 載入 (d) 復原」。答案是 <b>(b) 連結</b>，因為順序是編譯→連結→載入→執行，選項裡最前面的是連結；「復原」不在這個流程裡。</p></div>
+    </div>
+
+    <div class="stack">
+      <h3>編譯、直譯、組譯有什麼不同 <span class="badge">期中考簡答</span> <span class="vid">影片 1-5</span></h3>
+      <div class="tbl"><table>
+        <thead><tr><th></th><th>編譯 <span class="en">compile</span></th><th>直譯 <span class="en">interpret</span></th><th>組譯 <span class="en">assemble</span></th></tr></thead>
+        <tbody>
+          <tr><th>翻什麼</th><td>高階語言（C、C++、Go）</td><td>高階語言（Python、JavaScript、PHP）</td><td>組合語言（MOV、ADD 這類指令）</td></tr>
+          <tr><th>怎麼翻</th><td><mark>整份一次翻完</mark>，產生目的程式或執行檔</td><td><mark>翻一句、執行一句</mark>，不產生執行檔</td><td>組合語言和機器碼幾乎一對一，直接對應翻過去</td></tr>
+          <tr><th>工具</th><td>編譯器 <span class="en">compiler</span></td><td>直譯器 <span class="en">interpreter</span></td><td>組譯器 <span class="en">assembler</span></td></tr>
+          <tr><th>優點</th><td>執行快，翻一次可以一直跑</td><td>改完馬上能跑，方便測試</td><td>最接近硬體實際的步驟</td></tr>
+          <tr><th>缺點</th><td>每改一次都要重新編譯</td><td>每次執行都要再翻一次，比較慢</td><td>難寫難讀</td></tr>
+        </tbody>
+      </table></div>
+      <div class="box analogy"><span class="tag">廚房比喻</span><p>編譯：先把整本法文食譜翻成中文版印出來，之後照中文版做就好。直譯：請一位口譯站在旁邊，念一句、翻一句、做一步，每次做菜都要請口譯。</p></div>
+    </div>
+
+    <div class="stack">
+      <h3>RISC 和 CISC</h3>
+      <div class="grid2">
+        <div class="box card"><h4>CISC 複雜指令集</h4><span class="en">complex instruction set computer</span>早期的設計。指令多、長度不固定，一個指令做很多事，常要好幾個時脈週期才做完。</div>
+        <div class="box card"><h4>RISC 精簡指令集</h4><span class="en">reduced instruction set computer</span>1979 年 David Patterson 提出。<mark>指令長度與格式固定</mark>、多半一個指令週期就完成，方便管線化 <span class="en">pipeline</span>、省電。</div>
+      </div>
+      <p class="small muted">為什麼會有 RISC：大家發現常用的指令只佔約 20%，卻佔了程式的 80%。所以硬體專心把常用指令做快，複雜的指令就用簡單指令組合。</p>
+    </div>
+
+    <div class="stack">
+      <h3>其他小觀念</h3>
+      <ul class="clean">
+        <li><b>字元編碼</b> <span class="vid">影片 1-2</span>：電腦只認得 0 和 1，所以每個字元要對應到一組固定位元。<span class="en">ASCII</span>（英文）、<span class="en">EBCDIC</span>（IBM 大型主機）、<span class="en">Unicode</span>（涵蓋全世界文字，包括中文）的對應方式不同。</li>
+        <li><b>電腦的種類</b> <span class="vid">影片 1-4</span>：大型主機 <span class="en">mainframe</span>、工作站 <span class="en">workstation</span>、個人電腦、PDA、智慧型手機。手機和 PDA 也有 CPU 和記憶體，一樣算電腦，只是螢幕小、以觸控輸入為主。</li>
+        <li><b>最貴的零件</b>：CPU、記憶體、主機板。</li>
+      </ul>
+    </div>
+
+    <div class="tbl kw"><table>
+      <caption>考試這樣問</caption>
+      <thead><tr><th>題目關鍵字</th><th>答案</th></tr></thead>
+      <tbody>
+        <tr><td>「儲存程式的電腦」是誰提出的</td><td class="ans">John von Neumann</td></tr>
+        <tr><td>指令以固定格式與長度為主，多半單一指令週期完成 <span class="badge">期中考</span></td><td class="ans">RISC</td></tr>
+        <tr><td>每譯完一個指令就馬上執行，再處理下一個</td><td class="ans">直譯 interpret</td></tr>
+        <tr><td>原始程式全部轉換成目標程式 object program</td><td class="ans">編譯 compile</td></tr>
+        <tr><td>原始程式處理時，哪道程序先發生（執行／連結／載入／復原）</td><td class="ans">連結 linking</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- ============ CH2 ============ -->
+<section class="ch" id="ch2">
+  <div class="stack-lg">
+    <div class="ch-head"><span class="ch-no">第 2 章</span><h2>作業系統面面觀</h2></div>
+    <p class="lead">作業系統是「管資源的經理」，目標有兩個：讓電腦更好用（提供介面），讓電腦跑得更有效率（管好資源）。</p>
+
+    <div class="stack">
+      <h3>作業系統的四大管理 <span class="vid">影片 2-1</span></h3>
+      <p>處理器管理、記憶體管理、檔案管理、裝置管理。<mark>「人員管理」不是作業系統的工作</mark>，考題常拿它當錯誤選項。</p>
+    </div>
+
+    <div class="stack">
+      <h3>作業系統的演進 <span class="vid">影片 2-1</span></h3>
+      <div class="gens">
+        <div><span class="yr">第 1 代・1945–1955</span><br>真空管電腦，還沒有作業系統</div>
+        <div><span class="yr">第 2 代・1955–1965</span><br>電晶體，出現批次系統</div>
+        <div><span class="yr">第 3 代・1965–1980</span><br>積體電路，多重程式、分時系統</div>
+        <div><span class="yr">第 4 代・1980 之後</span><br>個人電腦普及</div>
+      </div>
+      <p class="small muted">更早的前身是 19 世紀 Babbage 設計的差分機 <span class="en">difference engine</span>。</p>
+    </div>
+
+    <div class="stack">
+      <h3>資源共用的兩種方式 <span class="vid">影片 2-1</span></h3>
+      <div class="grid2">
+        <div class="box card"><h4>時間多工</h4><span class="en">time-multiplexed</span><mark>按時間切</mark>，大家輪流用。<br>例：每個處理元輪流用 CPU 一小段時間。</div>
+        <div class="box card"><h4>空間多工</h4><span class="en">space-multiplexed</span><mark>把資源切成好幾塊</mark>，各用各的。<br>例：記憶體分成很多區，分給不同處理元。</div>
+      </div>
+      <div class="box analogy"><span class="tag">廚房比喻</span><p>時間多工：主廚只有一個，每道菜炒一下就換下一道，輪流來。空間多工：料理台很大，切成幾塊，每道菜各佔一塊。</p></div>
+    </div>
+
+    <div class="stack">
+      <h3>處理器模式：核心模式和使用者模式 <span class="vid">影片 2-1、3-3</span></h3>
+      <p>CPU 執行的工作有的來自作業系統，有的來自一般使用者，兩者權限不同，所以 CPU 有兩種模式：</p>
+      <ul class="clean">
+        <li><b>核心模式</b> <span class="en">kernel mode</span>，也叫<b>監督者模式</b> <span class="en">supervisor mode</span>：作業系統最重要的功能在這裡執行，<mark>權限最大、限制最少</mark>，電腦完全信任它。這些功能就是作業系統的<b>核心</b> <span class="en">kernel</span>。</li>
+        <li><b>使用者模式</b> <span class="en">user mode</span>：一般程式在這裡執行，限制比較多，避免它弄壞系統。</li>
+      </ul>
+      <p>一般程式要用到硬體或系統資源時，要向核心「申請」，方式有<b>系統呼叫</b> <span class="en">system call</span> 或<b>訊息傳送</b> <span class="en">message passing</span>。</p>
+      <div class="box analogy"><span class="tag">廚房比喻</span><p>經理有倉庫的萬能鑰匙（核心模式）。一般員工（使用者程式）要拿倉庫的東西，得填單請經理拿（系統呼叫），不能自己進去翻。</p></div>
+    </div>
+
+    <div class="stack">
+      <h3>作業系統的分類 <span class="vid">影片 2-2</span></h3>
+      <div class="tbl"><table>
+        <thead><tr><th>類型</th><th>重點</th><th>例子</th></tr></thead>
+        <tbody>
+          <tr><td><b>批次系統</b><br><span class="en">batch system</span></td><td>工作整批丟進去跑，使用者<mark>不能互動</mark>，只能等結果；有錯就改完重來。優點是設計單純。</td><td>早期大型主機</td></tr>
+          <tr><td><b>多重程式</b><br><span class="en">multiprogramming</span></td><td>記憶體同時放好幾個程式，一個在等 I/O 時，CPU 先去做別的。</td><td>第 3 代電腦</td></tr>
+          <tr><td><b>分時系統</b><br><span class="en">timesharing</span></td><td>把 CPU 時間切成小片輪流用，使用者可以互動、不用枯等。CPU 只有一個，但看起來好像很多程式同時在跑，這叫<b>多工</b> <span class="en">multitasking</span>。</td><td>UNIX、Windows</td></tr>
+          <tr><td><b>個人電腦</b></td><td>1970 年代出現。1980 年代 UNIX 在個人電腦上成熟後，Windows、IBM OS/2 才陸續有多人多工能力。UNIX 一開始就為多人多工設計，以穩定著稱。</td><td>Windows、Linux</td></tr>
+          <tr><td><b>行動裝置</b></td><td>手機、平板也需要作業系統。</td><td>Android、iOS、Windows Mobile</td></tr>
+          <tr><td><b>即時系統</b><br><span class="en">real-time</span></td><td>必須在時間限制內完成工作，否則可能出大事。分硬性與軟性（見下方）。</td><td>工業控制、國防武器</td></tr>
+          <tr><td><b>嵌入式</b><br><span class="en">embedded</span></td><td>裝在電子設備裡的小電腦，不是通用型電腦。低階應用：家電、玩具、汽車；高階應用：飛航、衛星、醫療儀器、核電廠。</td><td>數位相機、會調氣墊的球鞋</td></tr>
+          <tr><td><b>其他</b></td><td>網路作業系統、平行電腦用的作業系統。<mark>智慧卡 <span class="en">smart card</span> 上的是最小型的作業系統。</mark></td><td></td></tr>
+        </tbody>
+      </table></div>
+      <div class="grid2">
+        <div class="box card"><h4>硬性即時</h4><span class="en">hard real-time</span><mark>嚴格要求</mark>在時限內完成，每個資料存取、每個請求的時間都要管制。晚一點就算失敗，例如飛機控制。</div>
+        <div class="box card"><h4>軟性即時</h4><span class="en">soft real-time</span>只要求有即時需求的工作<mark>給較高優先順序</mark>。偶爾慢一點還能接受，例如看影片。</div>
+      </div>
+    </div>
+
+    <div class="stack">
+      <h3>虛擬機器與虛擬化 <span class="vid">影片 2-3、2-4</span></h3>
+      <p><b>虛擬機器</b> <span class="en">virtual machine</span>：用軟體模擬出一台電腦，讓一台實體電腦上同時跑好幾個作業系統。負責管理虛擬機器的軟體叫 <b>hypervisor</b>（虛擬機器管理程式，<span class="en">virtual machine manager</span>），例如 VMware、VirtualBox。</p>
+      <ul class="clean">
+        <li><b>用途</b>：企業的硬體環境統一成一致介面；同一台電腦上測試不同作業系統版本；虛擬機器彼此隔離，系統比較安全。</li>
+        <li><b>桌面虛擬化 VDI</b> <span class="en">Virtual Desktop Infrastructure</span>：桌面環境跑在伺服器上，使用者從任何裝置連進去使用。</li>
+      </ul>
+    </div>
+
+    <div class="tbl kw"><table>
+      <caption>考試這樣問</caption>
+      <thead><tr><th>題目關鍵字</th><th>答案</th></tr></thead>
+      <tbody>
+        <tr><td>下列何者「不屬於」作業系統管理的功能 <span class="badge">期中考</span></td><td class="ans">人員的管理</td></tr>
+        <tr><td>資源依時間切割共用，每個處理元輪流用 CPU <span class="badge">期中考</span></td><td class="ans">時間多工</td></tr>
+        <tr><td>資源本身分成多個部分，例如記憶體分給多個處理元</td><td class="ans">空間多工</td></tr>
+        <tr><td>嚴格要求時限內完成，每項請求的時間都要管制</td><td class="ans">硬性即時</td></tr>
+        <tr><td>只要求即時性工作給較高的執行優先順序</td><td class="ans">軟性即時</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- ============ CH3 ============ -->
+<section class="ch" id="ch3">
+  <div class="stack-lg">
+    <div class="ch-head"><span class="ch-no">第 3 章</span><h2>認識處理元</h2></div>
+    <p class="lead">程式是放在硬碟上的食譜，處理元是正在照食譜做的那道菜。作業系統用 PCB 這張工單，記住每道菜做到哪裡。</p>
+
+    <div class="stack">
+      <h3>程式和處理元的差別 <span class="vid">影片 3-1</span></h3>
+      <div class="tbl"><table>
+        <thead><tr><th></th><th>程式 <span class="en">program</span></th><th>處理元 <span class="en">process</span></th></tr></thead>
+        <tbody>
+          <tr><th>是什麼</th><td>存在硬碟上的可執行檔</td><td><mark>執行中的程式</mark> <span class="en">program in execution</span></td></tr>
+          <tr><th>狀態</th><td>靜態，不會動</td><td>動態，記憶體內容隨著指令執行不斷變化</td></tr>
+          <tr><th>數量關係</th><td colspan="2">同一個程式可以同時跑成好幾個處理元（開兩個記事本視窗就是兩個處理元）。反過來<mark>一個處理元不會對應到多個程式檔</mark>。</td></tr>
+        </tbody>
+      </table></div>
+      <ul class="clean">
+        <li>處理元是電腦系統中<mark>進行運算的基本單元</mark>（不是程式、檔案或資料夾）。</li>
+        <li>中文名稱很多：處理元、行程、程序，英文都是 process。</li>
+        <li>想看電腦裡有哪些處理元：Windows 開「工作管理員」，UNIX 用 <code>ps</code> 指令。</li>
+      </ul>
+    </div>
+
+    <div class="stack">
+      <h3>處理元的五種狀態（必考） <span class="vid">影片 3-1</span></h3>
+      <figure class="fig">
+        <svg viewBox="0 0 680 290" width="100%" style="min-width:560px" role="img" aria-label="處理元狀態轉換圖">
+          <defs>
+            <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-head"/></marker>
+            <marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-head-a"/></marker>
+          </defs>
+          <!-- edges -->
+          <line x1="118" y1="90" x2="198" y2="90" class="s-line" marker-end="url(#ah)"/>
+          <text x="158" y="78" text-anchor="middle" class="s-lab">允許進入</text>
+          <path d="M292,66 Q355,20 418,66" class="s-line-a" marker-end="url(#aha)"/>
+          <text x="355" y="30" text-anchor="middle" class="s-lab">被排程選中</text>
+          <path d="M418,114 Q355,158 292,114" class="s-line" marker-end="url(#ah)"/>
+          <text x="355" y="160" text-anchor="middle" class="s-lab">時間到／被搶走</text>
+          <line x1="512" y1="90" x2="568" y2="90" class="s-line" marker-end="url(#ah)"/>
+          <text x="540" y="78" text-anchor="middle" class="s-lab">完成</text>
+          <line x1="452" y1="116" x2="392" y2="212" class="s-line" marker-end="url(#ah)"/>
+          <text x="440" y="190" class="s-lab">等 I/O 或事件</text>
+          <line x1="310" y1="212" x2="258" y2="118" class="s-line" marker-end="url(#ah)"/>
+          <text x="262" y="190" text-anchor="end" class="s-lab">事件完成</text>
+          <!-- nodes -->
+          <ellipse cx="70" cy="90" rx="48" ry="28" class="s-node"/>
+          <text x="70" y="88" text-anchor="middle" class="s-t">新建</text><text x="70" y="104" text-anchor="middle" class="s-ts">new</text>
+          <ellipse cx="248" cy="90" rx="50" ry="28" class="s-node-a"/>
+          <text x="248" y="88" text-anchor="middle" class="s-t">就緒</text><text x="248" y="104" text-anchor="middle" class="s-ts">ready</text>
+          <ellipse cx="462" cy="90" rx="50" ry="28" class="s-node-a"/>
+          <text x="462" y="88" text-anchor="middle" class="s-t">執行</text><text x="462" y="104" text-anchor="middle" class="s-ts">running</text>
+          <ellipse cx="618" cy="90" rx="48" ry="28" class="s-node"/>
+          <text x="618" y="88" text-anchor="middle" class="s-t">完成</text><text x="618" y="104" text-anchor="middle" class="s-ts">done</text>
+          <ellipse cx="350" cy="240" rx="56" ry="28" class="s-node"/>
+          <text x="350" y="238" text-anchor="middle" class="s-t">阻塞</text><text x="350" y="254" text-anchor="middle" class="s-ts">blocked</text>
+        </svg>
+        <figcaption>只有「執行」狀態才能走到「完成」。所有箭頭以外的變化都不存在。</figcaption>
+      </figure>
+      <div class="tbl"><table>
+        <thead><tr><th>變化</th><th>什麼時候發生</th><th>廚房比喻</th></tr></thead>
+        <tbody>
+          <tr><td class="num">ready → running</td><td>被 CPU 排程選中</td><td>輪到這道菜上爐</td></tr>
+          <tr><td class="num">running → ready</td><td>分到的時間片用完，或被更高優先權的搶走</td><td>計時器響了，先擱旁邊，換別道</td></tr>
+          <tr><td class="num">running → blocked</td><td>要等 I/O 或某個事件（讀檔案、等使用者輸入、等網路）</td><td>要等烤箱預熱，這時給它爐子也沒用</td></tr>
+          <tr><td class="num">blocked → ready</td><td>等的事件完成了，回去排隊等 CPU</td><td>烤箱好了，回到排隊區</td></tr>
+          <tr><td class="num">running → done</td><td>執行完畢</td><td>出餐</td></tr>
+        </tbody>
+      </table></div>
+      <div class="box trap"><span class="tag">考試陷阱</span><p><b>「ready → done」不存在。</b>就緒的處理元還沒開始跑，不可能直接完成。另外注意 blocked 不能直接回 running，要先回 ready 排隊。</p></div>
+    </div>
+
+    <div class="stack">
+      <h3>PCB：處理元控制方塊 <span class="vid">影片 3-4</span></h3>
+      <p>作業系統替每個處理元準備一張「工單」，叫 <b>PCB</b> <span class="en">Process Control Block</span>，作業系統就是用 PCB 這種資料結構來<mark>表示</mark>一個處理元。處理元要被載入、準備執行之前，就要先用 PCB 記下它的資訊。PCB 裡面有：</p>
+      <div class="grid2">
+        <ul class="clean">
+          <li><b>處理元狀態</b> <span class="en">process state</span>：現在是 ready、running 還是 blocked</li>
+          <li><b>程式計數</b> <span class="en">program counter</span>：下一個要執行哪一行指令</li>
+          <li><b>CPU 暫存器</b> <span class="en">CPU registers</span>：上次暫停時 CPU 裡的內容</li>
+          <li><b>處理元排程資訊</b>：<mark>優先順序 priority 就記在這裡</mark></li>
+        </ul>
+        <ul class="clean">
+          <li><b>記憶體管理資訊</b>：它用了哪些記憶體</li>
+          <li><b>使用統計資訊</b> <span class="en">accounting information</span>：用了多少 CPU 時間等</li>
+          <li><b>I/O 狀態資訊</b> <span class="en">I/O status</span>：開了哪些檔案、用了哪些裝置</li>
+        </ul>
+      </div>
+      <div class="box analogy"><span class="tag">廚房比喻</span><p>主廚炒到一半被叫去做別道菜，回來時要知道「剛剛做到第幾步、鍋裡放了什麼」。PCB 就是那張寫著進度的工單，換菜時寫下來，回來時照著接續。</p></div>
+      <div class="box trap"><span class="tag">考試陷阱</span><p><b>PCB 不等於處理元的影像</b> <span class="en">process image</span>。影像是「程式＋資料＋系統堆疊＋PCB」全部加起來，PCB 只是其中一部分。考題「PCB 也就是處理元的影像」是錯的。</p></div>
+    </div>
+
+    <div class="stack">
+      <h3>處理元在記憶體裡分成四塊 <span class="vid">影片 3-1</span></h3>
+      <div class="tbl"><table>
+        <thead><tr><th>區段</th><th>放什麼</th></tr></thead>
+        <tbody>
+          <tr><td><b>text</b></td><td>程式碼本身</td></tr>
+          <tr><td><b>data</b></td><td>全域變數</td></tr>
+          <tr><td><b>heap</b></td><td><mark>執行期間才動態配置</mark>的記憶體（程式跑到一半才說要多少）</td></tr>
+          <tr><td><b>stack</b></td><td>函式呼叫、區域變數</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="stack">
+      <h3>開機、系統呼叫、作業系統結構</h3>
+      <ul class="clean">
+        <li><b>開機</b> <span class="vid">影片 3-2</span>：CPU 從記憶體的開機始點 <span class="en">bootstrap entry point</span> 拿指令執行，這是第一個處理元，目標是把作業系統帶起來。作業系統起來後會掌控硬體，再產生其他處理元。</li>
+        <li><b>處理元樹</b> <span class="vid">影片 3-2</span>：處理元會產生其他處理元（父生子），所以它們形成<mark>樹狀結構</mark> <span class="en">tree structure</span>。</li>
+        <li><b>系統呼叫</b> <span class="en">system call</span> <span class="vid">影片 3-5</span>：<mark>作業系統和使用者程式之間的介面</mark>。不同作業系統的系統呼叫不一樣，但觀念類似。</li>
+        <li><b>Monolithic systems</b> <span class="vid">影片 3-3</span>：最簡單的作業系統結構，其實就是<mark>沒有結構</mark>，所有功能擠在一起、彼此直接呼叫程序。</li>
+        <li><b>懸置</b> <span class="en">suspend</span> <span class="vid">影片 3-3</span>：處理元執行到一半被暫停，移出執行的行列。講義列了五個原因：<mark>為了空出記憶體空間</mark>、作業系統認定該處理元有問題、使用者要求懸置、處理元是週期性執行的、父處理元要求。</li>
+        <li><b>IPC</b> <span class="en">Interprocess Communication</span> <span class="vid">影片 3-5</span>：處理元之間的溝通，可以在同一台電腦上，也可以透過網路跨電腦。由作業系統負責，程式可以用程序呼叫 <span class="en">procedure call</span> 啟動。</li>
+      </ul>
+    </div>
+
+    <div class="stack">
+      <h3>執行緒 thread <span class="badge">期中考簡答</span> <span class="vid">影片 3-6</span></h3>
+      <p>處理元有兩個特徵：<b>擁有資源</b>，以及<b>被排程執行</b>。把這兩件事拆開來看，就有了執行緒：</p>
+      <div class="grid2">
+        <div class="box card"><h4>處理元</h4><span class="en">process</span><mark>資源擁有的單位</mark><br>擁有自己的記憶體空間、檔案等資源。</div>
+        <div class="box card"><h4>執行緒</h4><span class="en">thread</span><mark>執行分派 dispatching 的單位</mark><br>又叫輕量級處理元 <span class="en">lightweight process</span>，住在處理元裡面。</div>
+      </div>
+      <div class="box analogy"><span class="tag">比喻</span><p>補充講義的比喻：處理元是一間公司，執行緒是公司裡的員工。廚房版：一張「辦桌」大訂單是處理元，好幾個幫手同時切菜、炒菜、擺盤是執行緒，大家共用同一個料理台和食材。</p></div>
+      <div class="tbl"><table>
+        <thead><tr><th></th><th>處理元</th><th>執行緒</th></tr></thead>
+        <tbody>
+          <tr><th>記憶體</th><td>各自獨立（自己的 heap、stack）</td><td>共用所屬處理元的記憶體和資源，但各有自己的執行堆疊和區域變數空間</td></tr>
+          <tr><th>建立／切換</th><td>負擔大、比較慢</td><td>負擔小、比較快</td></tr>
+          <tr><th>出錯時</th><td>一個當掉通常不影響別的處理元</td><td>一個出大錯可能拖垮整個處理元</td></tr>
+          <tr><th>包含關係</th><td colspan="2"><mark>一個處理元裡有一個或多個執行緒</mark>（不是反過來）</td></tr>
+        </tbody>
+      </table></div>
+      <div class="box ok"><span class="tag">執行緒的三個好處</span>
+        <ol class="clean">
+          <li>產生執行緒比產生處理元快，<b>終止</b>也比較快。</li>
+          <li>同一個處理元裡的執行緒之間切換 <span class="en">switch</span> 很快。</li>
+          <li>同一個處理元的執行緒互相溝通不用核心 <span class="en">kernel</span> 插手，效率高。</li>
+        </ol>
+      </div>
+      <ul class="clean">
+        <li><b>執行緒的狀態</b>：執行 running、備妥 ready、阻絕 blocked。執行緒層次<mark>沒有懸置 suspend</mark>。處理元被置換出記憶體 <span class="en">swap out</span> 時，它的執行緒也一起被換出（因為共用位址空間）。</li>
+        <li><b>基本動作</b>：產生 <span class="en">spawn</span>、阻絕 <span class="en">block</span>、阻絕解除 <span class="en">unblock</span>、完成 <span class="en">finish</span>。</li>
+        <li><b>兩種實作</b> <span class="vid">影片 3-6、7-4</span>：使用者層次執行緒 <span class="en">user-level threads</span>（由應用程式用 threads library 自己管，核心不管）；核心層次執行緒 <span class="en">kernel-level threads</span>（由核心管）。</li>
+        <li><b>Windows</b>：處理元和執行緒都用物件 <span class="en">objects</span> 表示。<b>Linux</b>：處理元用 <code>task_struct</code> 表示；有特殊的 <b>Zombie（殭屍）</b>狀態，指處理元已經結束，但 task_struct 還留在 process table 裡；Linux 基本上不區分處理元和執行緒。</li>
+      </ul>
+    </div>
+
+    <div class="tbl kw"><table>
+      <caption>考試這樣問</caption>
+      <thead><tr><th>題目關鍵字</th><th>答案</th></tr></thead>
+      <tbody>
+        <tr><td>電腦系統中進行運算的基本單元</td><td class="ans">處理元 process</td></tr>
+        <tr><td>處理元在作業系統中以哪一種資料結構來表示 <span class="badge">期中考</span></td><td class="ans">PCB</td></tr>
+        <tr><td>對系統資源使用比較沒有限制的 CPU 模式 <span class="badge">期中考</span></td><td class="ans">kernel mode</td></tr>
+        <tr><td>執行期間動態分配給處理元的記憶體</td><td class="ans">heap</td></tr>
+        <tr><td>沒有結構的作業系統</td><td class="ans">Monolithic systems</td></tr>
+        <tr><td>PCB 中哪一項包含優先順序 priority</td><td class="ans">處理元排程資訊</td></tr>
+        <tr><td>PCB 描述錯誤的是</td><td class="ans">PCB 就是處理元的影像</td></tr>
+        <tr><td>不存在的狀態變化</td><td class="ans">ready → done</td></tr>
+        <tr><td>程式與處理元描述錯誤的是</td><td class="ans">一個處理元對應多個程式檔</td></tr>
+        <tr><td>不算執行緒好處的是</td><td class="ans">終止執行緒比行程久</td></tr>
+        <tr><td>處理元與執行緒描述錯誤的是</td><td class="ans">執行緒中有處理元</td></tr>
+      </tbody>
+    </table></div>
+
+    <details class="quiz"><summary>執行緒和處理元，哪一個是「資源擁有的單位」？哪一個是「執行分派的單位」？</summary>
+      <div class="a"><p><b class="key">處理元＝資源擁有的單位；執行緒＝執行分派 dispatching 的單位。</b></p><p class="qhint">記法：公司（處理元）擁有辦公室和設備，員工（執行緒）實際去做事。</p></div></details>
+    <details class="quiz"><summary>處理元正在等使用者按鍵盤，它在哪個狀態？按下去之後會先去哪個狀態？</summary>
+      <div class="a"><p><b class="key">等待時在 blocked；按下去之後先回到 ready</b>，排隊等 CPU，不會直接跳回 running。</p></div></details>
+  </div>
+</section>
+
+<!-- ============ CH4 ============ -->
+<section class="ch" id="ch4">
+  <div class="stack-lg">
+    <div class="ch-head"><span class="ch-no">第 4 章</span><h2>CPU 排程</h2></div>
+    <p class="lead">好幾個處理元都想用 CPU，排程就是決定「誰先用、用多久、什麼時候換人」。</p>
+
+    <div class="stack">
+      <h3>為什麼要排程 <span class="vid">影片 4-1-1</span></h3>
+      <p>多工作業系統會同時把好幾個處理元放進記憶體，用時間多工的方式共用 CPU。另一個重點是：正在等 I/O 的處理元要先讓出 CPU，不然 CPU 會閒著沒事做。不排程的話，資源使用就會一團亂。</p>
+    </div>
+
+    <div class="stack">
+      <h3>排程的「政策」和「機制」 <span class="vid">影片 4-1-2</span></h3>
+      <div class="grid2">
+        <div class="box card"><h4>政策（策略）</h4><span class="en">policy / strategy</span>決定<mark>處理元使用 CPU 的順序</mark>：下一個該誰？</div>
+        <div class="box card"><h4>機制</h4><span class="en">mechanism</span>決定<mark>CPU 配置給處理元的方法</mark>：實際把目前的處理元移出 CPU、把下一個移進去。</div>
+      </div>
+      <div class="box analogy"><span class="tag">廚房比喻</span><p>政策是經理決定「先做 3 號桌再做 5 號桌」；機制是實際把鍋子從爐上拿下來、換下一鍋上去的動作。</p></div>
+      <div class="box trap"><span class="tag">考試陷阱</span><p>「排程的政策決定處理元使用 CPU 的<b>時間長短</b>」是錯的。政策決定的是<b>順序</b>。</p></div>
+    </div>
+
+    <div class="stack">
+      <h3>可間斷和不可間斷 <span class="vid">影片 4-1-3、4-1-4</span></h3>
+      <div class="grid2">
+        <div class="box card"><h4>不可間斷（非搶占）</h4><span class="en">nonpreemptive</span>拿到 CPU 的處理元會<mark>一直執行到結束</mark>（或自己去等 I/O），中間不能被打斷。</div>
+        <div class="box card"><h4>可間斷（搶占）</h4><span class="en">preemptive</span>用<mark>間隔計時器 interval timer</mark> 限制每個處理元能佔用 CPU 多久，時間到或有更高優先權的來，就把 CPU 重新分配。</div>
+      </div>
+    </div>
+
+    <div class="stack">
+      <h3>三種時間（必考定義） <span class="vid">影片 4-1-2</span></h3>
+      <figure class="fig">
+        <div class="tbar">
+          <div class="w" style="flex:3">等待</div><div class="r" style="flex:2">執行</div><div class="w" style="flex:2">等待</div><div class="r" style="flex:3">執行</div>
+        </div>
+        <div class="brace"><div style="flex:10">輪轉時間 turnaround：第一次進 ready 到最後一次離開 running，全部加起來</div></div>
+        <figcaption>一個處理元的一生：可能執行到一半被打斷回去排隊，再回來執行。黃色是在 ready 排隊，綠色是在 CPU 上跑。</figcaption>
+      </figure>
+      <div class="tbl"><table>
+        <thead><tr><th>名稱</th><th>課本定義</th><th>白話</th></tr></thead>
+        <tbody>
+          <tr><td><b>服務時間</b><br><span class="en">service time</span></td><td>處理元執行完成所需要停留在 running 狀態的時間</td><td>真正在 CPU 上跑的時間（綠色）</td></tr>
+          <tr><td><b>等待時間</b><br><span class="en">wait time</span></td><td>處理元第一次進入 running 之前，在 ready 等待的時間</td><td>排隊等 CPU 的時間（黃色）</td></tr>
+          <tr><td><b>輪轉時間</b><br><span class="en">turnaround time</span></td><td>處理元第一次進入 ready 到最後一次離開 running 所經歷的時間</td><td>從開始排隊到完全做完，總共花多久</td></tr>
+        </tbody>
+      </table></div>
+      <p>如果所有處理元同時到、而且不可間斷，就有一個好用的關係：<mark>輪轉時間 ＝ 等待時間 ＋ 服務時間</mark>。</p>
+    </div>
+
+    <div class="stack">
+      <h3>常見的排程方法 <span class="badge">期中考簡答</span> <span class="vid">影片 4-1-3</span></h3>
+      <div class="tbl"><table>
+        <thead><tr><th>方法</th><th>怎麼排</th><th>優缺點</th></tr></thead>
+        <tbody>
+          <tr><td><b>先來先做</b><br><span class="en">FCFS, First-Come-First-Served</span></td><td>照到達順序，像排隊</td><td>最簡單。但一個很長的工作排前面，後面短的全部要等，這叫<b>護航效應</b> <span class="en">convoy effect</span>（一台慢車擋住一排車）。</td></tr>
+          <tr><td><b>最短工作優先</b><br><span class="en">SJN / SJF, Shortest Job Next/First</span></td><td>服務時間最短的先做</td><td>平均等待時間最短。但長工作可能一直被插隊，發生<b>飢餓</b> <span class="en">starvation</span>。</td></tr>
+          <tr><td><b>指定優先權</b><br><span class="en">priority scheduling</span></td><td>優先權高的先做</td><td>彈性大，但低優先權的可能永遠等不到。</td></tr>
+          <tr><td><b>截止時間</b><br><span class="en">deadline scheduling</span></td><td>截止時間最近的先做</td><td>適合有時限的工作。</td></tr>
+          <tr><td><b>最高回應比優先</b><br><span class="en">HRRN</span></td><td>算回應比 ＝（等待時間＋服務時間）÷ 服務時間，最高的先做</td><td>等越久比值越高，改善 SJN 對長工作不公平的問題。</td></tr>
+        </tbody>
+      </table></div>
+      <div class="box trap"><span class="tag">期中考簡答</span><p>「請列舉簡述四種不可間斷的 CPU 排程方法」，參考解答寫的是 <b>FCFS、SJN（SJF）、指定優先權、HRRN</b> 這四種，也就是補充講義的版本。每種寫「怎麼排」加上「優缺點」一兩句就夠了。截止時間排程法是面授投影片列的，不在這題的參考解答裡。</p></div>
+      <p class="small muted"><b>多層佇列</b> <span class="en">multiple-level queues</span> <span class="vid">影片 4-1-4</span> 是優先權排程的延伸：優先權一樣的放同一個佇列，先決定輪到哪個佇列，再決定佇列裡輪到誰。</p>
+    </div>
+
+    <div class="stack">
+      <h3>多處理器的排程 <span class="vid">影片 4-2</span></h3>
+      <p>這是講解目次第 4 章的第二個重點。單處理器只要決定「下一個誰用 CPU」；多處理器有好幾顆 CPU，還要決定<mark>誰用哪一顆</mark>，必須考慮多顆 CPU 同時運作的情況，所以比單處理器複雜。</p>
+      <p class="small muted">一般教科書會提到的考量：讓每顆 CPU 的工作量差不多（負載平衡）；處理元盡量留在同一顆 CPU 上執行，比較能利用那顆 CPU 的快取。</p>
+    </div>
+
+    <div class="stack">
+      <h3>課堂例題：算平均輪轉時間與平均等待時間 <span class="vid">影片 4-1-3</span></h3>
+      <p>5 個處理元 P1～P5 依序進入 ready list，服務時間分別是 <span class="num">300、150、430、230、92</span>。切換看看兩種排法：</p>
+      <div class="fig stack">
+        <div class="ctrl" role="group" aria-label="排程法">
+          <button id="b-fcfs" class="on" type="button">先來先做 FCFS（課堂例題）</button>
+          <button id="b-sjn" type="button">最短工作優先 SJN</button>
+        </div>
+        <div class="gwrap">
+          <div class="gantt" id="gantt" aria-live="polite"></div>
+          <div class="ticks" id="ticks"></div>
+        </div>
+        <div class="tbl"><table>
+          <thead><tr><th>處理元</th><th>服務時間 L</th><th>等待時間 W（＝開始時間）</th><th>輪轉時間 T（＝完成時間）</th></tr></thead>
+          <tbody id="gtable"></tbody>
+        </table></div>
+        <div class="avg" id="gavg"></div>
+        <p class="small" id="gnote"></p>
+      </div>
+      <div class="box ok"><span class="tag">解題步驟</span>
+        <ol class="clean">
+          <li>照排程法決定順序（FCFS 照到達順序，SJN 從短排到長）。</li>
+          <li>第一個處理元：等待 0，輪轉時間＝自己的服務時間。</li>
+          <li>之後每一個：<b>等待時間＝前一個的輪轉時間</b>；<b>輪轉時間＝自己的服務時間＋前一個的輪轉時間</b>。</li>
+          <li>全部加起來除以 5，就是平均。</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="tbl kw"><table>
+      <caption>考試這樣問</caption>
+      <thead><tr><th>題目關鍵字</th><th>答案</th></tr></thead>
+      <tbody>
+        <tr><td>讓取得 CPU 的處理元一直執行到結束 <span class="badge">期中考</span></td><td class="ans">不可間斷 nonpreemptive</td></tr>
+        <tr><td>以間隔計時器控制佔用 CPU 的時間，重新分配給更高優先權者</td><td class="ans">可間斷 preemptive</td></tr>
+        <tr><td>執行完成所需要停留在 running 狀態的時間 <span class="badge">期中考</span></td><td class="ans">服務時間</td></tr>
+        <tr><td>第一次進入 running 前在 ready 等待的時間</td><td class="ans">等待時間</td></tr>
+        <tr><td>第一次進入 ready 到最後一次離開 running</td><td class="ans">輪轉時間</td></tr>
+        <tr><td>CPU 排程描述錯誤的是</td><td class="ans">政策決定使用時間長短</td></tr>
+      </tbody>
+    </table></div>
+
+    <details class="quiz"><summary>三個處理元同時到，服務時間依序是 6、3、9，用 FCFS 的平均等待時間是多少？</summary>
+      <div class="a"><p><b class="key">平均等待時間 ＝ (0 ＋ 6 ＋ 9) ÷ 3 ＝ 5</b></p><p class="qhint">P1 等 0；P2 等 P1 做完＝6；P3 等前兩個做完＝6＋3＝9。順便算輪轉時間：6、9、18，平均 11。</p></div></details>
+    <details class="quiz"><summary>同一題改用 SJN，平均等待時間會變多還是變少？</summary>
+      <div class="a"><p><b class="key">變少，平均等待時間是 4。</b>順序變成 3、6、9：等待時間 0、3、9，平均 (0＋3＋9)÷3＝4。短的先做，大家等的總時間就少。</p></div></details>
+  </div>
+</section>
+
+<!-- ============ CH5 ============ -->
+<section class="ch" id="ch5">
+  <div class="stack-lg">
+    <div class="ch-head"><span class="ch-no">第 5 章</span><h2>處理元同步</h2></div>
+    <p class="lead">好幾個處理元同時搶用同一份資料時，要定好規矩「一次只准一個進去」，不然結果會亂掉。</p>
+
+    <div class="stack">
+      <h3>什麼是同步 <span class="vid">影片 5-1-1</span></h3>
+      <p><b>同步</b> <span class="en">synchronization / concurrency</span>：多個處理元同時在執行、輪流用 CPU，需要互相協調。這不是作業系統才有的問題，生活中也有：配音和影片要對嘴、芭蕾舞者要跳得一致、分散在各地的資料庫資料要一致。多工作業系統本來就<mark>允許多個處理元同時執行</mark>。</p>
+    </div>
+
+    <div class="stack">
+      <h3>臨界區域 critical section <span class="vid">影片 5-1-2</span></h3>
+      <p>兩個處理元共用同一個變數時，各自使用這個變數的那段程式就叫<b>臨界區域</b>。如果不控制，兩個同時跑，<mark>每次結果可能都不一樣</mark>（non-determinate）。例子：</p>
+      <div class="tbl"><table>
+        <thead><tr><th>時間</th><th>處理元 A（領 100 元）</th><th>處理元 B（領 100 元）</th><th>帳戶餘額</th></tr></thead>
+        <tbody>
+          <tr><td class="num">1</td><td>讀到餘額 1000</td><td></td><td class="num">1000</td></tr>
+          <tr><td class="num">2</td><td></td><td>也讀到餘額 1000</td><td class="num">1000</td></tr>
+          <tr><td class="num">3</td><td>寫回 1000－100＝900</td><td></td><td class="num">900</td></tr>
+          <tr><td class="num">4</td><td></td><td>寫回 1000－100＝900</td><td class="num">900（應該是 800！）</td></tr>
+        </tbody>
+      </table></div>
+      <p>解決原則：<mark>互斥 mutual exclusion</mark>，任一處理元進入臨界區域時，其他處理元就不能同時進入自己的臨界區域。作業系統提供的工具就是下面的號誌和監督器。</p>
+    </div>
+
+    <div class="stack">
+      <h3>號誌 semaphore <span class="vid">影片 5-3</span></h3>
+      <p>號誌是一個受保護的整數，只能用兩個不可分割的動作來改它。補充講義把它比喻成<b>停車場的空位計數器</b>：</p>
+      <div class="grid2">
+        <div class="box card"><h4>P 操作</h4><span class="en">P() / wait()</span><mark>要使用資源時做</mark>。號誌 &gt; 0 就減 1 進去；等於 0 就得排隊等。</div>
+        <div class="box card"><h4>V 操作</h4><span class="en">V() / signal()</span><mark>用完、釋放資源時做</mark>。號誌加 1，並叫醒正在等的處理元。</div>
+      </div>
+      <p class="small muted">記法：字母順序 P 在 V 前面，進去前先 P，出來後才 V。</p>
+      <div class="fig stack" id="semdemo">
+        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+          <b style="font-family:var(--f-display);font-size:1.1rem">動手試試：3 個車位的停車場</b>
+          <span>號誌 S ＝ <span class="semval" id="semval">3</span></span>
+        </div>
+        <div class="lot" id="lot"></div>
+        <div><span class="small muted">門口排隊中：</span><div class="queue" id="queue"></div></div>
+        <div class="ctrl">
+          <button type="button" class="primary" id="btnP">來一台車：P()</button>
+          <button type="button" id="btnV">開走一台車：V()</button>
+          <button type="button" id="btnR">重來</button>
+        </div>
+        <p class="log" id="semlog" aria-live="polite">按「來一台車」看看。車位滿了以後再來的車要在門口等，直到有車開走（V）。</p>
+      </div>
+    </div>
+
+    <div class="stack">
+      <h3>監督器 monitor <span class="vid">影片 7-3</span></h3>
+      <p>號誌很好用，但問題一複雜，P、V 的位置很容易寫錯。<b>監督器</b>是更高階的寫法：把共享變數、操作它的程序，以及同步機制<mark>包在一起</mark>（抽象資料型態）。</p>
+      <ul class="clean">
+        <li><b>自動互斥</b>：<mark>任何時間只有一個處理元能在監督器裡執行程序</mark>，其他的自動在外面排隊。</li>
+        <li><b>條件變數</b> <span class="en">condition variables</span>：搭配 wait() 和 signal()，讓處理元在某些條件下（例如緩衝區滿了）暫停或被叫醒。</li>
+        <li><b>能力一樣</b>：號誌和監督器能解決的問題一樣多，只是監督器用起來簡單多了。</li>
+      </ul>
+      <div class="box analogy"><span class="tag">比喻</span><p>號誌：門口掛著空位牌，每個人要自己記得進門翻牌、出門翻回來，有人忘了就出事。監督器：包廂門口站著一位服務生，一次只放一個人進去，你不用自己管牌子。</p></div>
+    </div>
+
+    <div class="stack">
+      <h3>經典同步問題</h3>
+      <ul class="clean">
+        <li><b>讀者與寫者問題</b> <span class="en">readers-writers problem</span>：很多人可以同時讀同一份資料，但有人在寫的時候，其他人不能讀也不能寫。</li>
+        <li><b>哲學家用餐問題</b> <span class="en">dining philosophers problem</span> <span class="vid">影片 5-4</span>：Dijkstra 在 1965 年提出，同時示範同步和死結。</li>
+      </ul>
+      <div class="grid2" style="align-items:start">
+        <figure class="fig">
+          <svg viewBox="0 0 320 320" width="100%" style="max-width:300px;display:block;margin:auto" role="img" aria-label="五位哲學家圍著圓桌，每兩人中間一根筷子">
+            <circle cx="160" cy="160" r="78" class="s-table"/>
+            <text x="160" y="156" text-anchor="middle" class="s-lab">一盆</text>
+            <text x="160" y="174" text-anchor="middle" class="s-lab">通心粉</text>
+            <g id="phil"></g>
+          </svg>
+          <figcaption>5 位哲學家、5 根筷子（紅色）。每人要同時拿到左右兩根才能吃。</figcaption>
+        </figure>
+        <div class="stack">
+          <p><b>危機</b>：如果 5 個人同時餓了、同時拿起左手邊的筷子，每個人都抱著一根、等右邊那根，誰也不放手 → <mark>死結</mark>。</p>
+          <p><b>飢餓</b>：就算沒卡死，某位哲學家運氣不好，一直搶不到兩根筷子，就會「餓死」。</p>
+        </div>
+      </div>
+      <div class="tbl"><table>
+        <thead><tr><th>解法</th><th>做法</th><th>為什麼有效</th></tr></thead>
+        <tbody>
+          <tr><td><b>限制人數</b></td><td>最多只讓 4 個人同時拿筷子</td><td>5 根筷子 4 個人搶，至少有一人能拿到兩根，吃完就放出來</td></tr>
+          <tr><td><b>奇偶規則</b></td><td>奇數號先拿左邊，偶數號先拿右邊</td><td>打破「大家動作都一樣」的對稱，相鄰的人會先搶同一根，贏的人就能吃</td></tr>
+          <tr><td><b>資源編號</b></td><td>筷子編 1～5，規定一律先拿號碼小的</td><td>打破<b>循環等待</b>，不會繞成一圈互等</td></tr>
+          <tr><td><b>一次拿兩根</b></td><td>用監督器檢查，左右兩根都空著才一起拿，否則一根都不拿</td><td>不會發生「手上抓一根等另一根」；每人有 THINKING、HUNGRY、EATING 三種狀態</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="tbl kw"><table>
+      <caption>考試這樣問</caption>
+      <thead><tr><th>題目關鍵字</th><th>答案</th></tr></thead>
+      <tbody>
+        <tr><td>同步 concurrency 的敘述，錯誤的是 <span class="badge">期中考</span></td><td class="ans wrap">多工作業系統不容許多個行程同時執行</td></tr>
+        <tr><td>處理元「需要使用」共享資源時，對號誌做什麼操作</td><td class="ans">P</td></tr>
+        <tr><td>處理元「不再需要」共享資源時，對號誌做什麼操作</td><td class="ans">V</td></tr>
+        <tr><td>臨界區域的概念是用來解決什麼問題 <span class="badge">期中考</span></td><td class="ans">處理元同步</td></tr>
+        <tr><td>監督器的概念是用來解決什麼問題</td><td class="ans">處理元同步</td></tr>
+        <tr><td>哲學家用餐問題跟哪一種問題類似</td><td class="ans">處理元同步</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- ============ CH6 ============ -->
+<section class="ch" id="ch6">
+  <div class="stack-lg">
+    <div class="ch-head"><span class="ch-no">第 6 章</span><h2>死結 deadlock</h2></div>
+    <p class="lead">大家手上都抓著一樣東西，又在等別人手上的東西，而且誰也不放手，整個系統就卡死了。</p>
+
+    <div class="grid2" style="align-items:center">
+      <figure class="fig">
+        <svg viewBox="0 0 400 230" width="100%" style="min-width:300px" role="img" aria-label="資源分配圖：阿明拿鍋子等鏟子，阿華拿鏟子等鍋子">
+          <defs>
+            <marker id="ahw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-head-w"/></marker>
+            <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-head"/></marker>
+          </defs>
+          <line x1="166" y1="52" x2="104" y2="90" class="s-line" marker-end="url(#ah2)"/>
+          <text x="112" y="58" text-anchor="end" class="s-lab">持有</text>
+          <line x1="104" y1="140" x2="166" y2="178" class="s-line-w" marker-end="url(#ahw)"/>
+          <text x="112" y="182" text-anchor="end" class="s-lab-w">等待</text>
+          <line x1="234" y1="178" x2="296" y2="140" class="s-line" marker-end="url(#ah2)"/>
+          <text x="288" y="182" class="s-lab">持有</text>
+          <line x1="296" y1="90" x2="234" y2="52" class="s-line-w" marker-end="url(#ahw)"/>
+          <text x="288" y="58" class="s-lab-w">等待</text>
+          <circle cx="80" cy="115" r="32" class="s-node-a"/>
+          <text x="80" y="113" text-anchor="middle" class="s-t">阿明</text><text x="80" y="129" text-anchor="middle" class="s-ts">P1</text>
+          <circle cx="320" cy="115" r="32" class="s-node-a"/>
+          <text x="320" y="113" text-anchor="middle" class="s-t">阿華</text><text x="320" y="129" text-anchor="middle" class="s-ts">P2</text>
+          <rect x="166" y="20" width="68" height="44" rx="4" class="s-node"/>
+          <text x="200" y="40" text-anchor="middle" class="s-t">鍋子</text><text x="200" y="56" text-anchor="middle" class="s-ts">R1</text>
+          <rect x="166" y="166" width="68" height="44" rx="4" class="s-node"/>
+          <text x="200" y="186" text-anchor="middle" class="s-t">鏟子</text><text x="200" y="202" text-anchor="middle" class="s-ts">R2</text>
+        </svg>
+        <figcaption>箭頭繞成一圈：阿明等阿華、阿華等阿明，誰也動不了。</figcaption>
+      </figure>
+      <div class="box analogy"><span class="tag">廚房比喻</span><p>阿明拿著唯一的鍋子在等鏟子，阿華拿著唯一的鏟子在等鍋子。兩人都不肯先放手，也不能去搶對方的，兩道菜永遠做不完。</p></div>
+    </div>
+
+    <div class="stack">
+      <h3>死結的四個必要條件（四個<mark>同時</mark>成立才會發生） <span class="vid">影片 6-1</span></h3>
+      <div class="tbl"><table>
+        <thead><tr><th>條件</th><th>白話</th><th>題目會這樣描述</th></tr></thead>
+        <tbody>
+          <tr><td><b>互斥</b><br><span class="en">mutual exclusion</span></td><td>資源一次只能給一個人用（鍋子只有一個人能拿）</td><td>防止多個執行緒同時存取或修改同一個共用資源（例如全域變數）</td></tr>
+          <tr><td><b>占有與等待</b><br><span class="en">hold and wait</span></td><td>手上已經有東西，還在等別人的（拿著鍋子等鏟子）</td><td>處理元占有至少一個資源，同時等待另一個被其他處理元占用的資源</td></tr>
+          <tr><td><b>不間斷</b>（不可搶奪）<br><span class="en">no preemption</span></td><td>不能硬搶，只能等對方自己放手</td><td>資源的使用無法被中斷，必須由處理元主動釋出，要等它完成工作</td></tr>
+          <tr><td><b>循環等待</b><br><span class="en">circular wait</span></td><td>等待關係繞成一圈</td><td>P0 等 P1 的資源，P1 等 P2 的…，Pn 等 P0 的</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="stack">
+      <h3>資源與死結的成因 <span class="vid">影片 6-1</span></h3>
+      <ul class="clean">
+        <li><b>實體資源</b>：看得到摸得到的硬體，例如 CPU、記憶體、印表機。</li>
+        <li><b>邏輯資源</b>：軟體層面的東西，例如號誌、監督器、檔案。</li>
+        <li><b>死結的主要原因</b>：<mark>容許多個處理元同步執行</mark>（不是資源太多、電腦太慢或網路太複雜）。</li>
+        <li><b>資源分配圖 → 等待圖</b> <span class="en">wait-for graph</span>：把資源節點拿掉，只留「誰在等誰」。每種資源只有一個時，圖上出現環就代表死結；有多個同類資源（多個 instance）時，有環也不一定是死結。</li>
+      </ul>
+    </div>
+
+    <div class="stack">
+      <h3>四種處理死結的方法 <span class="badge">期中考簡答</span> <span class="vid">影片 6-2～6-5</span></h3>
+      <div class="tbl"><table>
+        <thead><tr><th>方法</th><th>做法</th><th>比喻</th></tr></thead>
+        <tbody>
+          <tr><td><b>預防</b><br><span class="en">prevention</span><br><span class="vid">影片 6-2</span></td><td><mark>讓四個條件無法同時成立</mark>，死結就不可能發生。例：規定開工前一次拿齊所有資源（破壞占有與等待）；資源編號、只能照順序拿（破壞循環等待）。</td><td>規定每個廚師開工前要一次領齊鍋子和鏟子</td></tr>
+          <tr><td><b>避免</b><br><span class="en">avoidance</span><br><span class="vid">影片 6-3</span></td><td>每次有人要資源時，系統先算「給了之後還安不安全」，確定在<b>安全狀態</b> <span class="en">safe state</span> 才給。代表作：<b>銀行家演算法</b> <span class="en">Banker's algorithm</span>。</td><td>銀行放款前先算：借出去後，所有客戶的需求還能不能都被滿足</td></tr>
+          <tr><td><b>偵測與復原</b><br><span class="en">detection &amp; recovery</span><br><span class="vid">影片 6-4、6-5</span></td><td><mark>容許死結發生</mark>，但系統定期偵測，發現了就復原。因為不事先設限，所以會<mark>儘量把資源分配出去</mark>。</td><td>先讓大家自由拿，經理定時巡一圈，發現卡住再處理</td></tr>
+          <tr><td><b>忽略</b><br><span class="en">ostrich algorithm</span></td><td>假設死結很少發生、處理成本太高，乾脆不管（鴕鳥把頭埋進沙裡）。Windows、Linux 等一般作業系統多採用這種，卡住就重開。</td><td>真的卡住就請大家重來</td></tr>
+        </tbody>
+      </table></div>
+      <div class="box trap"><span class="tag">考試陷阱</span><p>發現死結後的處理方式：通知管理者、讓系統復原、終止一些處理元、搶奪某些處理元的資源。<b>「增加某些資源的使用」不是正確做法。</b></p></div>
+    </div>
+
+    <div class="tbl kw"><table>
+      <caption>考試這樣問</caption>
+      <thead><tr><th>題目關鍵字</th><th>答案</th></tr></thead>
+      <tbody>
+        <tr><td>占有至少一個資源，同時等待另一個被占用的資源 <span class="badge">期中考</span></td><td class="ans">占有與等待</td></tr>
+        <tr><td>P0 等 P1、P1 等 P2…Pn 等 P0</td><td class="ans">循環等待</td></tr>
+        <tr><td>防止多個執行緒同時存取同一個共用資源</td><td class="ans">互斥</td></tr>
+        <tr><td>資源無法被中斷，必須由處理元主動釋出</td><td class="ans">不間斷</td></tr>
+        <tr><td>讓死結形成的條件無法同時成立</td><td class="ans">預防</td></tr>
+        <tr><td>容許死結發生，經常偵測，發現時復原</td><td class="ans">偵測與復原</td></tr>
+        <tr><td>哪一種方法會儘量把資源分配出去</td><td class="ans">偵測與復原</td></tr>
+        <tr><td>死結會發生的主要原因</td><td class="ans">容許多個處理元同步執行</td></tr>
+        <tr><td>屬於實體資源的是</td><td class="ans">CPU</td></tr>
+        <tr><td>屬於邏輯資源的是</td><td class="ans">號誌 semaphore</td></tr>
+        <tr><td>發現死結後的處理方式，錯誤的是</td><td class="ans">增加某些資源</td></tr>
+      </tbody>
+    </table></div>
+
+    <details class="quiz"><summary>哲學家用餐問題的「筷子編號、先拿小號」解法，是打破了死結四條件中的哪一個？</summary>
+      <div class="a"><p><b class="key">循環等待 circular wait。</b>大家都照號碼由小到大拿，等待關係就不會繞成一圈。</p></div></details>
+    <details class="quiz"><summary>「避免」和「預防」差在哪？</summary>
+      <div class="a"><p><b class="key">預防是事先立規矩，讓四個條件不可能同時成立；避免是不改規矩，但每次分配資源前先算會不會進入不安全狀態。</b></p><p class="qhint">預防像「規定一次領齊工具」，避免像「銀行放款前先試算」。</p></div></details>
+  </div>
+</section>
+
+<!-- ============ CH7 ============ -->
+<section class="ch" id="ch7">
+  <div class="stack-lg">
+    <div class="ch-head"><span class="ch-no">第 7 章練習題</span><h2>同步機制大整理</h2></div>
+    <p class="lead">除了號誌和監督器，作業系統還有其他方法讓處理元同步。考試重點是分清楚每一種「靠什麼」達成同步。</p>
+    <div class="tbl"><table>
+      <thead><tr><th>機制</th><th>靠什麼達成同步</th><th>題目關鍵字</th></tr></thead>
+      <tbody>
+        <tr><td><b>號誌</b><br><span class="en">semaphore</span><br><span class="vid">影片 7-1-2</span></td><td>同步訊號，處理元之間<mark>不交換資訊</mark></td><td>「同步訊號」「並未在處理元間交換資訊」</td></tr>
+        <tr><td><b>監督器</b><br><span class="en">monitor</span><br><span class="vid">影片 7-3</span></td><td>透過<mark>共用記憶體</mark>分享資訊；用抽象化簡化複雜的同步問題</td><td>「共用記憶體 shared memory」「抽象化」</td></tr>
+        <tr><td><b>IPC</b> 處理元間的溝通<br><span class="vid">影片 7-3</span></td><td>交換訊息，訊息從一個處理元的位址空間<mark>拷貝</mark>到另一個</td><td>「交換訊息」「拷貝到另一個位址空間」</td></tr>
+        <tr><td><b>系統呼叫與事件排序</b></td><td>用 fork、join、quit 這些系統呼叫<mark>產生或結束處理元</mark>來同步</td><td>「產生或是結束處理元」</td></tr>
+        <tr><td><b>合併同步</b><br><span class="en">AND synchronization</span></td><td>需要同時用好幾個資源時，<mark>一個 P 操作一次拿到全部</mark>需要的號誌</td><td>「同步條件不只一個」「同時使用多個資源」</td></tr>
+      </tbody>
+    </table></div>
+    <ul class="clean">
+      <li><b>為什麼 fork/join/quit 比號誌貴</b>：系統呼叫耗用的系統資源比較多。</li>
+      <li><b>多處理器的特有問題</b> <span class="vid">影片 7-2</span>：單 CPU 時，號誌常用「暫時取消中斷」來實作；但多顆 CPU 共用記憶體時，關掉一顆 CPU 的中斷擋不住其他 CPU，所以要改用其他技術。</li>
+      <li><b>為什麼傳統處理元叫「重量級」</b> <span class="en">heavyweight process</span> <span class="vid">影片 7-4</span>：它佔用的系統資源比較多；執行緒則是輕量級的。</li>
+    </ul>
+    <details class="quiz"><summary>「透過共用記憶體讓處理元共享資訊」和「透過同步訊號、不交換資訊」，分別是哪一種？</summary>
+      <div class="a"><p><b class="key">共用記憶體共享資訊 → 監督器；同步訊號、不交換資訊 → 號誌。</b></p></div></details>
+  </div>
+</section>
+
+<!-- ============ HW2 PREVIEW ============ -->
+<section class="ch" id="hw2">
+  <div class="stack-lg">
+    <div class="ch-head"><span class="ch-no">預習</span><h2>第二次平時作業會用到的觀念</h2></div>
+    <p class="lead">第二次作業考記憶體、檔案、磁碟、I/O 和分散式系統，講義資料夾裡還沒有這些章節的投影片。下面先用白話把觀念講清楚。平時作業的繳交期限是 12/28。</p>
+    <div class="box trap"><span class="tag">注意</span><p>這一段是一般教科書的標準觀念，不是照你的課本整理的。如果課本說法不同，以課本為準。作業的簡答題請讀懂後用自己的話寫。</p></div>
+
+    <div class="stack">
+      <h3>程式處理的四個時期 <span class="vid">影片 8-1</span></h3>
+      <div class="tbl"><table>
+        <thead><tr><th>時期</th><th>發生什麼事</th></tr></thead>
+        <tbody>
+          <tr><td><b>編譯時期</b> <span class="en">compile time</span></td><td>原始碼翻成目的模組 <span class="en">object module</span>，檢查語法錯誤</td></tr>
+          <tr><td><b>連結時期</b> <span class="en">link time</span></td><td><mark>把多個目的模組連結成一個完整的模組</mark>（absolute／load module）</td></tr>
+          <tr><td><b>載入時期</b> <span class="en">load time</span></td><td>載入器把程式放進記憶體，配置位址</td></tr>
+          <tr><td><b>執行時期</b> <span class="en">run time</span></td><td>CPU 真正在跑，動態配置記憶體、處理 I/O</td></tr>
+        </tbody>
+      </table></div>
+      <p class="small muted">補充講義最後一頁把程式處理分成<b>三種時期</b>：編譯時期、載入時期、執行時期，沒有把連結時期獨立出來。連結發生在編譯之後、載入之前（回想第 1 章的四個步驟）。作業第 1 題的選項裡有 link time，寫之前可以對照課本確認。</p>
+    </div>
+
+    <div class="stack">
+      <h3>記憶體的層次 <span class="vid">影片 8-2、11-6</span></h3>
+      <div class="pyr">
+        <div style="width:30%">暫存器</div>
+        <div style="width:48%">快取記憶體 cache</div>
+        <div style="width:66%">主記憶體 RAM：<b>揮發性</b> volatile</div>
+        <div style="width:84%">硬碟、SSD：<b>非揮發性</b> nonvolatile</div>
+      </div>
+      <p>越上面越快、越貴、越小。<mark>揮發性＝斷電內容就消失</mark>，一般電腦的主記憶體就是揮發性的；硬碟斷電資料還在，是非揮發性。</p>
+    </div>
+
+    <div class="stack">
+      <h3>置換作業 swapping <span class="vid">影片 8-3、11-4</span></h3>
+      <p>記憶體不夠時，作業系統把<b>暫時不會執行的處理元整個搬到硬碟</b>上，騰出記憶體給需要的處理元；之後輪到它，再搬回記憶體。</p>
+      <div class="box analogy"><span class="tag">廚房比喻</span><p>料理台滿了，經理把暫時沒在動的那盤（例如在等烤箱的）先收進冰箱，空出位置給要開始做的菜；等輪到它，再從冰箱拿出來。</p></div>
+      <p class="small muted">想作業第 1 題時可以這樣思考：什麼情況下料理台會不夠？哪一種菜最適合先收進冰箱？（提示：回想第 3 章的 blocked 狀態，以及 swap out 時執行緒也會一起被換出。講義 3-3 列的「處理元被懸置的原因」，第一條就是「為了空出記憶體空間」，也可以參考。）</p>
+    </div>
+
+    <div class="stack">
+      <h3>虛擬記憶體：分頁法和分段法 <span class="vid">影片 9-2、9-3</span></h3>
+      <p><b>虛擬記憶體</b>：只把正在用到的部分放進 RAM，其他先放在硬碟。好處是程式可以比 RAM 還大、記憶體用得更有效率、能同時跑更多程式。缺點是要用的部分不在 RAM 時，得停下來去硬碟拿，這叫<mark>分頁中斷 page interrupt / page fault</mark>，會有額外成本。</p>
+      <div class="grid2">
+        <div class="box card stack" style="gap:8px">
+          <h4>分頁法 paging</h4>
+          <span class="en" style="margin:0">固定大小切塊</span>
+          <div class="mem"><span class="pg">頁 1</span><span class="pg">頁 2</span><span class="pg">頁 3</span><span class="pg part">頁 4</span></div>
+          <p class="small">每頁一樣大，最後一頁通常裝不滿，黃色那段浪費在頁的「內部」→ <mark>有內部碎片</mark>，沒有外部碎片。</p>
+        </div>
+        <div class="box card stack" style="gap:8px">
+          <h4>分段法 segmentation</h4>
+          <span class="en" style="margin:0">依邏輯單位切，大小不一</span>
+          <div class="mem"><span style="width:90px">主程式</span><span class="gap">空洞</span><span style="width:54px">函式</span><span class="gap">空洞</span><span style="width:70px">資料</span></div>
+          <p class="small">需要多少給多少，<mark>沒有內部碎片</mark>；但段和段之間會留下零碎空洞 → 有外部碎片。</p>
+        </div>
+      </div>
+      <ul class="clean small">
+        <li><b>內部碎片</b>：分到的那塊比需要的大，多出來的浪費在那塊裡面。</li>
+        <li><b>外部碎片</b>：記憶體裡有很多小空洞，加起來夠用，卻沒有一塊連續的夠大。</li>
+      </ul>
+    </div>
+
+    <div class="stack">
+      <h3>檔案與目錄</h3>
+      <ul class="clean">
+        <li><b>副檔名</b> <span class="vid">影片 10-2</span>：pdf 文件、<mark>zip 壓縮檔</mark>、txt 純文字、jpg 圖片。</li>
+        <li><b>循序檔</b> <span class="vid">影片 10-3</span>：資料照順序一筆一筆放，要找某筆得從頭找。</li>
+        <li><b>索引循序檔</b> <span class="en">indexed sequential file</span>：資料照鍵值排好，再加上索引，可以先用索引跳到附近，再循序找。</li>
+        <li><b>倒轉檔</b> <span class="en">inverted file</span>：針對資料的屬性建立索引，像書最後面的「索引頁」。</li>
+        <li><b>目錄結構</b> <span class="vid">影片 10-4</span>：一般電腦的目錄是<mark>樹狀結構</mark>，從根目錄往下分子目錄，例如 <code>C:\ → Users → 文件 → 作業系統 → 講義.pdf</code>。想想看樹狀結構對「分類整理」「每個檔案的路徑」「不同資料夾能不能有同名檔案」各有什麼好處，就是作業第 2 題的方向。</li>
+      </ul>
+    </div>
+
+    <div class="stack">
+      <h3>磁碟 <span class="vid">影片 11-1、11-2</span></h3>
+      <div class="grid2" style="align-items:center">
+        <figure class="fig">
+          <svg viewBox="0 0 360 220" width="100%" style="min-width:300px" role="img" aria-label="磁碟示意：磁盤、磁軌、磁區">
+            <circle cx="110" cy="110" r="96" class="s-node"/>
+            <circle cx="110" cy="110" r="70" class="s-line" style="stroke-dasharray:3 4"/>
+            <circle cx="110" cy="110" r="50" class="s-line-a" style="stroke-width:5"/>
+            <circle cx="110" cy="110" r="30" class="s-line" style="stroke-dasharray:3 4"/>
+            <circle cx="110" cy="110" r="10" class="s-fill-a"/>
+            <path d="M79.2,25.4 A90,90 0 0 1 140.8,25.4 L133.9,44.2 A70,70 0 0 0 86.1,44.2 Z" class="s-fill-hl"/>
+            <line x1="140" y1="32" x2="232" y2="40" class="s-line"/>
+            <text x="238" y="44" class="s-lab">磁區 sector（最小）</text>
+            <line x1="156" y1="128" x2="232" y2="110" class="s-line"/>
+            <text x="238" y="114" class="s-lab">磁軌 track（一圈）</text>
+            <line x1="190" y1="160" x2="232" y2="180" class="s-line"/>
+            <text x="238" y="184" class="s-lab">磁盤 platter（整片）</text>
+          </svg>
+        </figure>
+        <ul class="clean">
+          <li>空間大小：<mark>磁盤 &gt; 磁軌 &gt; 磁區</mark>。</li>
+          <li><b>磁柱</b> <span class="en">cylinder</span>：好幾片磁盤疊在一起時，同一個位置的磁軌合起來。</li>
+          <li><b>CHS</b>：用「磁柱、磁頭、磁區」三個數字找位置。</li>
+          <li><b>LBA</b> <span class="en">logical block address</span>：<mark>直接給每個磁區一個序號</mark> 0、1、2…，簡單很多。</li>
+        </ul>
+      </div>
+      <p><b>磁碟排程</b>：很多讀寫請求在排隊，磁頭要決定先去哪裡，目標是少移動。例：磁頭在 53，請求依序是 98、183、37、122、14、124、65、67。</p>
+      <div class="tbl"><table>
+        <thead><tr><th>方法</th><th>規則</th><th>拜訪順序</th><th>磁頭移動總距離</th></tr></thead>
+        <tbody>
+          <tr><td><b>FCFS</b></td><td>照請求順序</td><td class="num">98, 183, 37, 122, 14, 124, 65, 67</td><td class="num">640</td></tr>
+          <tr><td><b>SSTF</b></td><td>每次去最近的</td><td class="num">65, 67, 37, 14, 98, 122, 124, 183</td><td class="num">236</td></tr>
+          <tr><td><b>SCAN</b></td><td><mark>先往一個方向走到邊緣，再往回走</mark>，像電梯</td><td class="num">37, 14,（到 0）, 65, 67, 98, 122, 124, 183</td><td class="num">236</td></tr>
+          <tr><td><b>F-SCAN</b></td><td>SCAN 的改良：用兩個佇列，掃描時新來的請求先放另一個佇列，下一趟再處理</td><td colspan="2" class="small muted">避免一直有新請求插進來</td></tr>
+        </tbody>
+      </table></div>
+      <p class="small muted">SCAN 這列是假設磁頭先往 0 的方向走。SSTF 有機會讓遠處的請求一直等不到（飢餓）。</p>
+    </div>
+
+    <div class="stack">
+      <h3>I/O 與匯流排 <span class="vid">影片 12-2、12-3</span></h3>
+      <ul class="clean">
+        <li><b>內部匯流排</b>：在主機板上連接內部元件，例如 <mark>PCI、PCIe</mark>。<b>外部</b>接設備用的：USB、IEEE 1394，SCSI 也常用來接外接裝置。</li>
+      </ul>
+      <div class="tbl"><table>
+        <thead><tr><th>系統呼叫類型</th><th>意思</th><th>點餐比喻</th></tr></thead>
+        <tbody>
+          <tr><td><b>阻絕式</b> <span class="en">blocking call</span></td><td><mark>呼叫的程式要等 I/O 完成才能繼續</mark></td><td>站在櫃台等，餐好才離開</td></tr>
+          <tr><td><b>非阻絕式</b> <span class="en">non-blocking call</span></td><td>馬上回來，有多少資料先給多少</td><td>問一下好了沒，沒好就先回座位，等等再來問</td></tr>
+          <tr><td><b>非同步</b> <span class="en">asynchronous call</span></td><td>馬上回來，I/O 完成後再通知</td><td>拿呼叫器回座位，好了會響</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="stack">
+      <h3>平行與分散式系統</h3>
+      <p><b>Flynn 分類</b>：看「同時有幾道指令流」和「同時處理幾份資料流」。</p>
+      <div class="tbl"><table>
+        <thead><tr><th></th><th>單資料流</th><th>多資料流</th></tr></thead>
+        <tbody>
+          <tr><th>單指令流</th><td><b>SISD</b>：<mark>傳統單 CPU 個人電腦、大型主機</mark></td><td><b>SIMD</b>：一道指令同時處理很多資料，<mark>陣列處理器 array processor</mark>、向量處理器</td></tr>
+          <tr><th>多指令流</th><td><b>MISD</b>：很少見</td><td><b>MIMD</b>：多處理器、多台電腦各跑各的</td></tr>
+        </tbody>
+      </table></div>
+      <ul class="clean">
+        <li><b>分散式系統</b> <span class="vid">影片 13-1、15-1</span>（正式名稱 <span class="en">distributed computing system</span>）：很多台獨立的電腦透過網路合作，對使用者來說看起來像<mark>一個完整的系統</mark>。它主要是<mark>軟體系統</mark>的概念，不是單純的硬體。</li>
+        <li><b>網路作業系統 vs. 分散式作業系統</b> <span class="vid">影片 13-1</span>：網路作業系統裡，使用者知道有很多台電腦，要自己登入或存取遠端資源；分散式作業系統則把多台電腦包裝成好像只有一台。常見再加上建立在各機器作業系統之上的「中介軟體」<span class="en">middleware</span> 做法。作業第 3 題請翻課本對照它列出的類型。</li>
+        <li><b>網路作業系統的分類</b> <span class="vid">影片 13-2</span>：常見依架構分成<b>對等式</b> <span class="en">peer-to-peer</span>（每台電腦地位相同）和<b>主從式</b> <span class="en">client/server</span>（有專門提供服務的伺服器）。作業第 4 題同樣以課本說法為準。</li>
+        <li><b>網路檔案系統</b> <span class="vid">影片 14-1、14-2</span>：NFS（Sun 開發，常用於區域網路）；<mark>AFS</mark>（Andrew File System，為大規模、廣域網路設計）；Novell NetWare（區域網路的網路作業系統）；EFS 是 Windows 的加密檔案系統，不是網路檔案系統。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ VIDEO MAP ============ -->
+<section class="ch" id="videos">
+  <div class="stack-lg">
+    <div class="ch-head"><span class="ch-no">附錄</span><h2>課程影片分節對照表</h2></div>
+    <p class="lead">看影片時想找筆記，或讀筆記時想回去看影片，都可以查這張表。</p>
+    <ul class="clean">
+      <li><b>第 1～7 章</b>（期中考範圍）：大部分分節都有對應的筆記段落。</li>
+      <li><b>第 8～15 章</b>：只整理了第二次作業會用到的部分，放在「第二次作業預習」。</li>
+      <li><b>第 16～18 章</b>：還沒有整理。</li>
+    </ul>
+    <p class="small muted">對應是依照分節標題和講義投影片判斷的。標「筆記未整理」的分節，講義和題目裡沒有找到對應內容。第 8 章 8-3-2 之後到第 9 章 9-1-2 之間的分節沒有收到截圖（有兩張截圖重複了），所以表裡缺這一段。</p>
+    <div class="tbl"><table>
+      <thead><tr><th>分節</th><th>影片標題</th><th>筆記位置</th></tr></thead>
+      <tbody>
+          <tr class="chrow"><th colspan="3">第 1 章 認識電腦系統</th></tr>
+          <tr><td class="sec">1-1</td><td>學習作業系統的準備</td><td><a href="#intro">開頭</a>：四個學習提醒</td></tr>
+          <tr><td class="sec">1-2</td><td>電腦發展的歷史</td><td><a href="#ch1">第 1 章</a>：馮紐曼與儲存程式電腦、字元編碼</td></tr>
+          <tr><td class="sec">1-3</td><td>認識電腦結構</td><td><a href="#ch1">第 1 章</a>：電腦系統的四個部分</td></tr>
+          <tr><td class="sec">1-4</td><td>電腦的種類</td><td><a href="#ch1">第 1 章</a>：其他小觀念：電腦的種類</td></tr>
+          <tr><td class="sec">1-5</td><td>系統程式的迷思</td><td><a href="#ch1">第 1 章</a>：程式的四個步驟、編譯／直譯／組譯</td></tr>
+          <tr class="chrow"><th colspan="3">第 2 章 作業系統面面觀</th></tr>
+          <tr><td class="sec">2-1</td><td>作業系統簡介</td><td><a href="#ch2">第 2 章</a>：四大管理、演進、時間／空間多工、處理器模式</td></tr>
+          <tr><td class="sec">2-2</td><td>作業系統的分類</td><td><a href="#ch2">第 2 章</a>：作業系統的分類、硬性／軟性即時</td></tr>
+          <tr><td class="sec">2-3</td><td>虛擬機器</td><td><a href="#ch2">第 2 章</a>：虛擬機器與虛擬化</td></tr>
+          <tr><td class="sec">2-4</td><td>虛擬化技術</td><td><a href="#ch2">第 2 章</a>：虛擬機器與虛擬化（hypervisor、VDI）</td></tr>
+          <tr class="chrow"><th colspan="3">第 3 章 認識處理元</th></tr>
+          <tr><td class="sec">3-1</td><td>處理元的基本概念</td><td><a href="#ch3">第 3 章</a>：程式和處理元的差別、五種狀態、記憶體四區塊</td></tr>
+          <tr><td class="sec">3-2</td><td>從作業系統的啟動程序觀察處理元的衍生過程</td><td><a href="#ch3">第 3 章</a>：開機、處理元樹</td></tr>
+          <tr><td class="sec">3-3</td><td>作業系統的內部對處理元的分類</td><td><a href="#ch3">第 3 章</a>：Monolithic、核心／使用者模式、懸置的原因</td></tr>
+          <tr><td class="sec">3-4</td><td>系統的細節</td><td><a href="#ch3">第 3 章</a>：PCB</td></tr>
+          <tr><td class="sec">3-5</td><td>系統呼叫的實例</td><td><a href="#ch3">第 3 章</a>：系統呼叫、IPC</td></tr>
+          <tr><td class="sec">3-6</td><td>處理元與執行緒</td><td><a href="#ch3">第 3 章</a>：執行緒</td></tr>
+          <tr class="chrow"><th colspan="3">第 4 章 排程</th></tr>
+          <tr><td class="sec">4-1-1</td><td>排程的由來</td><td><a href="#ch4">第 4 章</a>：為什麼要排程</td></tr>
+          <tr><td class="sec">4-1-2</td><td>排程機制與策略</td><td><a href="#ch4">第 4 章</a>：政策和機制、三種時間</td></tr>
+          <tr><td class="sec">4-1-3</td><td>不可間斷的排程策略</td><td><a href="#ch4">第 4 章</a>：常見的排程方法、課堂例題</td></tr>
+          <tr><td class="sec">4-1-4</td><td>可間斷的排程策略</td><td><a href="#ch4">第 4 章</a>：可間斷和不可間斷、多層佇列</td></tr>
+          <tr><td class="sec">4-2</td><td>多處理器的排程</td><td><a href="#ch4">第 4 章</a>：多處理器的排程</td></tr>
+          <tr><td class="sec">4-3</td><td>作業系統排程的實例</td><td class="none">筆記未整理</td></tr>
+          <tr class="chrow"><th colspan="3">第 5 章 同步</th></tr>
+          <tr><td class="sec">5-1-1</td><td>基本觀念</td><td><a href="#ch5">第 5 章</a>：什麼是同步</td></tr>
+          <tr><td class="sec">5-1-2</td><td>臨界區域</td><td><a href="#ch5">第 5 章</a>：臨界區域</td></tr>
+          <tr><td class="sec">5-1-3</td><td>實際案例</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">5-1-4</td><td>解決的方法</td><td><a href="#ch5">第 5 章</a>：只有臨界區域段落的互斥原則</td></tr>
+          <tr><td class="sec">5-1-5</td><td>同步問題解決方法的整理</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">5-2</td><td>處理元之間的協調</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">5-3</td><td>號誌</td><td><a href="#ch5">第 5 章</a>：號誌、停車場模擬</td></tr>
+          <tr><td class="sec">5-4</td><td>哲學家用餐問題的解決方法</td><td><a href="#ch5">第 5 章</a>：哲學家用餐問題與四種解法</td></tr>
+          <tr class="chrow"><th colspan="3">第 6 章 死結</th></tr>
+          <tr><td class="sec">6-1</td><td>認識死結</td><td><a href="#ch6">第 6 章</a>：四個必要條件、資源、等待圖</td></tr>
+          <tr><td class="sec">6-2</td><td>死結的預防策略</td><td><a href="#ch6">第 6 章</a>：處理方法表「預防」</td></tr>
+          <tr><td class="sec">6-3</td><td>死結的避免策略</td><td><a href="#ch6">第 6 章</a>：處理方法表「避免」</td></tr>
+          <tr><td class="sec">6-4</td><td>死結的偵測</td><td><a href="#ch6">第 6 章</a>：處理方法表「偵測與復原」</td></tr>
+          <tr><td class="sec">6-5</td><td>死結的復原</td><td><a href="#ch6">第 6 章</a>：處理方法表「偵測與復原」、考試陷阱</td></tr>
+          <tr class="chrow"><th colspan="3">第 7 章 進階的同步觀念與實務</th></tr>
+          <tr><td class="sec">7-1-1</td><td>共用變數的解決辦法</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">7-1-2</td><td>引導出號誌的觀念</td><td><a href="#ch7">第 7 章</a>：同步機制表「號誌」（詳細在第 5 章）</td></tr>
+          <tr><td class="sec">7-1-3</td><td>實作上的考量</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">7-2</td><td>多處理器的情況</td><td><a href="#ch7">第 7 章</a>：多處理器的特有問題</td></tr>
+          <tr><td class="sec">7-3</td><td>更高層次的同步控制方法</td><td><a href="#ch7">第 7 章</a>：同步機制表「監督器」「IPC」（監督器詳細在第 5 章）</td></tr>
+          <tr><td class="sec">7-4</td><td>執行緒的實作</td><td><a href="#ch7">第 7 章</a>：重量級處理元；第 3 章執行緒的兩種實作</td></tr>
+          <tr class="chrow"><th colspan="3">第 8 章 記憶體管理的概念</th></tr>
+          <tr><td class="sec">8-1</td><td>使用者程式的處理</td><td><a href="#hw2">預習</a>：程式處理的四個時期</td></tr>
+          <tr><td class="sec">8-2</td><td>認識電腦系統的主記憶體</td><td><a href="#hw2">預習</a>：記憶體的層次（揮發性）</td></tr>
+          <tr><td class="sec">8-3</td><td>電腦系統中記憶體的管理（8-3-1 基本觀念的建立、8-3-2 記憶體空間中的處理元…）</td><td><a href="#hw2">預習</a>：置換作業 swapping</td></tr>
+          <tr class="chrow"><th colspan="3">第 9 章（截圖沒有拍到章名）</th></tr>
+          <tr><td class="sec">9-1-3</td><td>記憶體管理的策略</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">9-2</td><td>分段式的虛擬記憶體機制</td><td><a href="#hw2">預習</a>：分段法</td></tr>
+          <tr><td class="sec">9-3</td><td>分頁的虛擬記憶體機制（9-3-1 靜態、9-3-2 動態分頁配置演算法）</td><td><a href="#hw2">預習</a>：分頁法（兩種配置演算法未整理）</td></tr>
+          <tr><td class="sec">9-4</td><td>分段分頁的記憶體配置</td><td class="none">筆記未整理</td></tr>
+          <tr class="chrow"><th colspan="3">第 10 章 檔案系統</th></tr>
+          <tr><td class="sec">10-1</td><td>檔案的用途</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">10-2</td><td>檔案的觀念</td><td><a href="#hw2">預習</a>：副檔名</td></tr>
+          <tr><td class="sec">10-3</td><td>檔案的結構與存取方法</td><td><a href="#hw2">預習</a>：循序檔、索引循序檔、倒轉檔</td></tr>
+          <tr><td class="sec">10-4</td><td>檔案系統</td><td><a href="#hw2">預習</a>：目錄結構</td></tr>
+          <tr><td class="sec">10-5</td><td>體驗檔案系統的實作</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">10-6</td><td>檔案系統的保護機制</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">10-7</td><td>檔案系統的掛載</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">10-8</td><td>現代的檔案系統</td><td class="none">筆記未整理</td></tr>
+          <tr class="chrow"><th colspan="3">第 11 章 儲存裝置與其管理</th></tr>
+          <tr><td class="sec">11-1</td><td>儲存裝置</td><td><a href="#hw2">預習</a>：磁碟構造、CHS 和 LBA</td></tr>
+          <tr><td class="sec">11-2</td><td>磁碟排程的原理與方法</td><td><a href="#hw2">預習</a>：磁碟排程 FCFS、SSTF、SCAN、F-SCAN</td></tr>
+          <tr><td class="sec">11-3</td><td>磁碟儲存空間的管理</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">11-4</td><td>切換空間（swap space）的管理</td><td><a href="#hw2">預習</a>：置換作業（相關）</td></tr>
+          <tr><td class="sec">11-5</td><td>磁碟穩定性的管理</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">11-6</td><td>儲存媒體的分級</td><td><a href="#hw2">預習</a>：記憶體的層次</td></tr>
+          <tr><td class="sec">11-7</td><td>作業系統對於可抽換式儲存媒體的處理</td><td class="none">筆記未整理</td></tr>
+          <tr class="chrow"><th colspan="3">第 12 章 輸出入系統</th></tr>
+          <tr><td class="sec">12-1</td><td>電腦輸出入系統簡介</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">12-2</td><td>從硬體和軟體層面來看輸出入作業（12-2-1 硬體、12-2-2 軟體）</td><td><a href="#hw2">預習</a>：匯流排</td></tr>
+          <tr><td class="sec">12-3</td><td>作業系統層次的輸出入作業</td><td><a href="#hw2">預習</a>：阻絕式／非阻絕式／非同步呼叫</td></tr>
+          <tr><td class="sec">12-4</td><td>I/O 請求與硬體作業之間的轉換</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">12-5</td><td>串流（streams）的概念</td><td class="none">筆記未整理</td></tr>
+          <tr class="chrow"><th colspan="3">第 13 章 分散式作業系統</th></tr>
+          <tr><td class="sec">13-1</td><td>分散式作業系統入門</td><td><a href="#hw2">預習</a>：分散式系統、網路 OS 和分散式 OS</td></tr>
+          <tr><td class="sec">13-2</td><td>區域網路作業系統</td><td><a href="#hw2">預習</a>：網路作業系統的分類</td></tr>
+          <tr><td class="sec">13-3</td><td>分散式架構下的資訊傳遞</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">13-4</td><td>Java 的遠端方法呼叫</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">13-5</td><td>Java RMI 範例練習</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">13-6</td><td>從應用的觀點來了解訊息服務</td><td class="none">筆記未整理</td></tr>
+          <tr class="chrow"><th colspan="3">第 14 章 分散式檔案系統</th></tr>
+          <tr><td class="sec">14-1</td><td>分散式檔案系統</td><td><a href="#hw2">預習</a>：網路檔案系統 NFS</td></tr>
+          <tr><td class="sec">14-2</td><td>廣域網路檔案系統</td><td><a href="#hw2">預習</a>：網路檔案系統 AFS</td></tr>
+          <tr><td class="sec">14-3</td><td>雲端運算領域中的儲存服務</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">14-4</td><td>如何踏入雲端運算的領域</td><td class="none">筆記未整理</td></tr>
+          <tr class="chrow"><th colspan="3">第 15 章 分散式運算系統的理論與實務</th></tr>
+          <tr><td class="sec">15-1</td><td>分散式運算系統的基本概念</td><td><a href="#hw2">預習</a>：分散式系統的正式名稱</td></tr>
+          <tr><td class="sec">15-2</td><td>事件的排序問題</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">15-3</td><td>互斥</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">15-4</td><td>分散式的單元</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">15-5</td><td>分散式的同時控制</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">15-6</td><td>分散式的死結處理</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">15-7</td><td>分散式演算法的常見問題</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">15-8</td><td>以 CORBA 為例來認識分散式系統</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">15-9</td><td>雲端運算的發展與分散式運算</td><td class="none">筆記未整理</td></tr>
+          <tr class="chrow"><th colspan="3">第 16 章 系統的保護</th></tr>
+          <tr><td class="sec">16-1</td><td>系統保護的基本觀念</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">16-2</td><td>系統保護的機制</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">16-3</td><td>存取控制</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">16-4</td><td>用陣列來描述保護的模型</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">16-5</td><td>存取控制可能遭遇的威脅</td><td class="none">筆記未整理</td></tr>
+          <tr class="chrow"><th colspan="3">第 17 章 系統的安全管理</th></tr>
+          <tr><td class="sec">17-1</td><td>電腦與網路安全</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">17-2</td><td>電腦病毒與惡意軟體</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">17-3</td><td>安全問題的解決辦法</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">17-4</td><td>從密碼學來看保護安全的方法</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">17-5</td><td>防火牆</td><td class="none">筆記未整理</td></tr>
+          <tr class="chrow"><th colspan="3">第 18 章 特定系統的介紹</th></tr>
+          <tr><td class="sec">18-1</td><td>作業系統的元件與架構</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">18-2</td><td>硬體分散產生的影響</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">18-3</td><td>作業系統的設計</td><td class="none">筆記未整理</td></tr>
+          <tr><td class="sec">18-4</td><td>特定系統</td><td class="none">筆記未整理</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- ============ GLOSSARY ============ -->
+<section class="ch" id="glossary">
+  <div class="stack-lg">
+    <div class="ch-head"><span class="ch-no">附錄</span><h2>名詞速查（中英對照）</h2></div>
+    <p class="muted">老師說不用背，但要認得。考前掃一遍，看到英文能想起中文意思就夠了。</p>
+    <div class="tbl"><table>
+      <thead><tr><th>中文</th><th>英文</th><th>一句話</th></tr></thead>
+      <tbody>
+        <tr><td>儲存程式電腦</td><td class="num">stored-program computer</td><td>程式存在記憶體裡，換程式就換功能（馮紐曼）</td></tr>
+        <tr><td>編譯／直譯／組譯</td><td class="num">compile / interpret / assemble</td><td>整份翻／翻一句跑一句／組合語言翻機器碼</td></tr>
+        <tr><td>連結／載入</td><td class="num">linking / loading</td><td>接成執行檔／搬進記憶體</td></tr>
+        <tr><td>精簡／複雜指令集</td><td class="num">RISC / CISC</td><td>固定長度、單週期／指令多、長度不一</td></tr>
+        <tr><td>時間多工／空間多工</td><td class="num">time- / space-multiplexed</td><td>輪流用／切塊分著用</td></tr>
+        <tr><td>核心模式／使用者模式</td><td class="num">kernel / user mode</td><td>權限最大／限制較多</td></tr>
+        <tr><td>系統呼叫</td><td class="num">system call</td><td>使用者程式和作業系統之間的介面</td></tr>
+        <tr><td>批次／分時系統</td><td class="num">batch / timesharing</td><td>不能互動／切 CPU 時間、能互動</td></tr>
+        <tr><td>硬性／軟性即時</td><td class="num">hard / soft real-time</td><td>嚴格守時限／即時工作優先</td></tr>
+        <tr><td>嵌入式系統</td><td class="num">embedded system</td><td>裝在設備裡、非通用型的電腦</td></tr>
+        <tr><td>虛擬機器管理程式</td><td class="num">hypervisor</td><td>管理虛擬機器的軟體</td></tr>
+        <tr><td>處理元（行程）</td><td class="num">process</td><td>執行中的程式，運算的基本單元</td></tr>
+        <tr><td>處理元控制方塊</td><td class="num">PCB</td><td>記錄處理元狀態、程式計數等資訊的工單</td></tr>
+        <tr><td>處理元的影像</td><td class="num">process image</td><td>程式＋資料＋堆疊＋PCB</td></tr>
+        <tr><td>就緒／執行／阻塞</td><td class="num">ready / running / blocked</td><td>排隊等 CPU／在 CPU 上／等 I/O 或事件</td></tr>
+        <tr><td>程序間溝通</td><td class="num">IPC</td><td>處理元之間交換資料</td></tr>
+        <tr><td>執行緒</td><td class="num">thread</td><td>輕量級處理元，執行分派的單位</td></tr>
+        <tr><td>排程政策／機制</td><td class="num">policy / mechanism</td><td>決定順序／實際切換的方法</td></tr>
+        <tr><td>可間斷／不可間斷</td><td class="num">preemptive / nonpreemptive</td><td>可被打斷／做到完</td></tr>
+        <tr><td>服務／等待／輪轉時間</td><td class="num">service / wait / turnaround time</td><td>在 CPU 上／排隊／從頭到尾</td></tr>
+        <tr><td>先來先做／最短工作優先</td><td class="num">FCFS / SJN</td><td>照順序／短的先</td></tr>
+        <tr><td>飢餓</td><td class="num">starvation</td><td>一直輪不到</td></tr>
+        <tr><td>臨界區域</td><td class="num">critical section</td><td>使用共享變數的那段程式</td></tr>
+        <tr><td>互斥</td><td class="num">mutual exclusion</td><td>一次只准一個進去</td></tr>
+        <tr><td>號誌</td><td class="num">semaphore (P / V)</td><td>空位計數器，P 要用、V 用完</td></tr>
+        <tr><td>監督器</td><td class="num">monitor</td><td>把共享資料和同步包起來，一次只進一個</td></tr>
+        <tr><td>死結</td><td class="num">deadlock</td><td>互相等對方放手，全部卡死</td></tr>
+        <tr><td>占有與等待／不間斷／循環等待</td><td class="num">hold and wait / no preemption / circular wait</td><td>死結的另外三個必要條件</td></tr>
+        <tr><td>預防／避免／偵測與復原</td><td class="num">prevention / avoidance / detection &amp; recovery</td><td>處理死結的方法</td></tr>
+        <tr><td>銀行家演算法</td><td class="num">Banker's algorithm</td><td>死結避免的代表方法</td></tr>
+        <tr><td>置換</td><td class="num">swapping</td><td>把處理元整個搬到硬碟騰出記憶體</td></tr>
+        <tr><td>分頁／分段</td><td class="num">paging / segmentation</td><td>固定大小切／依邏輯單位切</td></tr>
+        <tr><td>內部／外部碎片</td><td class="num">internal / external fragmentation</td><td>塊內浪費／塊間空洞</td></tr>
+        <tr><td>阻絕式呼叫</td><td class="num">blocking call</td><td>等 I/O 做完才繼續</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+</main>
+
+<footer class="wrap">
+  <p>資料來源：講義 1-1～3-6、第 1 次課程投影片（第 1～3 章）、補充講義、第一次面授資料（課程大綱、課程目標、第一章至第七章講解目次、繳交期限）、練習題第 1～7 章、第一次平時作業解答、期中考評量解答、第二次平時作業題目、課程影片分節列表。第二次作業預習段落為一般教科書觀念，請以課本為準。</p>
+</footer>
+
+<script>
+(function(){
+  /* ---------- Gantt / scheduling example ---------- */
+  var procs=[{n:'P1',L:300},{n:'P2',L:150},{n:'P3',L:430},{n:'P4',L:230},{n:'P5',L:92}];
+  var shades=['var(--accent-soft)','var(--hl-bg)','var(--accent-soft)','var(--hl-bg)','var(--accent-soft)'];
+  function render(mode){
+    var list=procs.map(function(p,i){return {n:p.n,L:p.L,i:i};});
+    if(mode==='sjn'){list.sort(function(a,b){return a.L-b.L;});}
+    var t=0,rows=[];
+    list.forEach(function(p){rows.push({n:p.n,L:p.L,i:p.i,W:t,T:t+p.L});t+=p.L;});
+    var total=t;
+    var g=document.getElementById('gantt'),tk=document.getElementById('ticks');
+    g.innerHTML='';tk.innerHTML='';
+    rows.forEach(function(r,k){
+      var d=document.createElement('div');
+      d.style.flex=r.L+' 0 0';
+      d.style.background=shades[k%shades.length];
+      d.style.color=(k%2===1)?'var(--hl-ink)':'var(--ink)';
+      d.textContent=r.n;
+      d.title=r.n+'：'+r.W+' → '+r.T;
+      g.appendChild(d);
+    });
+    var marks=[0].concat(rows.map(function(r){return r.T;}));
+    marks.forEach(function(m,k){
+      var s=document.createElement('span');
+      s.textContent=m;
+      s.style.left=(m/total*100)+'%';
+      s.className=(k%2===0?'hi':'lo')+(k===0?' first':'')+(k===marks.length-1?' last':'');
+      tk.appendChild(s);
+    });
+    var sorted=rows.slice().sort(function(a,b){return a.i-b.i;});
+    document.getElementById('gtable').innerHTML=sorted.map(function(r){
+      return '<tr><td><b>'+r.n+'</b></td><td class="num">'+r.L+'</td><td class="num">'+r.W+'</td><td class="num">'+r.T+'</td></tr>';
+    }).join('');
+    var sumT=0,sumW=0;rows.forEach(function(r){sumT+=r.T;sumW+=r.W;});
+    var fmt=function(x){return Math.round(x*100)/100;};
+    var Ts=sorted.map(function(r){return r.T;}).join(' + ');
+    var Ws=sorted.map(function(r){return r.W;}).join(' + ');
+    document.getElementById('gavg').innerHTML=
+      '<div>平均輪轉時間 AT<b>'+fmt(sumT/5)+'</b><small>('+Ts+') ÷ 5</small></div>'+
+      '<div>平均等待時間 AW<b>'+fmt(sumW/5)+'</b><small>('+Ws+') ÷ 5</small></div>';
+    document.getElementById('gnote').textContent = mode==='sjn'
+      ? '同樣 5 個工作，改成短的先做：平均等待時間從 548 降到 315.6。代價是最長的 P3 被排到最後，如果一直有短工作進來，它可能一直等不到（飢餓）。'
+      : '這就是講義第 49 頁的答案：AT ＝ 788.4、AW ＝ 548。最短的 P5 只要 92，卻排在最後等了 1110。';
+    document.getElementById('b-fcfs').className = mode==='fcfs'?'on':'';
+    document.getElementById('b-sjn').className = mode==='sjn'?'on':'';
+  }
+  document.getElementById('b-fcfs').addEventListener('click',function(){render('fcfs');});
+  document.getElementById('b-sjn').addEventListener('click',function(){render('sjn');});
+  render('fcfs');
+
+  /* ---------- Semaphore parking lot ---------- */
+  var CAP=3,S=CAP,lot=[],queue=[],nextId=1;
+  function draw(){
+    document.getElementById('semval').textContent=S;
+    var l=document.getElementById('lot');l.innerHTML='';
+    for(var i=0;i<CAP;i++){
+      var d=document.createElement('div');
+      d.className='slot'+(lot[i]?' full':'');
+      d.textContent=lot[i]?('車'+lot[i]):'空位';
+      l.appendChild(d);
+    }
+    var q=document.getElementById('queue');
+    q.innerHTML=queue.length?queue.map(function(c){return '<span>車'+c+'</span>';}).join(''):'<span class="small muted" style="background:none;border:none;color:var(--muted)">（沒有人在等）</span>';
+  }
+  function say(t){document.getElementById('semlog').textContent=t;}
+  document.getElementById('btnP').addEventListener('click',function(){
+    var id=nextId++;
+    if(S>0){
+      S--;lot.push(id);
+      say('車'+id+' 做 P()：S 原本大於 0，減 1 變成 '+S+'，直接開進去停。');
+    }else{
+      queue.push(id);
+      say('車'+id+' 做 P()：S 已經是 0，沒有空位，只好在門口排隊等。這就是「P 時值為 0 就要等待」。');
+    }
+    draw();
+  });
+  document.getElementById('btnV').addEventListener('click',function(){
+    if(!lot.length){say('停車場裡沒有車，沒有人能做 V()。');return;}
+    var out=lot.shift();
+    if(queue.length){
+      var w=queue.shift();lot.push(w);
+      say('車'+out+' 開走做 V()，空出一個位子，馬上叫醒門口的車'+w+' 開進去，所以 S 仍然是 '+S+'。');
+    }else{
+      S++;
+      say('車'+out+' 開走做 V()：S 加 1 變成 '+S+'。');
+    }
+    draw();
+  });
+  document.getElementById('btnR').addEventListener('click',function(){
+    S=CAP;lot=[];queue=[];nextId=1;draw();
+    say('重來了。按「來一台車」看看。');
+  });
+  draw();
+
+  /* ---------- Dining philosophers figure ---------- */
+  var ns='http://www.w3.org/2000/svg',g=document.getElementById('phil'),cx=160,cy=160;
+  function el(tag,attrs,txt){var e=document.createElementNS(ns,tag);for(var k in attrs){e.setAttribute(k,attrs[k]);}if(txt){e.textContent=txt;}return e;}
+  for(var k=0;k<5;k++){
+    var a=(-90+72*k)*Math.PI/180,b=(-90+36+72*k)*Math.PI/180;
+    g.appendChild(el('line',{x1:cx+52*Math.cos(b),y1:cy+52*Math.sin(b),x2:cx+90*Math.cos(b),y2:cy+90*Math.sin(b),'class':'s-stick'}));
+    var px=cx+122*Math.cos(a),py=cy+122*Math.sin(a);
+    g.appendChild(el('circle',{cx:px,cy:py,r:24,'class':'s-node-a'}));
+    g.appendChild(el('text',{x:px,y:py+5,'text-anchor':'middle','class':'s-t'},'P'+(k+1)));
+  }
+
+  /* ---------- nav scroll spy ---------- */
+  var links=[].slice.call(document.querySelectorAll('#navrow a'));
+  var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'));});
+  function spy(){
+    var y=window.scrollY+90,cur=0;
+    secs.forEach(function(s,i){if(s&&s.offsetTop<=y){cur=i;}});
+    links.forEach(function(a,i){
+      var on=i===cur;
+      if(on!==a.classList.contains('on')){
+        a.classList.toggle('on',on);
+        if(on&&a.scrollIntoView){var row=document.getElementById('navrow');row.scrollLeft=a.offsetLeft-row.offsetLeft-16;}
+      }
+    });
+  }
+  window.addEventListener('scroll',spy,{passive:true});
+  spy();
+})();
+</script>
+
+<script src="../../apps/embed.js"></script>
+</body>
+</html>

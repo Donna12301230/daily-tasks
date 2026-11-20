@@ -1,0 +1,1728 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>鍾雅婷每日任務</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Layout: 手帳式工作台。頂部日期抬頭＋黏住的分頁（今天｜各區域｜擴充），區域裡再用模組分頁切換。「今天」是兩欄：左邊任務流，右邊學習時段、單字、倒數。螢光筆黃只拿來標「今天」。 */
+:root {
+  --bg: #f3f5f9; --surface: #ffffff; --sunk: #e9edf3; --ink: #1c2333; --muted: #5b6678; --line: #d8dee8;
+  --accent: #2b3f7a; --accent-ink: #ffffff; --accent-soft: #e2e7f5;
+  --mark: #f2c230; --mark-soft: #fcf0c4; --mark-ink: #5a4300;
+  --ok: #23774f; --ok-soft: #dcf0e5; --warn: #9a5b00; --warn-soft: #fbecd2; --bad: #b42a3c; --bad-soft: #f8e0e4;
+  --c1: #2f6fb0; --c2: #7d4cb8; --c3: #2a8259; --c4: #b9651c; --c5: #be3a5b; --c6: #4a5b72;
+  --font-display: "LXGW WenKai TC", "Noto Sans TC", "Microsoft JhengHei", serif;
+  --font-body: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12151c; --surface: #1a1f29; --sunk: #232a37; --ink: #e3e7ef; --muted: #98a2b4; --line: #2e3544;
+  --accent: #9fb4f0; --accent-ink: #10162a; --accent-soft: #263055;
+  --mark: #e8bb3a; --mark-soft: #3a3115; --mark-ink: #f6d77a;
+  --ok: #6fcf9c; --ok-soft: #173427; --warn: #e8b25f; --warn-soft: #3a2c14; --bad: #f08a99; --bad-soft: #3d1d24;
+  --c1: #7fb0e6; --c2: #b996ec; --c3: #74c99c; --c4: #e6a15f; --c5: #ef8ba3; --c6: #a3b1c6;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12151c; --surface: #1a1f29; --sunk: #232a37; --ink: #e3e7ef; --muted: #98a2b4; --line: #2e3544;
+  --accent: #9fb4f0; --accent-ink: #10162a; --accent-soft: #263055;
+  --mark: #e8bb3a; --mark-soft: #3a3115; --mark-ink: #f6d77a;
+  --ok: #6fcf9c; --ok-soft: #173427; --warn: #e8b25f; --warn-soft: #3a2c14; --bad: #f08a99; --bad-soft: #3d1d24;
+  --c1: #7fb0e6; --c2: #b996ec; --c3: #74c99c; --c4: #e6a15f; --c5: #ef8ba3; --c6: #a3b1c6;
+  color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--font-body); margin: 0 }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg) }
+.wrap { max-width: 1200px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
+a { color: var(--accent) }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+button, input, select, textarea { font: inherit; color: inherit }
+button { cursor: pointer }
+h2, h3, h4 { text-wrap: balance }
+
+/* header + nav */
+header.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; padding-block: 18px 6px }
+.brand { display: flex; align-items: baseline; gap: 10px }
+.brand-name { font: 700 1.55rem/1.2 var(--font-display); letter-spacing: .05em }
+.brand-sub { color: var(--muted); font-size: .88rem; letter-spacing: .14em }
+.status { font-size: .8rem; color: var(--muted); display: inline-flex; align-items: center; gap: 6px }
+.status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--line) }
+.status[data-s="live"]::before { background: var(--ok) }
+.status[data-s="warn"]::before { background: var(--warn) }
+.status[data-s="off"]::before { background: var(--bad) }
+.navbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); border-bottom: 1px solid var(--line) }
+.tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none }
+.tabs a { position: relative; text-decoration: none; color: var(--muted); padding: 9px 14px 11px; font-weight: 500; white-space: nowrap; display: inline-flex; align-items: center; gap: 7px }
+.tabs a:hover { color: var(--ink) }
+.tabs a .sw { width: 8px; height: 8px; border-radius: 2px; background: var(--ac, var(--accent)) }
+.tabs a[aria-current="page"] { color: var(--ink) }
+.tabs a[aria-current="page"]::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--ac, var(--accent)) }
+.tabs .spacer { flex: 1 }
+.subtabs { display: flex; gap: 6px; overflow-x: auto; padding-block: 0 10px; scrollbar-width: none }
+.subtabs a { text-decoration: none; color: var(--muted); padding: 3px 13px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); white-space: nowrap; font-size: .88rem }
+.subtabs a:hover { color: var(--ink); border-color: var(--ac) }
+.subtabs a[aria-current="page"] { background: var(--ac); border-color: var(--ac); color: var(--surface) }
+main.view { padding-block: 20px 72px }
+
+/* controls */
+.btn { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 5px 12px; font-size: .86rem; line-height: 1.35; text-decoration: none; color: var(--ink); white-space: nowrap }
+.btn:hover { border-color: var(--muted) }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink) }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--muted) }
+.btn.ghost:hover { color: var(--ink); background: var(--sunk) }
+.btn.danger { color: var(--bad); border-color: var(--bad); background: var(--surface) }
+.btn.sm { padding: 2px 9px; font-size: .8rem }
+.btn:disabled { opacity: .45; cursor: default }
+input[type="text"], input[type="url"], input[type="date"], input[type="number"], input[type="search"], select, textarea { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 5px 9px; font-size: .9rem; max-width: 100%; min-width: 0 }
+textarea { width: 100%; resize: vertical; line-height: 1.65 }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent-soft); outline-offset: 0; border-color: var(--accent) }
+input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); margin: 0; flex: none }
+label.inline { display: inline-flex; align-items: center; gap: 6px; font-size: .86rem; color: var(--muted); flex-wrap: wrap }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums }
+.muted { color: var(--muted) }
+.small { font-size: .82rem }
+.grow { flex: 1 1 auto; min-width: 0 }
+.btnrow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
+.empty { color: var(--muted); padding: 22px 16px; text-align: center; font-size: .9rem }
+.empty b { color: var(--ink); display: block; font-weight: 500; margin-bottom: 2px }
+.confirm { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: .84rem }
+
+/* panels & rows */
+.stack { display: grid; gap: 14px; align-content: start; min-width: 0 }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; min-width: 0 }
+.ph { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 11px 14px; border-bottom: 1px solid var(--line) }
+.ph h3 { margin: 0; font-size: .98rem; font-weight: 700 }
+.ph .sum { margin-left: auto; color: var(--muted); font-size: .8rem }
+.ph.bad h3 { color: var(--bad) }
+.pb { padding: 12px 14px }
+h3.sec { margin: 0; font: 700 1.18rem/1.3 var(--font-display) }
+.row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 14px; border-top: 1px solid var(--line) }
+.rows > .row:first-child, .rows > .check:first-child { border-top: 0 }
+.row > input[type="checkbox"] { margin-top: 3px }
+.row-main { flex: 1 1 auto; min-width: 0; cursor: pointer }
+.row-title { display: block; overflow-wrap: anywhere }
+.row-note { display: block; color: var(--muted); font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.is-done .row-title { text-decoration: line-through; color: var(--muted) }
+.row-meta { display: flex; flex-wrap: wrap; gap: 4px 6px; margin-top: 3px }
+.row-acts { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 2px; flex: none }
+.row-edit { padding: 0 14px 12px 42px }
+.ms-dot { width: 18px; text-align: center; color: var(--ac, var(--accent)); flex: none; font-weight: 700 }
+.dgroup { padding: 9px 14px 3px; font-size: .78rem; color: var(--muted); font-weight: 500; letter-spacing: .04em; border-top: 1px solid var(--line) }
+.rows > .dgroup:first-child { border-top: 0 }
+.check { display: flex; align-items: center; gap: 8px; padding: 7px 14px; border-top: 1px solid var(--line) }
+.check .grow { overflow-wrap: anywhere; cursor: pointer }
+.check.is-done .grow { text-decoration: line-through; color: var(--muted) }
+.addline { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 14px; border-top: 1px solid var(--line); align-items: center }
+.addline input[type="text"] { flex: 1 1 180px }
+.fold { margin: 6px 10px 8px }
+
+/* chips */
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: .74rem; line-height: 1.55; padding: 0 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis }
+.chip.ctx { border-color: transparent; color: var(--ac, var(--accent)); background: color-mix(in srgb, var(--ac, var(--accent)) 13%, transparent) }
+.chip.bad { color: var(--bad); border-color: transparent; background: var(--bad-soft) }
+.chip.warn { color: var(--warn); border-color: transparent; background: var(--warn-soft) }
+.chip.mark { color: var(--mark-ink); border-color: transparent; background: var(--mark-soft) }
+.chip.ok { color: var(--ok); border-color: transparent; background: var(--ok-soft) }
+.chip.doing { color: var(--accent); border-color: transparent; background: var(--accent-soft) }
+.pill { font-size: .72rem; padding: 1px 8px; border-radius: 999px; white-space: nowrap; flex: none }
+.st-plan { background: var(--sunk); color: var(--muted) }
+.st-active { background: var(--accent-soft); color: var(--accent) }
+.st-hold { background: var(--warn-soft); color: var(--warn) }
+.st-done { background: var(--ok-soft); color: var(--ok) }
+.meter { display: block; height: 7px; border-radius: 4px; background: var(--sunk); overflow: hidden }
+.meter i { display: block; height: 100%; background: var(--ac, var(--accent)); border-radius: 4px }
+.meter.full i { background: var(--ok) }
+.dot { width: 10px; height: 10px; border-radius: 3px; background: var(--pc, var(--ac)); flex: none }
+
+/* today */
+.hero { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px 24px; align-items: end; padding-bottom: 18px; margin-bottom: 18px; border-bottom: 1px dashed var(--line) }
+.hero-date { font-family: var(--font-display); line-height: 1.1 }
+.hero-date .d { font-size: 2.6rem; font-weight: 700; background: linear-gradient(transparent 60%, var(--mark-soft) 60%); padding: 0 4px }
+.hero-date .w { font-size: 1.1rem; color: var(--muted); margin-left: 8px }
+.hero-sum { color: var(--muted); font-size: .9rem; margin-top: 8px }
+.hero-sum b { color: var(--ink); font-family: var(--font-mono); font-weight: 600 }
+.countdowns { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end }
+.cd { display: grid; grid-template-columns: auto minmax(0, auto); align-items: center; gap: 0 8px; padding: 6px 12px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); text-decoration: none; color: var(--ink); max-width: 260px }
+.cd b { font: 600 1.4rem/1 var(--font-mono); grid-row: span 2 }
+.cd span { font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.cd small { color: var(--muted); font-size: .72rem }
+.cd.soon b { color: var(--bad) }
+.today-grid { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr); gap: 18px; align-items: start }
+.qadd { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--line) }
+.qadd input[type="text"] { flex: 1 1 220px }
+.qadd select { flex: 0 1 230px }
+.vbig { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px }
+.vbig b { font: 600 2rem/1 var(--font-mono) }
+.prow { display: grid; gap: 6px; width: 100%; text-align: left; background: none; border: 0; border-top: 1px solid var(--line); padding: 10px 14px; color: var(--ink) }
+.rows > .prow:first-child { border-top: 0 }
+.prow:hover { background: var(--sunk) }
+.pr-top { display: flex; align-items: center; gap: 8px }
+.pr-top b { flex: 1 1 auto; min-width: 0; font-weight: 500; overflow-wrap: anywhere }
+
+/* module header & links */
+.mhead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: 18px }
+.mhead h2 { margin: 0; font: 700 1.65rem/1.2 var(--font-display) }
+.type { font-size: .76rem; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 0 6px; white-space: nowrap }
+.mlinks { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-left: auto }
+.lk { display: inline-flex; align-items: center; gap: 4px; font-size: .84rem; padding: 3px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); text-decoration: none; color: var(--ink); max-width: 100% }
+.lk:hover { border-color: var(--ac, var(--accent)) }
+.lk::after { content: "↗"; color: var(--muted); font-size: .8em }
+.ledit { display: grid; gap: 6px; padding: 12px 14px }
+.lrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto; gap: 6px; align-items: center }
+.lgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px }
+.lcard { display: grid; gap: 4px; padding: 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); text-decoration: none; color: var(--ink); min-width: 0 }
+.lcard:hover { border-color: var(--ac) }
+.lcard b { font-weight: 500; overflow-wrap: anywhere }
+.lcard span { color: var(--muted); font-size: .78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 14px }
+.seg { display: inline-flex; flex-wrap: wrap; gap: 4px }
+.seg button { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 3px 11px; font-size: .82rem; color: var(--muted) }
+.seg button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg) }
+.fields { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 12px; align-items: center; font-size: .88rem }
+.fields > span { color: var(--muted) }
+.swatches { display: flex; gap: 6px; flex-wrap: wrap }
+.swatches button { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--surface); background: var(--sc); box-shadow: 0 0 0 1px var(--line) }
+.swatches button[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink) }
+.title-input { font: 700 1.4rem/1.3 var(--font-display) !important; border-color: transparent !important; background: transparent !important; padding: 2px 6px !important; flex: 1 1 200px }
+.title-input:hover { border-color: var(--line) !important }
+
+/* timeline */
+.tl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); margin-bottom: 16px }
+.tl { position: relative }
+.tl-row { display: grid; grid-template-columns: 180px minmax(0, 1fr); border-top: 1px solid var(--line); min-height: 36px }
+.tl-row.head { border-top: 0; min-height: 30px }
+.tl-name { position: sticky; left: 0; z-index: 2; background: var(--surface); padding: 7px 12px; font-size: .84rem; border: 0; border-right: 1px solid var(--line); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; color: var(--ink) }
+button.tl-name:hover { color: var(--accent) }
+.tl-track { position: relative; overflow: hidden }
+.tl-months { display: flex; height: 100% }
+.tl-months span, .tl-grid span { flex: none; border-left: 1px solid var(--line) }
+.tl-months span { font: .72rem var(--font-mono); color: var(--muted); padding: 7px 0 0 6px; white-space: nowrap; overflow: hidden }
+.tl-grid { position: absolute; inset: 0; display: flex; pointer-events: none }
+.tl-grid span { border-left-color: var(--sunk) }
+.tl-bar { position: absolute; top: 10px; height: 16px; border-radius: 5px; background: var(--pc); min-width: 4px }
+.tl-bar.done { opacity: .35 }
+.tl-ms { position: absolute; top: 12px; width: 12px; height: 12px; margin-left: -6px; transform: rotate(45deg); background: var(--surface); border: 2px solid var(--ink); border-radius: 2px; z-index: 1 }
+.tl-ms.done { background: var(--ink) }
+.tl-today { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--mark); z-index: 1; pointer-events: none }
+
+/* projects */
+.pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px }
+.pcard { display: grid; gap: 8px; align-content: start; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; color: var(--ink); min-width: 0 }
+.pcard:hover { border-color: var(--pc) }
+.pc-top { display: flex; align-items: center; gap: 8px }
+.pc-top b { flex: 1 1 auto; min-width: 0; font-weight: 700; overflow-wrap: anywhere }
+.pc-line { display: flex; justify-content: space-between; gap: 8px; font-size: .8rem; color: var(--muted) }
+.pc-line > span:first-child { min-width: 0; overflow-wrap: anywhere }
+.pd { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 14px; align-items: start }
+
+/* board */
+.board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: start }
+.col { background: var(--sunk); border-radius: 12px; padding: 8px; min-height: 140px; display: grid; gap: 8px; align-content: start; min-width: 0 }
+.col.over { outline: 2px dashed var(--accent); outline-offset: -2px }
+.col-h { display: flex; align-items: center; gap: 6px; padding: 3px 6px; font-weight: 700; font-size: .9rem }
+.col-h .n { font: .78rem var(--font-mono); color: var(--muted); font-weight: 400 }
+.colpick { display: none; margin-bottom: 10px }
+.col-empty { margin: 0; padding: 14px 6px; text-align: center; color: var(--muted); font-size: .8rem }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; display: grid; gap: 6px; min-width: 0 }
+.card[draggable="true"] { cursor: grab }
+.card.dragging { opacity: .45 }
+.card-t { font-size: .9rem; overflow-wrap: anywhere; text-align: left; background: none; border: 0; padding: 0; color: var(--ink); display: flex; gap: 6px; align-items: baseline }
+.card-t:hover { color: var(--accent) }
+.card-b { display: flex; flex-wrap: wrap; gap: 4px; align-items: center }
+.card-b .mv { margin-left: auto; display: flex; gap: 2px }
+.pri { width: 8px; height: 8px; border-radius: 50%; background: var(--bad); flex: none; transform: translateY(-1px) }
+.cedit { display: grid; gap: 7px; padding-top: 8px; border-top: 1px dashed var(--line) }
+.cedit .r2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px }
+
+/* study plan */
+.goals { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start }
+.goal-h { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding: 12px 14px; border-bottom: 1px solid var(--line) }
+.goal-h h3 { margin: 0; font: 700 1.14rem/1.35 var(--font-display) }
+.goal-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; grid-column: 1 / -1 }
+.goal-note { grid-column: 1 / -1; margin: 0; font-size: .84rem; color: var(--muted) }
+.ring { --p: 0; width: 46px; height: 46px; border-radius: 50%; background: conic-gradient(var(--ac) calc(var(--p) * 1%), var(--sunk) 0); display: grid; place-items: center }
+.ring span { width: 36px; height: 36px; border-radius: 50%; background: var(--surface); display: grid; place-items: center; font: 600 .7rem var(--font-mono) }
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)) }
+.wday { border-left: 1px solid var(--line); padding: 8px; min-width: 0; display: grid; gap: 6px; align-content: start; min-height: 110px }
+.wday:first-child { border-left: 0 }
+.wday.is-today { background: var(--mark-soft) }
+.wday h4 { margin: 0; font-size: .8rem; font-weight: 500; color: var(--muted); display: flex; justify-content: space-between; gap: 4px; flex-wrap: wrap }
+.blk { background: var(--sunk); border-radius: 8px; padding: 6px 8px; font-size: .8rem; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 2px 6px; align-items: start }
+.wday.is-today .blk { background: var(--surface) }
+.blk input[type="checkbox"] { width: 15px; height: 15px; margin-top: 2px }
+.blk label { overflow-wrap: anywhere; cursor: pointer }
+.blk small { grid-column: 2 / -1; color: var(--muted) }
+.blk.done label { text-decoration: line-through; color: var(--muted) }
+.blk .btn { padding: 0 4px }
+.daypick { display: flex; flex-wrap: wrap; gap: 4px }
+.daypick label { display: inline-flex; align-items: center; gap: 3px; font-size: .84rem; border: 1px solid var(--line); border-radius: 8px; padding: 2px 8px; background: var(--surface); cursor: pointer }
+.daypick input { width: 14px; height: 14px }
+
+/* notes */
+.ngrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px }
+.ncard { text-align: left; display: grid; gap: 6px; align-content: start; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 13px 14px; color: var(--ink); min-height: 130px; min-width: 0 }
+.ncard:hover { border-color: var(--ac) }
+.nc-top { display: flex; flex-wrap: wrap; gap: 4px }
+.nc-title { font: 700 1.04rem/1.35 var(--font-display); overflow-wrap: anywhere }
+.nc-body { font-size: .84rem; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere }
+.nc-date { font: .74rem var(--font-mono); color: var(--muted) }
+.ned { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start }
+.prose { font-size: .95rem; line-height: 1.8; overflow-wrap: anywhere; max-width: 68ch }
+.prose > :first-child { margin-top: 0 }
+.prose h1, .prose h2, .prose h3 { font-family: var(--font-display); margin: 1em 0 .3em; line-height: 1.35 }
+.prose h1 { font-size: 1.35rem } .prose h2 { font-size: 1.18rem } .prose h3 { font-size: 1.05rem }
+.prose p { margin: 0 0 .7em }
+.prose ul, .prose ol { margin: 0 0 .7em; padding-left: 1.4em }
+.prose code { font-family: var(--font-mono); font-size: .86em; background: var(--sunk); padding: 0 4px; border-radius: 4px }
+.prose mark { background: var(--mark-soft); color: inherit; padding: 0 2px; border-radius: 2px }
+.prose blockquote { margin: 0 0 .7em; padding: 2px 12px; border-left: 3px solid var(--line); color: var(--muted) }
+
+/* exams */
+.exams { display: grid; gap: 12px }
+.exam { display: grid; grid-template-columns: 96px minmax(0, 1fr) }
+.exam-cd { display: grid; place-content: center; text-align: center; border-right: 1px solid var(--line); padding: 12px 6px }
+.exam-cd b { font: 600 2.1rem/1 var(--font-mono) }
+.exam-cd small { color: var(--muted); font-size: .76rem; margin-top: 4px }
+.exam.soon .exam-cd b { color: var(--bad) }
+.exam-body { padding: 12px 14px; display: grid; gap: 7px; min-width: 0 }
+.exam-body h3 { margin: 0; font: 700 1.12rem/1.35 var(--font-display); display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.exam-body p { margin: 0 }
+.exam-edit { grid-column: 1 / -1; border-top: 1px solid var(--line) }
+.tscroll { overflow-x: auto }
+table.t { width: 100%; border-collapse: collapse; font-size: .86rem }
+table.t th, table.t td { text-align: left; padding: 8px 12px; border-top: 1px solid var(--line); vertical-align: top }
+table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
+
+/* vocab */
+.vtop { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 14px; margin-bottom: 22px }
+.tgt-in { width: 74px }
+.bars { display: flex; align-items: flex-end; gap: 4px; position: relative }
+.bars .b { flex: 1 1 0; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 3px }
+.bars .b i { width: 100%; max-width: 22px; background: var(--ac); border-radius: 4px 4px 1px 1px; min-height: 2px }
+.bars .b.miss i { background: color-mix(in srgb, var(--ac) 35%, var(--sunk)) }
+.bars .b small { font: .66rem/16px var(--font-mono); color: var(--muted); height: 16px }
+.bars .b.now small { color: var(--ink); font-weight: 600 }
+.bars .tgt { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--warn); pointer-events: none }
+.flash { display: grid; justify-items: center; gap: 14px; padding: 36px 16px 40px; text-align: center }
+.flash .w { font: 700 2.4rem/1.2 var(--font-display); overflow-wrap: anywhere }
+.flash .m { font-size: 1.15rem }
+.flash .ex { color: var(--muted); font-size: .92rem; max-width: 52ch }
+.flash kbd { font: .72rem var(--font-mono); border: 1px solid currentColor; border-radius: 4px; padding: 0 4px; color: inherit; opacity: .7 }
+.wrow { align-items: center; flex-wrap: wrap }
+.wrow .grow { flex: 1 1 160px }
+.wrow .w { font-weight: 700; min-width: 7em; overflow-wrap: anywhere }
+.wrow .grow small { display: block; color: var(--muted); font-size: .8rem }
+.lv { font: .72rem var(--font-mono); padding: 0 6px; border-radius: 4px; background: var(--sunk); color: var(--muted); white-space: nowrap }
+
+/* manage */
+.mg { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 16px; align-items: start }
+.area-h { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 11px 14px; background: var(--sunk); border-top: 1px solid var(--line) }
+.area-h input[type="text"] { font-weight: 700; flex: 1 1 140px }
+.area-h .sw { width: 10px; height: 10px; border-radius: 3px; background: var(--ac) }
+.mrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 9px 14px 9px 30px; border-top: 1px solid var(--line) }
+.mrow input[type="text"] { flex: 1 1 140px }
+.types div { padding: 9px 14px; border-top: 1px solid var(--line); font-size: .86rem; color: var(--muted) }
+.types div:first-child { border-top: 0 }
+.types b { display: block; color: var(--ink); font-weight: 500 }
+
+/* account + built-in sites */
+.acct { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px }
+.who { font-size: .82rem; color: var(--muted) }
+#apphost { background: var(--bg) }
+.appframe { display: block; width: 100%; height: calc(100dvh - var(--navh, 110px)); border: 0; background: var(--bg) }
+.signin { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 14px 16px; margin-bottom: 18px; border-radius: 12px; background: var(--accent-soft); color: var(--ink) }
+.signin p { margin: 0; flex: 1 1 260px; font-size: .9rem }
+.wb-row .row-title small { color: var(--muted); font-size: .78rem; margin-left: 6px }
+
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; align-items: center; gap: 12px; background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 10px; font-size: .88rem; z-index: 40; max-width: calc(100vw - 32px) }
+.toast button { background: none; border: 0; color: var(--mark); font-weight: 700; padding: 0 }
+@media (prefers-reduced-motion: no-preference) {
+  .toast { animation: tin .18s ease-out }
+  @keyframes tin { from { opacity: 0; transform: translate(-50%, 6px) } }
+  .row, .card, .pcard, .ncard { transition: background-color .15s, border-color .15s }
+}
+
+@media (max-width: 900px) {
+  .today-grid, .pd, .ned, .mg, .goals { grid-template-columns: minmax(0, 1fr) }
+  .hero { grid-template-columns: minmax(0, 1fr) }
+  .countdowns { justify-content: flex-start }
+  .board { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+}
+@media (max-width: 680px) {
+  .board, .vtop { grid-template-columns: minmax(0, 1fr) }
+  .colpick { display: inline-flex }
+  .board[data-col="todo"] .col:not([data-drop="todo"]), .board[data-col="doing"] .col:not([data-drop="doing"]),
+  .board[data-col="wait"] .col:not([data-drop="wait"]), .board[data-col="done"] .col:not([data-drop="done"]) { display: none }
+  .week { grid-template-columns: minmax(0, 1fr) }
+  .wday { border-left: 0; border-top: 1px solid var(--line); min-height: 0 }
+  .wday:first-child { border-top: 0 }
+  .lrow { grid-template-columns: minmax(0, 1fr) auto }
+  .lrow input[type="url"] { grid-column: 1 / -1; grid-row: 2 }
+  .exam { grid-template-columns: 72px minmax(0, 1fr) }
+  .exam-cd b { font-size: 1.6rem }
+  .hero-date .d { font-size: 2.1rem }
+  .row-edit { padding-left: 14px }
+  .tl-row { grid-template-columns: 120px minmax(0, 1fr) }
+  .mrow { padding-left: 14px }
+}
+</style>
+<script>window.DT_APP = "daily";</script>
+<script src="fb.js"></script>
+</head>
+<body>
+
+<header class="top wrap">
+  <div class="brand"><span class="brand-name">鍾雅婷</span><span class="brand-sub">每日任務</span></div>
+  <div class="acct"><span class="status" id="status" role="status" data-s="wait">連線中…</span><span id="acct"></span></div>
+</header>
+<div class="navbar">
+  <div class="wrap">
+    <nav class="tabs" id="tabs" aria-label="區域"></nav>
+    <nav class="subtabs" id="subtabs" aria-label="模組" hidden></nav>
+  </div>
+</div>
+<main id="main" class="wrap view"><p class="empty">正在準備今天的任務…</p></main>
+<div id="apphost" hidden></div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ═════════ 基本工具 ═════════ */
+  const main = document.getElementById("main");
+  const tabsEl = document.getElementById("tabs");
+  const subEl = document.getElementById("subtabs");
+  const statusEl = document.getElementById("status");
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const pad = n => String(n).padStart(2, "0");
+  const fmt = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  const parse = s => { const p = String(s).split("-").map(Number); return new Date(p[0], p[1] - 1, p[2]); };
+  const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return fmt(d); };
+  const firstOfNext = s => { const d = parse(s); return fmt(new Date(d.getFullYear(), d.getMonth() + 1, 1)); };
+  const dow = s => parse(s).getDay();
+  const WD = "日一二三四五六";
+  const today = () => fmt(new Date());
+  const md = s => { const d = parse(s); return (d.getMonth() + 1) + "/" + d.getDate(); };
+  const mdy = s => { const d = parse(s); return (d.getFullYear() !== new Date().getFullYear() ? d.getFullYear() + "/" : "") + md(s); };
+  const mdw = s => mdy(s) + "（" + WD[dow(s)] + "）";
+  const ymd = s => String(s).replace(/-/g, "/");
+  const diff = (a, b) => Math.round((parse(b) - parse(a)) / 864e5);
+  const mondayOf = s => addDays(s, -((dow(s) + 6) % 7));
+  const isDate = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
+  const uid = p => p + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const clone = o => JSON.parse(JSON.stringify(o == null ? {} : o));
+  function merge(t, p) {
+    for (const k in p) {
+      const v = p[k];
+      if (v && typeof v === "object" && !Array.isArray(v)) { if (!t[k] || typeof t[k] !== "object" || Array.isArray(t[k])) t[k] = {}; merge(t[k], v); }
+      else t[k] = v;
+    }
+    return t;
+  }
+  const safeUrl = u => { u = String(u || "").trim(); return /^https?:\/\/[^\s"'<>]+$/i.test(u) ? u : ""; };
+  const host = u => { try { return new URL(u).host.replace(/^www\./, ""); } catch (e) { return String(u || ""); } };
+  const val = id => { const el = document.getElementById(id); return el ? String(el.value || "").trim() : ""; };
+  const isChecked = id => { const el = document.getElementById(id); return !!(el && el.checked); };
+  const cur = b => ' aria-current="' + (b ? "page" : "false") + '"';
+  const prs = b => ' aria-pressed="' + (b ? "true" : "false") + '"';
+  const sel = b => (b ? " selected" : "");
+  const chk = b => (b ? " checked" : "");
+  const byDue = (a, b) => { const x = a.due || "9999", y = b.due || "9999"; return x < y ? -1 : x > y ? 1 : (b.pri || 0) - (a.pri || 0) || String(a.t || "").localeCompare(String(b.t || ""), "zh-Hant"); };
+  const byDate = (a, b) => ((a.date || "9999") < (b.date || "9999") ? -1 : (a.date || "9999") > (b.date || "9999") ? 1 : 0);
+  const byDoneDesc = (a, b) => ((b.done || "") > (a.done || "") ? 1 : (b.done || "") < (a.done || "") ? -1 : 0);
+  function toast(msg, undo) {
+    document.querySelectorAll(".toast").forEach(t => t.remove());
+    const t = document.createElement("div");
+    t.className = "toast"; t.setAttribute("role", "status");
+    const s = document.createElement("span"); s.textContent = msg; t.appendChild(s);
+    if (undo) { const b = document.createElement("button"); b.type = "button"; b.textContent = "復原"; b.addEventListener("click", () => { undo(); t.remove(); render(true); }); t.appendChild(b); }
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), undo ? 6000 : 2600);
+  }
+
+  /* ═════════ 模組類型（要擴充新類型，就在這裡加一個） ═════════
+     每個類型 = { label, desc, view(mod) }。view 回傳 HTML 字串，
+     互動用 data-act 交給下面的 CLICK / CHANGE 處理。
+     類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
+  const TYPES = {
+    projectPlan: { label: "專案計畫", desc: "每個專案的目標、範圍、里程碑，加上跨專案的時程總覽。", view: vProjectPlan },
+    projectBoard: { label: "專案管理", desc: "看板：待辦、進行中、等待中、完成，可以拖拉或用箭頭移動。", view: vBoard },
+    studyPlan: { label: "學習規劃", desc: "把學習目標拆成有期限的步驟，再排每週固定讀書時段。", view: vStudyPlan },
+    notes: { label: "筆記", desc: "可以搜尋、依課程分類的筆記，支援簡單排版與螢光筆。", view: vNotes },
+    exams: { label: "考試", desc: "考試倒數、準備清單，考完記下成績。", view: vExams },
+    vocab: { label: "單字", desc: "每日單字目標、14 天紀錄、生字本與翻卡複習。", view: vVocab },
+    tasks: { label: "任務清單", desc: "最簡單的待辦清單，適合生活雜事或任何新領域。", view: vTasks },
+    links: { label: "連結集", desc: "常用網站與工具的入口。", view: vLinks },
+    // 內建網站：程式碼放在 apps/，由 tools/build.py 從原本的 repo 複製進來（工作台直接在 apps/workbench 維護）
+    workbenchApp: { label: "工作台", desc: "月曆、甘特圖、IG 發文、讀書進度與清單（原本的赫滋與羊工作台）。", src: "apps/workbench/index.html" },
+    vocabApp: { label: "單字練習", desc: "閃卡、不熟清單、每天 10 個今日複習、考試和發音。", src: "apps/vocab/index.html" },
+    nsysuApp: { label: "考古題練習", desc: "中山資管 94–115 學年度考古題：依年度、依章節、錯題本、英文術語。", src: "apps/nsysu/index.html" },
+    osNotesApp: { label: "作業系統筆記", desc: "空大作業系統的白話筆記、考試重點、小測驗和互動示範。", src: "apps/os-notes/index.html" },
+    genaiApp: { label: "生成式 AI 講義", desc: "一講一頁的課程講義、名詞對照和自我檢核。", src: "apps/genai/index.html" },
+  };
+  const DEFAULT_CFG = {
+    areas: [{ id: "work", name: "工作", color: 1 }, { id: "learn", name: "學習", color: 2 }],
+    mods: [
+      { id: "proj-plan", area: "work", type: "projectPlan", name: "專案計畫" },
+      { id: "proj-board", area: "work", type: "projectBoard", name: "專案管理" },
+      { id: "workbench", area: "work", type: "workbenchApp", name: "工作台" },
+      { id: "study-plan", area: "learn", type: "studyPlan", name: "規劃" },
+      { id: "notes", area: "learn", type: "notes", name: "筆記" },
+      { id: "os-notes", area: "learn", type: "osNotesApp", name: "作業系統" },
+      { id: "genai", area: "learn", type: "genaiApp", name: "生成式 AI" },
+      { id: "exams", area: "learn", type: "exams", name: "考試" },
+      { id: "nsysu", area: "learn", type: "nsysuApp", name: "考古題" },
+      { id: "vocab", area: "learn", type: "vocabApp", name: "單字" },
+    ],
+  };
+  const TASK_ST = { todo: "待辦", doing: "進行中", wait: "等待中", done: "完成" };
+  const ST_ORDER = ["todo", "doing", "wait", "done"];
+  const PROJ_ST = { plan: "規劃中", active: "進行中", hold: "暫停", done: "完成" };
+  const EXAM_KINDS = ["期中考", "期末考", "檢定", "入學考", "面試", "其他"];
+  const INTERVALS = [0, 1, 2, 4, 7, 15, 30];
+
+  /* ═════════ 狀態 ═════════ */
+  const COLS = ["mods", "tasks", "projects", "goals", "notes", "exams", "words", "days"];
+  const S = { cfg: null, mods: {}, tasks: {}, projects: {}, goals: {}, notes: {}, exams: {}, words: {}, days: {} };
+  const ui = { proj: null, pstat: "all", pnew: false, tedit: null, bproj: {}, showDone: {}, showLater: {}, bcol: {}, gedit: null, gnew: false, gopen: {}, gmore: {}, rnew: false,
+    note: null, nq: "", ncourse: "", nreview: false, exam: null, enew: false, wfilter: "all", wq: "", review: null, ledit: null, confirm: null,
+    qaTo: null, exportText: null, openDone: {} };
+  let db = null, canWrite = true, live = false, warnedNoDb = false, signedOut = false, wbDb = null;
+
+  const cfg = () => (S.cfg && Array.isArray(S.cfg.areas) && Array.isArray(S.cfg.mods) ? S.cfg : DEFAULT_CFG);
+  const areaOf = id => cfg().areas.find(a => a.id === id);
+  const modById = id => cfg().mods.find(m => m.id === id);
+  const modsOfArea = aid => cfg().mods.filter(m => m.area === aid && !m.hidden);
+  const acol = a => "var(--c" + ((a && a.color) || 6) + ")";
+  const acolByArea = aid => acol(areaOf(aid));
+  const pcol = p => "var(--c" + ((p && p.c) || 1) + ")";
+  const modDoc = mid => S.mods[mid] || {};
+  const modLinks = mid => (Array.isArray(modDoc(mid).links) ? modDoc(mid).links : []);
+  const modOfType = (area, type) => (cfg().mods.find(m => m.area === area && m.type === type) || {}).id;
+  const arr = col => Object.keys(S[col] || {}).map(id => Object.assign({ id }, S[col][id]));
+  const dayLog = d => { const m = S.days[d.slice(0, 7)]; return (m && m.d && m.d[d]) || {}; };
+
+  /* ═════════ 寫入：本機先更新，再排隊存進資料庫（同一份文件一次只寫一筆） ═════════ */
+  const chains = {}, known = new Set(), firstSeen = new Set(), confirmed = new Set();
+  function queue(path, fn) {
+    chains[path] = (chains[path] || Promise.resolve()).then(fn).catch(err => {
+      const code = err && err.code;
+      if (code === "invalid_argument") { canWrite = false; toast("這次修改沒有存到：你目前只能檢視"); setStatus("warn", "唯讀檢視"); }
+      else if (code === "quota_exceeded") toast("資料庫已經滿了，請先刪掉一些舊資料");
+      else toast("儲存失敗，請稍後再試一次");
+    });
+  }
+  function guard() {
+    if (!canWrite) { toast("你目前只能檢視，修改不會被儲存"); return false; }
+    if (db && firstSeen.size < COLS.length + 1) { toast("資料還在讀取，請稍等一下再改"); return false; }
+    if (!db && !warnedNoDb) { warnedNoDb = true; toast("還沒登入，這次的修改不會被儲存"); }
+    return true;
+  }
+  const refOf = (col, id) => db.collection(col).doc(id);
+  function put(col, id, data) {
+    if (!guard()) return false;
+    S[col] = Object.assign({}, S[col], { [id]: data });
+    if (db) { const path = col + "/" + id; queue(path, () => refOf(col, id).set(data).then(() => known.add(path))); }
+    schedule(); return true;
+  }
+  function patch(col, id, p, quiet) {
+    if (!guard()) return false;
+    S[col] = Object.assign({}, S[col], { [id]: merge(clone(S[col][id] || {}), p) });
+    if (db) {
+      const path = col + "/" + id;
+      queue(path, async () => {
+        const ref = refOf(col, id);
+        if (known.has(path)) return ref.update(p);
+        const snap = await ref.get();
+        if (snap.exists) { known.add(path); return ref.update(p); }
+        await ref.set(clone(S[col][id] || p)); known.add(path);
+      });
+    }
+    if (!quiet) schedule();
+    return true;
+  }
+  function del(col, id) {
+    if (!guard()) return false;
+    const n = Object.assign({}, S[col]); delete n[id]; S[col] = n;
+    if (db) { const path = col + "/" + id; queue(path, () => refOf(col, id).delete().then(() => known.delete(path))); }
+    schedule(); return true;
+  }
+  function setCfg(next) {
+    if (!guard()) return false;
+    S.cfg = next;
+    if (db) queue("cfg/main", () => db.doc("cfg/main").set(next).then(() => known.add("cfg/main")));
+    schedule(); return true;
+  }
+  const setDay = (d, p) => patch("days", d.slice(0, 7), { d: { [d]: p } });
+
+  /* ═════════ 共用小元件 ═════════ */
+  function dueChip(due, done) {
+    if (!isDate(due)) return "";
+    const n = diff(today(), due);
+    if (done) return '<span class="chip mono">' + mdy(due) + "</span>";
+    if (n < 0) return '<span class="chip bad">逾期 ' + -n + " 天・" + mdy(due) + "</span>";
+    if (n === 0) return '<span class="chip mark">今天</span>';
+    if (n === 1) return '<span class="chip warn">明天</span>';
+    if (n <= 3) return '<span class="chip warn">' + mdw(due) + "</span>";
+    return '<span class="chip">' + mdw(due) + "</span>";
+  }
+  function taskArea(t) {
+    if (t.proj && S.projects[t.proj]) return S.projects[t.proj].area;
+    const g = t.goal && S.goals[t.goal]; const m = modById(g ? g.mod : t.mod);
+    return m ? m.area : null;
+  }
+  function taskCtx(t) {
+    if (t.proj && S.projects[t.proj]) { const p = S.projects[t.proj]; return { label: p.name, ac: pcol(p) }; }
+    if (t.goal && S.goals[t.goal]) { const g = S.goals[t.goal], m = modById(g.mod); return { label: g.name, ac: m ? acolByArea(m.area) : "var(--c6)" }; }
+    const m = modById(t.mod); if (m) return { label: m.name, ac: acolByArea(m.area) };
+    return { label: "未分類", ac: "var(--c6)" };
+  }
+  function linkChip(l, ac) {
+    const u = safeUrl(l.url); if (!u) return "";
+    return '<a class="lk" href="' + esc(u) + '" target="_blank" rel="noopener"' + (ac ? ' style="--ac:' + ac + '"' : "") + ">" + esc(l.t || host(u)) + "</a>";
+  }
+  function confirmBtn(key, label, q) {
+    if (ui.confirm === key) return '<span class="confirm"><span class="muted">' + esc(q) + '</span><button class="btn danger sm" data-act="confirm" data-k="' + esc(key) + '">確定刪除</button><button class="btn ghost sm" data-act="unconfirm">取消</button></span>';
+    return '<button class="btn ghost sm" data-act="askconfirm" data-k="' + esc(key) + '">' + esc(label) + "</button>";
+  }
+  function taskRow(t, o) {
+    o = o || {};
+    const c = taskCtx(t), done = t.st === "done", id = esc(t.id), k = o.k || "";
+    const meta = (o.noCtx ? "" : '<span class="chip ctx" style="--ac:' + c.ac + '">' + esc(c.label) + "</span>")
+      + dueChip(t.due, done)
+      + (t.st === "doing" ? '<span class="chip doing">進行中</span>' : t.st === "wait" ? '<span class="chip">等待中</span>' : "")
+      + (t.pri ? '<span class="chip bad">重要</span>' : "");
+    const note = t.note ? '<span class="row-note">' + esc(String(t.note).split(/\n/)[0]) + "</span>" : "";
+    const open = ui.tedit === t.id;
+    let h = '<div class="row' + (done ? " is-done" : "") + '"><input type="checkbox" id="ck-' + id + k + '" data-act="tdone" data-id="' + id + '"' + chk(done) + ' aria-label="完成：' + esc(t.t) + '">'
+      + '<label class="row-main" for="ck-' + id + k + '"><span class="row-title">' + esc(t.t) + "</span>" + note + (meta ? '<span class="row-meta">' + meta + "</span>" : "") + "</label>"
+      + '<span class="row-acts">' + (o.acts || "") + '<button class="btn ghost sm" data-act="tedit" data-id="' + id + '" aria-expanded="' + open + '">' + (open ? "收起" : "編輯") + "</button></span></div>";
+    if (open) h += '<div class="row-edit">' + taskEditor(t) + "</div>";
+    return h;
+  }
+  function taskEditor(t) {
+    const area = taskArea(t), id = esc(t.id);
+    const projs = area ? arr("projects").filter(p => p.area === area) : [];
+    const projSel = t.goal || (!projs.length && !t.proj) ? "" : '<select id="te-p-' + id + '" data-act="tfield" data-id="' + id + '" data-k="proj" aria-label="所屬專案"><option value="">不分專案</option>' + projs.map(p => '<option value="' + esc(p.id) + '"' + sel(t.proj === p.id) + ">" + esc(p.name) + "</option>").join("") + "</select>";
+    return '<div class="cedit"><input type="text" id="te-t-' + id + '" value="' + esc(t.t) + '" data-act="tfield" data-id="' + id + '" data-k="t" aria-label="任務名稱">'
+      + '<div class="r2"><label class="inline">開始 <input type="date" id="te-s-' + id + '" value="' + esc(t.start || "") + '" data-act="tfield" data-id="' + id + '" data-k="start"></label>'
+      + '<label class="inline">期限 <input type="date" id="te-d-' + id + '" value="' + esc(t.due || "") + '" data-act="tfield" data-id="' + id + '" data-k="due"></label></div>'
+      + '<div class="r2"><select id="te-st-' + id + '" data-act="tfield" data-id="' + id + '" data-k="st" aria-label="狀態">' + ST_ORDER.map(s => '<option value="' + s + '"' + sel((t.st || "todo") === s) + ">" + TASK_ST[s] + "</option>").join("") + "</select>" + projSel + "</div>"
+      + '<label class="inline"><input type="checkbox" id="te-pri-' + id + '" data-act="tfield" data-id="' + id + '" data-k="pri"' + chk(t.pri) + "> 標為重要</label>"
+      + '<textarea id="te-n-' + id + '" rows="2" data-act="tfield" data-id="' + id + '" data-k="note" placeholder="備註">' + esc(t.note || "") + "</textarea>"
+      + '<div class="btnrow">' + confirmBtn("tdel:" + t.id, "刪除任務", "確定刪除這個任務？") + '<span class="grow"></span><button class="btn sm" data-act="tedit" data-id="' + id + '">收起</button></div></div>';
+  }
+  function checklist(title, hint, list, col, id, field) {
+    const key = field + "-" + esc(id);
+    return '<section class="panel"><div class="ph"><h3>' + esc(title) + '</h3><span class="sum">' + list.filter(x => x.done).length + " / " + list.length + '</span></div><div class="rows">'
+      + (list.length ? list.map((x, i) => '<div class="check' + (x.done ? " is-done" : "") + '"><input type="checkbox" id="cl-' + key + "-" + i + '" data-act="clck" data-col="' + col + '" data-id="' + esc(id) + '" data-f="' + field + '" data-i="' + i + '"' + chk(x.done) + '><label class="grow" for="cl-' + key + "-" + i + '">' + esc(x.t) + '</label><button class="btn ghost sm" data-act="cldel" data-col="' + col + '" data-id="' + esc(id) + '" data-f="' + field + '" data-i="' + i + '" aria-label="移除">✕</button></div>').join("") : '<div class="empty">' + esc(hint) + "</div>")
+      + '</div><div class="addline" data-form><input type="text" id="cl-new-' + key + '" placeholder="新增一項" data-enter="cladd" aria-label="新增一項"><button class="btn sm" data-act="cladd" data-col="' + col + '" data-id="' + esc(id) + '" data-f="' + field + '">加入</button></div></section>';
+  }
+  function milestones() {
+    const out = [];
+    arr("projects").forEach(p => (p.ms || []).forEach(m => { if (isDate(m.date)) out.push({ pid: p.id, id: m.id, t: m.t, date: m.date, done: !!m.done, pname: p.name, c: p.c }); }));
+    return out.sort(byDate);
+  }
+  function msRow(m) {
+    const id = "ms-" + esc(m.pid) + "-" + esc(m.id);
+    return '<div class="row' + (m.done ? " is-done" : "") + '"><input type="checkbox" id="' + id + '" data-act="msdone" data-p="' + esc(m.pid) + '" data-id="' + esc(m.id) + '"' + chk(m.done) + ' aria-label="里程碑完成：' + esc(m.t) + '">'
+      + '<label class="row-main" for="' + id + '"><span class="row-title">◆ ' + esc(m.t) + '</span><span class="row-meta"><span class="chip ctx" style="--ac:' + pcol(m) + '">' + esc(m.pname) + '</span><span class="chip">里程碑</span></span></label></div>';
+  }
+  function examRow(e) {
+    return '<div class="row"><span class="ms-dot" aria-hidden="true">考</span><a class="row-main" href="#m-' + esc(e.mod) + '" style="text-decoration:none;color:inherit"><span class="row-title">' + esc(e.name) + '</span><span class="row-meta"><span class="chip bad">考試</span>' + (e.place ? '<span class="chip">' + esc(e.place) + "</span>" : "") + "</span></a></div>";
+  }
+  const upcomingExams = () => { const t0 = today(); return arr("exams").filter(e => isDate(e.date) && (isDate(e.end) ? e.end : e.date) >= t0).sort(byDate); };
+
+  /* ═════════ 今天 ═════════ */
+  function vToday() {
+    const t0 = today(), wk = addDays(t0, 7);
+    const tasks = arr("tasks"), open = tasks.filter(t => t.st !== "done");
+    const overdue = open.filter(t => isDate(t.due) && t.due < t0).sort(byDue);
+    const dueToday = tasks.filter(t => t.due === t0 || (t.st === "done" && t.done === t0 && isDate(t.due) && t.due < t0))
+      .sort((a, b) => (a.st === "done") - (b.st === "done") || (b.pri || 0) - (a.pri || 0));
+    const doing = open.filter(t => t.st === "doing" && !(isDate(t.due) && t.due <= t0)).sort(byDue);
+    const ms = milestones(), msToday = ms.filter(m => m.date === t0);
+    const exams = upcomingExams(), exToday = exams.filter(e => e.date === t0);
+    const upTasks = open.filter(t => t.st !== "doing" && isDate(t.due) && t.due > t0 && t.due <= wk);
+    const upCount = upTasks.length + ms.filter(m => !m.done && m.date > t0 && m.date <= wk).length;
+    const left = dueToday.filter(t => t.st !== "done").length + msToday.filter(m => !m.done).length;
+    const d = parse(t0);
+    let h = '<section class="hero"><div><div class="hero-date"><span class="d">' + (d.getMonth() + 1) + "月" + d.getDate() + '日</span><span class="w">星期' + WD[d.getDay()] + "</span></div>"
+      + '<div class="hero-sum">今天還有 <b>' + left + "</b> 件" + (overdue.length ? "・逾期 <b>" + overdue.length + "</b> 件" : "") + "・接下來 7 天 <b>" + upCount + "</b> 件</div></div>"
+      + '<div class="countdowns">' + exams.slice(0, 3).map(e => {
+        const n = Math.max(0, diff(t0, e.date));
+        return '<a class="cd' + (n <= 14 ? " soon" : "") + '" href="#m-' + esc(e.mod) + '"><b>' + n + "</b><span>" + esc(e.name) + "</span><small>" + (n === 0 ? "就是今天" : "天後・" + mdw(e.date)) + "</small></a>";
+      }).join("") + "</div></section>";
+
+    h += '<div class="today-grid"><div class="stack">';
+    if (overdue.length) {
+      h += '<section class="panel"><div class="ph bad"><h3>逾期還沒完成</h3><span class="sum">勾掉，或改到今天、明天</span></div><div class="rows">'
+        + overdue.map(t => taskRow(t, { k: "-o", acts: '<button class="btn sm" data-act="tmove" data-id="' + esc(t.id) + '" data-to="' + t0 + '">移到今天</button><button class="btn ghost sm" data-act="tmove" data-id="' + esc(t.id) + '" data-to="' + addDays(t0, 1) + '">明天</button>' })).join("")
+        + "</div></section>";
+    }
+    const todayRows = exToday.map(examRow).join("") + msToday.map(msRow).join("") + dueToday.map(t => taskRow(t)).join("");
+    h += '<section class="panel"><div class="ph"><h3>今天</h3><span class="sum">完成 ' + (dueToday.filter(t => t.st === "done").length + msToday.filter(m => m.done).length) + " / " + (dueToday.length + msToday.length) + "</span></div>"
+      + '<div class="rows">' + (todayRows || '<div class="empty"><b>今天沒有排到期的事</b>在下面新增一件，或到各模組排日期。</div>') + "</div>" + quickAdd() + "</section>";
+    if (doing.length) h += '<section class="panel"><div class="ph"><h3>進行中</h3><span class="sum">' + doing.length + " 件，還沒到期</span></div><div class=\"rows\">" + doing.map(t => taskRow(t, { k: "-g" })).join("") + "</div></section>";
+    let up = "";
+    for (let i = 1; i <= 7; i++) {
+      const dd = addDays(t0, i);
+      const rows = exams.filter(e => e.date === dd).map(examRow).join("") + ms.filter(m => m.date === dd && !m.done).map(msRow).join("") + upTasks.filter(t => t.due === dd).sort(byDue).map(t => taskRow(t, { k: "-u" })).join("");
+      if (rows) up += '<div class="dgroup">' + mdw(dd) + (i === 1 ? "・明天" : "") + "</div>" + rows;
+    }
+    h += '<section class="panel"><div class="ph"><h3>接下來 7 天</h3><span class="sum">' + upCount + ' 件</span></div><div class="rows">' + (up || '<div class="empty">這週後面還沒有排到期的事。</div>') + "</div></section>";
+    h += '</div><div class="stack">' + sideWorkbench() + sideRoutine() + sideApps() + sideVocab() + sideProjects() + sideLinks() + "</div></div>";
+    return (signedOut ? '<div class="signin"><p>用 Google 登入後，任務、專案和工作台會存到你的帳號，手機和電腦會同步。</p><button class="btn primary" data-act="signin">用 Google 登入</button></div>' : "") + h;
+  }
+  /* 今天頁：直接讀內建網站的進度（同一個網域，資料在這台裝置的瀏覽器裡） */
+  const readLS = k => { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } };
+  function vocabProgress() {
+    const s = readLS("vocab-trainer-v2"); if (!s || !s.banks) return null;
+    const P = s.banks[s.cur] || {}, log = P.dailyLog || {}, t0 = today();
+    const d = P.daily && P.daily.date === t0 ? P.daily : null;
+    let n = 0, x = log[t0] ? t0 : addDays(t0, -1);
+    while (log[x] && n < 999) { n++; x = addDays(x, -1); }
+    return { started: !!d, total: d ? d.ids.length : 0, done: d ? d.done.filter(id => d.ids.includes(id)).length : 0, complete: !!log[t0], streak: n, stars: Object.keys(P.star || {}).length };
+  }
+  function nsysuProgress() {
+    const s = readLS("nsysu-pq-v1"); if (!s) return null;
+    const c = { ok: 0, bad: 0, idk: 0 };
+    Object.keys(s).forEach(pid => Object.values((s[pid] && s[pid].q) || {}).forEach(q => { if (q && c[q.s] != null) c[q.s]++; }));
+    return c;
+  }
+  function sideApps() {
+    let h = "";
+    const vm = cfg().mods.find(x => x.type === "vocabApp" && !x.hidden);
+    if (vm) {
+      const v = vocabProgress(), pct = v && v.total ? Math.round(v.done / v.total * 100) : 0;
+      h += '<section class="panel" style="--ac:' + acolByArea(vm.area) + '"><div class="ph"><h3>單字・今日複習</h3><span class="sum">' + (v && v.streak ? "連續 " + v.streak + " 天" : "") + '</span></div><div class="pb stack" style="gap:10px">'
+        + (v && v.started && v.total ? '<div class="vbig"><b>' + v.done + '</b><span class="muted">/ ' + v.total + " 個</span>" + (v.complete ? '<span class="chip ok">今天完成</span>' : "") + '</div><span class="meter' + (v.complete ? " full" : "") + '"><i style="width:' + pct + '%"></i></span>'
+          : '<p class="muted small" style="margin:0">' + (!v ? "這台裝置還沒有單字練習紀錄。" : !v.stars ? "不熟清單是空的，今天沒有要複習的字。" : "今天還沒開始複習。") + "</p>")
+        + (v && v.stars ? '<p class="muted small" style="margin:0">不熟清單 ' + v.stars + " 個</p>" : "")
+        + '<div><a class="btn" href="#m-' + esc(vm.id) + '">' + (v && v.started && v.total && !v.complete ? "繼續複習" : "開始練習") + "</a></div></div></section>";
+    }
+    const em = cfg().mods.find(x => x.type === "nsysuApp" && !x.hidden);
+    if (em) {
+      const q = nsysuProgress(), any = q && q.ok + q.bad + q.idk;
+      h += '<section class="panel" style="--ac:' + acolByArea(em.area) + '"><div class="ph"><h3>考古題</h3><span class="sum"><a href="#m-' + esc(em.id) + '">練習</a></span></div><div class="pb">'
+        + (any ? '<div class="btnrow"><span class="chip ok">會 ' + q.ok + '</span><span class="chip bad">錯 ' + q.bad + '</span><span class="chip warn">不會 ' + q.idk + "</span></div>" : '<p class="muted small" style="margin:0">這台裝置還沒有作答紀錄。</p>') + "</div></section>";
+    }
+    return h;
+  }
+  const WB_TAG = { "★": "里程碑", "交": "截止", "課": "課程", "讀": "讀書", "IG": "IG" };
+  function sideWorkbench() {
+    const m = cfg().mods.find(x => x.type === "workbenchApp" && !x.hidden);
+    if (!m || !wbDb) return "";
+    const t0 = today(), order = { "★": 0, "交": 1, "課": 2, "讀": 3 };
+    const items = Object.entries((S.wb && S.wb.items) || {}).map(([id, it]) => Object.assign({ id }, it)).filter(it => !it.deleted && it.date === t0)
+      .sort((a, b) => (order[a.tag] != null ? order[a.tag] : 9) - (order[b.tag] != null ? order[b.tag] : 9));
+    let h = '<section class="panel"><div class="ph"><h3>工作台的今天</h3><span class="sum">' + items.filter(x => x.done).length + " / " + items.length + '・<a href="#m-' + esc(m.id) + '">打開</a></span></div>';
+    if (!S.wbReady) return h + '<div class="empty">讀取中…</div></section>';
+    if (!items.length) return h + '<div class="empty">工作台今天沒有排事項。</div></section>';
+    return h + '<div class="rows">' + items.map(it => '<div class="row wb-row' + (it.done ? " is-done" : "") + '"><input type="checkbox" id="wb-' + esc(it.id) + '" data-act="wbdone" data-id="' + esc(it.id) + '"' + chk(it.done) + ' aria-label="完成：' + esc(it.title) + '">'
+      + '<label class="row-main" for="wb-' + esc(it.id) + '"><span class="row-title">' + esc(it.title) + (it.track ? "<small>" + esc(it.track) + (it.hours ? " " + esc(it.hours) + " 小時" : "") + "</small>" : "") + '</span><span class="row-meta"><span class="chip">' + esc(WB_TAG[it.tag] || it.tag || "") + "</span></span></label></div>").join("") + "</div></section>";
+  }
+  function addTargets() {
+    let h = "";
+    cfg().areas.forEach(a => {
+      let g = "";
+      modsOfArea(a.id).forEach(m => {
+        if (m.type === "projectBoard") {
+          g += '<option value="m:' + esc(m.id) + '"' + sel(ui.qaTo === "m:" + m.id) + ">" + esc(m.name) + "（不分專案）</option>";
+          arr("projects").filter(p => p.area === a.id && p.st !== "done").sort((x, y) => String(x.name).localeCompare(String(y.name), "zh-Hant"))
+            .forEach(p => { g += '<option value="p:' + esc(p.id) + '"' + sel(ui.qaTo === "p:" + p.id) + ">專案・" + esc(p.name) + "</option>"; });
+        } else if (m.type === "studyPlan") {
+          arr("goals").filter(x => x.mod === m.id).forEach(x => { g += '<option value="g:' + esc(x.id) + '"' + sel(ui.qaTo === "g:" + x.id) + ">目標・" + esc(x.name) + "</option>"; });
+        } else if (m.type === "tasks") g += '<option value="m:' + esc(m.id) + '"' + sel(ui.qaTo === "m:" + m.id) + ">" + esc(m.name) + "</option>";
+      });
+      if (g) h += '<optgroup label="' + esc(a.name) + '">' + g + "</optgroup>";
+    });
+    return h;
+  }
+  function quickAdd() {
+    const opts = addTargets();
+    if (!opts) return '<div class="qadd muted small">到「擴充」加一個任務清單或專案管理模組，就能在這裡快速新增。</div>';
+    return '<div class="qadd" data-form><input type="text" id="qa-t" placeholder="新增一件事…" data-enter="qadd" aria-label="任務名稱"><select id="qa-to" aria-label="放到哪裡">' + opts + '</select><input type="date" id="qa-d" value="' + today() + '" aria-label="期限"><button class="btn primary" data-act="qadd">加入</button></div>';
+  }
+  function sideRoutine() {
+    const t0 = today(), wd = dow(t0), st = dayLog(t0).r || {};
+    const mods = cfg().mods.filter(m => m.type === "studyPlan" && !m.hidden);
+    if (!mods.length) return "";
+    const items = [];
+    mods.forEach(m => (modDoc(m.id).routine || []).forEach(r => { if ((r.days || []).includes(wd)) items.push(Object.assign({ mod: m.id }, r)); }));
+    items.sort((a, b) => String(a.time || "99").localeCompare(String(b.time || "99")));
+    const n = items.filter(r => st[r.id]).length;
+    let h = '<section class="panel" style="--ac:' + acolByArea(mods[0].area) + '"><div class="ph"><h3>今日學習時段</h3><span class="sum">' + n + " / " + items.length + "</span></div>";
+    if (!items.length) return h + '<div class="empty"><b>今天沒有固定時段</b>到 <a href="#m-' + esc(mods[0].id) + '">' + esc(mods[0].name) + "</a> 排每週固定時段。</div></section>";
+    return h + '<div class="rows">' + items.map(r => '<div class="row' + (st[r.id] ? " is-done" : "") + '"><input type="checkbox" id="rt-' + esc(r.id) + '" data-act="rtdone" data-id="' + esc(r.id) + '" data-date="' + t0 + '"' + chk(st[r.id]) + '>'
+      + '<label class="row-main" for="rt-' + esc(r.id) + '"><span class="row-title">' + esc(r.t) + '</span><span class="row-meta">' + (r.time ? '<span class="chip mono">' + esc(r.time) + "</span>" : "") + (r.min ? '<span class="chip">' + esc(r.min) + " 分鐘</span>" : "") + "</span></label>"
+      + (r.to && modById(r.to) ? '<a class="btn ghost sm" href="#m-' + esc(r.to) + '">打開' + esc(modById(r.to).name) + "</a>" : safeUrl(r.url) ? '<a class="btn ghost sm" href="' + esc(r.url) + '" target="_blank" rel="noopener">開啟 ↗</a>' : "") + "</div>").join("") + "</div></section>";
+  }
+  const vTarget = mid => Number(modDoc(mid).target) || 50;
+  const vCount = (mid, d) => Number((dayLog(d).vc || {})[mid]) || 0;
+  const dueWords = mid => { const t0 = today(); return arr("words").filter(w => w.mod === mid && (!w.due || w.due <= t0)); };
+  function streak(mid) {
+    const tgt = vTarget(mid); let d = today(), n = 0;
+    if (vCount(mid, d) < tgt) d = addDays(d, -1);
+    while (n < 999 && vCount(mid, d) >= tgt) { n++; d = addDays(d, -1); }
+    return n;
+  }
+  function vAddBtns(mid) {
+    return [10, 25, 50].map(k => '<button class="btn sm" data-act="vadd" data-mod="' + esc(mid) + '" data-n="' + k + '">+' + k + "</button>").join("");
+  }
+  function sideVocab() {
+    return cfg().mods.filter(m => m.type === "vocab" && !m.hidden).map(m => {
+      const tgt = vTarget(m.id), n = vCount(m.id, today()), due = dueWords(m.id).length, pct = Math.min(100, Math.round(n / tgt * 100)), sk = streak(m.id);
+      return '<section class="panel" style="--ac:' + acolByArea(m.area) + '"><div class="ph"><h3>' + esc(m.name) + '</h3><span class="sum"><a href="#m-' + esc(m.id) + '">打開</a></span></div><div class="pb stack" style="gap:10px">'
+        + '<div class="vbig"><b>' + n + '</b><span class="muted">/ ' + tgt + " 個</span>" + (sk ? '<span class="chip ok">連續達標 ' + sk + " 天</span>" : "") + "</div>"
+        + '<span class="meter' + (n >= tgt ? " full" : "") + '"><i style="width:' + pct + '%"></i></span>'
+        + '<div class="btnrow">' + vAddBtns(m.id) + modLinks(m.id).map(l => linkChip(l)).join("") + "</div>"
+        + (due ? '<div><button class="btn" data-act="vreview" data-mod="' + esc(m.id) + '">複習生字本 ' + due + " 個</button></div>" : "")
+        + "</div></section>";
+    }).join("");
+  }
+  function sideProjects() {
+    const ps = arr("projects").filter(p => p.st === "active").sort((a, b) => ((a.end || "9") < (b.end || "9") ? -1 : 1));
+    if (!ps.length) return "";
+    const tasks = arr("tasks");
+    return '<section class="panel"><div class="ph"><h3>進行中的專案</h3><span class="sum">' + ps.length + ' 個</span></div><div class="rows">' + ps.slice(0, 6).map(p => {
+      const ts = tasks.filter(t => t.proj === p.id), dn = ts.filter(t => t.st === "done").length, pct = ts.length ? Math.round(dn / ts.length * 100) : 0;
+      return '<button class="prow" data-act="popen" data-id="' + esc(p.id) + '" style="--pc:' + pcol(p) + ";--ac:" + pcol(p) + '"><span class="pr-top"><span class="dot"></span><b>' + esc(p.name) + '</b><span class="muted mono small">' + dn + "/" + ts.length + '</span></span><span class="meter"><i style="width:' + pct + '%"></i></span></button>';
+    }).join("") + "</div></section>";
+  }
+  function sideLinks() {
+    const seen = new Set(), out = [];
+    cfg().mods.filter(m => !m.hidden).forEach(m => modLinks(m.id).forEach(l => { const u = safeUrl(l.url); if (u && !seen.has(u)) { seen.add(u); out.push({ l, ac: acolByArea(m.area) }); } }));
+    if (!out.length) return "";
+    return '<section class="panel"><div class="ph"><h3>快速入口</h3></div><div class="pb btnrow">' + out.slice(0, 12).map(x => linkChip(x.l, x.ac)).join("") + "</div></section>";
+  }
+
+  /* ═════════ 模組頁共用：標題與相關網站 ═════════ */
+  function modHead(m) {
+    const T = TYPES[m.type], links = modLinks(m.id), editing = ui.ledit === m.id;
+    let h = '<div class="mhead"><h2>' + esc(m.name) + '</h2><span class="type">' + esc(T ? T.label : m.type) + '</span><div class="mlinks">'
+      + (m.type === "links" ? "" : links.map(l => linkChip(l)).join(""))
+      + '<button class="btn ghost sm" data-act="ledit" data-mod="' + esc(m.id) + '" aria-expanded="' + editing + '">' + (m.type === "links" ? "管理連結" : links.length ? "管理連結" : "＋ 加相關網站") + "</button></div></div>";
+    if (editing) {
+      h += '<section class="panel" style="margin-bottom:18px"><div class="ph"><h3>' + (m.type === "links" ? "連結" : "相關網站") + '</h3><span class="sum">改完按 Enter 或點別處就會儲存</span></div><div class="ledit">'
+        + links.map((l, i) => '<div class="lrow"><input type="text" id="lt-' + i + '" value="' + esc(l.t) + '" data-act="lfield" data-mod="' + esc(m.id) + '" data-i="' + i + '" data-k="t" aria-label="名稱"><input type="url" id="lu-' + i + '" value="' + esc(l.url) + '" data-act="lfield" data-mod="' + esc(m.id) + '" data-i="' + i + '" data-k="url" aria-label="網址"><button class="btn ghost sm" data-act="ldel" data-mod="' + esc(m.id) + '" data-i="' + i + '">移除</button></div>').join("")
+        + '<div class="lrow" data-form><input type="text" id="ln-t" placeholder="名稱，例如：作業系統筆記" data-enter="ladd" aria-label="新連結名稱"><input type="url" id="ln-u" placeholder="https://…" data-enter="ladd" aria-label="新連結網址"><button class="btn primary sm" data-act="ladd" data-mod="' + esc(m.id) + '">加入</button></div>'
+        + '<div><button class="btn sm" data-act="ledit" data-mod="' + esc(m.id) + '">完成</button></div></div></section>';
+    }
+    return h;
+  }
+
+  /* ═════════ 時程條（專案總覽、專案任務共用） ═════════ */
+  function timeline(rows, label) {
+    rows = rows.filter(r => isDate(r.start) && isDate(r.end));
+    if (!rows.length) return "";
+    const t0 = today();
+    let a = t0, b = t0;
+    rows.forEach(r => { if (r.start < a) a = r.start; if (r.end > b) b = r.end; (r.ms || []).forEach(x => { if (x.date < a) a = x.date; if (x.date > b) b = x.date; }); });
+    const A = a.slice(0, 7) + "-01", B = firstOfNext(b), total = diff(A, B);
+    const months = []; for (let x = A; x < B; x = firstOfNext(x)) months.push(x);
+    const pos = s => (diff(A, s) / total) * 100;
+    const widths = months.map(x => (diff(x, firstOfNext(x)) / total) * 100);
+    const minW = Math.max(680, 180 + months.length * 64);
+    const grid = '<div class="tl-grid">' + widths.map(w => '<span style="width:' + w + '%"></span>').join("") + "</div>";
+    const tx = pos(t0) + 50 / total;
+    let h = '<div class="tl-wrap" data-keepx="tl" data-todayx="' + Math.round(180 + (minW - 180) * tx / 100) + '"><div class="tl" style="min-width:' + minW + 'px">'
+      + '<div class="tl-row head"><div class="tl-name muted">' + esc(label) + '</div><div class="tl-track"><div class="tl-months">'
+      + months.map((x, i) => { const d = parse(x); return '<span style="width:' + widths[i] + '%">' + (d.getMonth() === 0 || i === 0 ? d.getFullYear() + "/" : "") + (d.getMonth() + 1) + "月</span>"; }).join("")
+      + '</div><div class="tl-today" style="left:' + tx + '%"></div></div></div>';
+    rows.forEach(r => {
+      const l = pos(r.start), w = Math.max(0.5, pos(addDays(r.end, 1)) - l);
+      h += '<div class="tl-row" style="--pc:' + r.c + '">' + (r.act ? '<button class="tl-name" data-act="' + r.act + '" data-id="' + esc(r.id) + '" title="' + esc(r.label) + '">' + esc(r.label) + "</button>" : '<div class="tl-name" title="' + esc(r.label) + '">' + esc(r.label) + "</div>")
+        + '<div class="tl-track">' + grid + '<div class="tl-today" style="left:' + tx + '%"></div><div class="tl-bar' + (r.done ? " done" : "") + '" style="left:' + l + "%;width:" + w + '%" title="' + esc(r.label + "：" + mdy(r.start) + "–" + mdy(r.end)) + '"></div>'
+        + (r.ms || []).map(x => '<span class="tl-ms' + (x.done ? " done" : "") + '" style="left:' + (pos(x.date) + 50 / total) + '%" title="◆ ' + esc(x.t + "　" + mdy(x.date)) + '"></span>').join("") + "</div></div>";
+    });
+    return h + "</div></div>";
+  }
+
+  /* ═════════ 專案計畫 ═════════ */
+  function vProjectPlan(m) {
+    const projs = arr("projects").filter(p => p.area === m.area);
+    if (ui.proj && S.projects[ui.proj] && S.projects[ui.proj].area === m.area) return projectDetail(m, ui.proj);
+    const shown = projs.filter(p => ui.pstat === "all" || p.st === ui.pstat).sort((a, b) => ((a.start || "9") < (b.start || "9") ? -1 : 1));
+    let h = '<div class="toolbar"><div class="seg">' + [["all", "全部"], ["active", "進行中"], ["plan", "規劃中"], ["hold", "暫停"], ["done", "完成"]].map(([k, l]) =>
+      '<button data-act="pstat" data-k="' + k + '"' + prs(ui.pstat === k) + ">" + l + ' <span class="mono">' + (k === "all" ? projs.length : projs.filter(p => p.st === k).length) + "</span></button>").join("")
+      + '</div><span class="grow"></span><button class="btn primary" data-act="pnew" aria-expanded="' + ui.pnew + '">＋ 新專案</button></div>';
+    if (ui.pnew) h += '<section class="panel" style="margin-bottom:16px"><div class="ph"><h3>新專案</h3><span class="sum">建立後再補目標、範圍和里程碑</span></div><div class="addline" data-form style="border-top:0"><input type="text" id="np-name" placeholder="專案名稱" data-enter="pcreate" aria-label="專案名稱"><label class="inline">開始 <input type="date" id="np-start" value="' + today() + '"></label><label class="inline">結束 <input type="date" id="np-end" value="' + addDays(today(), 30) + '"></label><button class="btn primary" data-act="pcreate" data-area="' + esc(m.area) + '">建立</button><button class="btn ghost" data-act="pnew">取消</button></div></section>';
+    if (!projs.length) return h + '<div class="panel empty"><b>還沒有專案</b>按「新專案」寫下名稱和起訖日期，之後再補目標、範圍和里程碑。</div>';
+    h += timeline(shown.map(p => ({ id: p.id, label: p.name, start: p.start, end: p.end, c: pcol(p), done: p.st === "done", ms: (p.ms || []).filter(x => isDate(x.date)), act: "popen" })), "專案時程");
+    const tasks = arr("tasks");
+    h += shown.length ? '<div class="pgrid">' + shown.map(p => pcard(p, tasks)).join("") + "</div>" : '<p class="empty">這個狀態沒有專案。</p>';
+    return h;
+  }
+  function endLabel(end, done) {
+    if (!isDate(end) || done) return "";
+    const n = diff(today(), end);
+    return n < 0 ? '<span style="color:var(--bad)">超過 ' + -n + " 天</span>" : "剩 " + n + " 天";
+  }
+  function pcard(p, tasks) {
+    const ts = tasks.filter(t => t.proj === p.id), dn = ts.filter(t => t.st === "done").length, pct = ts.length ? Math.round(dn / ts.length * 100) : 0;
+    const next = (p.ms || []).filter(x => !x.done && isDate(x.date)).sort(byDate)[0];
+    return '<button class="pcard" data-act="popen" data-id="' + esc(p.id) + '" style="--pc:' + pcol(p) + ";--ac:" + pcol(p) + '">'
+      + '<span class="pc-top"><span class="dot"></span><b>' + esc(p.name) + '</b><span class="pill st-' + esc(p.st || "plan") + '">' + (PROJ_ST[p.st] || "規劃中") + "</span></span>"
+      + '<span class="pc-line mono"><span>' + (isDate(p.start) ? mdy(p.start) : "?") + " – " + (isDate(p.end) ? mdy(p.end) : "?") + "</span><span>" + endLabel(p.end, p.st === "done") + "</span></span>"
+      + '<span class="meter"><i style="width:' + pct + '%"></i></span>'
+      + '<span class="pc-line"><span>' + dn + " / " + ts.length + " 個任務</span><span>" + pct + "%</span></span>"
+      + (next ? '<span class="pc-line"><span>下個里程碑：' + esc(next.t) + '</span><span class="mono">' + mdy(next.date) + "</span></span>" : "")
+      + "</button>";
+  }
+  function projectDetail(m, id) {
+    const p = S.projects[id], pc = pcol(p), eid = esc(id);
+    const ts = arr("tasks").filter(t => t.proj === id).sort(byDue);
+    const board = modOfType(m.area, "projectBoard");
+    const ms = (p.ms || []).slice().sort(byDate);
+    let h = '<div class="toolbar"><button class="btn" data-act="pclose">‹ 全部專案</button><input type="text" class="title-input" id="p-name" value="' + esc(p.name) + '" data-act="pfield" data-id="' + eid + '" data-k="name" aria-label="專案名稱"><span class="pill st-' + esc(p.st || "plan") + '">' + (PROJ_ST[p.st] || "規劃中") + "</span></div>";
+    h += '<div class="pd" style="--pc:' + pc + ";--ac:" + pc + '"><div class="stack">';
+    h += '<section class="panel"><div class="ph"><h3>目標</h3><span class="sum">做完這個專案，要得到什麼結果</span></div><div class="pb"><textarea id="p-goal" rows="3" data-act="pfield" data-id="' + eid + '" data-k="goal" placeholder="例如：第一批 12/10 前出貨">' + esc(p.goal || "") + "</textarea></div></section>";
+    h += checklist("範圍與交付物", "要交出去的東西，一項一行。", p.scope || [], "projects", id, "scope");
+    h += '<section class="panel"><div class="ph"><h3>里程碑</h3><span class="sum">' + ms.filter(x => x.done).length + " / " + ms.length + '</span></div><div class="rows">'
+      + (ms.length ? ms.map(x => '<div class="check' + (x.done ? " is-done" : "") + '"><input type="checkbox" id="pm-' + esc(x.id) + '" data-act="msdone" data-p="' + eid + '" data-id="' + esc(x.id) + '"' + chk(x.done) + '><span class="chip mono">' + (isDate(x.date) ? mdy(x.date) : "未定") + '</span><label class="grow" for="pm-' + esc(x.id) + '">' + esc(x.t) + '</label><button class="btn ghost sm" data-act="msdel" data-p="' + eid + '" data-id="' + esc(x.id) + '" aria-label="移除里程碑">✕</button></div>').join("") : '<div class="empty">關鍵日期，例如開賣、送件、開展。</div>')
+      + '</div><div class="addline" data-form><input type="date" id="pm-new-d" aria-label="里程碑日期"><input type="text" id="pm-new-t" placeholder="新增里程碑" data-enter="msadd" aria-label="里程碑名稱"><button class="btn sm" data-act="msadd" data-p="' + eid + '">加入</button></div></section>';
+    h += '<section class="panel"><div class="ph"><h3>任務</h3><span class="sum">完成 ' + ts.filter(t => t.st === "done").length + " / " + ts.length + (board ? '・<a href="#m-' + esc(board) + '" data-act="toboard" data-id="' + eid + '">到看板管理</a>' : "") + "</span></div>"
+      + (ts.some(t => isDate(t.due)) ? '<div class="pb" style="padding-bottom:0">' + timeline(ts.filter(t => isDate(t.due)).map(t => ({ id: t.id, label: t.t, start: isDate(t.start) && t.start <= t.due ? t.start : t.due, end: t.due, c: pc, done: t.st === "done" })), "任務時程") + "</div>" : "")
+      + '<div class="rows">' + (ts.length ? ts.map(t => taskRow(t, { noCtx: true })).join("") : '<div class="empty">還沒有任務，在下面加第一個。</div>') + "</div>"
+      + '<div class="addline" data-form><input type="text" id="pt-t" placeholder="新增任務" data-enter="ptadd" aria-label="任務名稱"><label class="inline">開始 <input type="date" id="pt-s"></label><label class="inline">期限 <input type="date" id="pt-d"></label><button class="btn primary sm" data-act="ptadd" data-id="' + eid + '">加入</button></div></section>';
+    h += '</div><div class="stack">';
+    const days = isDate(p.start) && isDate(p.end) ? diff(p.start, p.end) + 1 : null;
+    h += '<section class="panel"><div class="ph"><h3>基本資料</h3></div><div class="pb fields">'
+      + '<span>狀態</span><select id="p-st" data-act="pfield" data-id="' + eid + '" data-k="st">' + Object.keys(PROJ_ST).map(k => '<option value="' + k + '"' + sel((p.st || "plan") === k) + ">" + PROJ_ST[k] + "</option>").join("") + "</select>"
+      + '<span>開始</span><input type="date" id="p-start" value="' + esc(p.start || "") + '" data-act="pfield" data-id="' + eid + '" data-k="start">'
+      + '<span>結束</span><input type="date" id="p-end" value="' + esc(p.end || "") + '" data-act="pfield" data-id="' + eid + '" data-k="end">'
+      + "<span>期間</span><span>" + (days ? '<span class="mono">' + days + " 天</span>　" + endLabel(p.end, p.st === "done") : "請填開始與結束日期") + "</span>"
+      + '<span>顏色</span><div class="swatches">' + [1, 2, 3, 4, 5, 6].map(n => '<button style="--sc:var(--c' + n + ')" data-act="pcolor" data-id="' + eid + '" data-n="' + n + '"' + prs((p.c || 1) === n) + ' aria-label="顏色 ' + n + '"></button>').join("") + "</div>"
+      + "</div></section>";
+    h += '<section class="panel"><div class="ph"><h3>風險與備註</h3></div><div class="pb"><textarea id="p-risk" rows="5" data-act="pfield" data-id="' + eid + '" data-k="risk" placeholder="可能卡住的地方、需要誰幫忙、預算…">' + esc(p.risk || "") + "</textarea></div></section>";
+    h += '<section class="panel"><div class="pb">' + confirmBtn("pdel:" + id, "刪除這個專案", "確定刪除？裡面的任務會保留，但不再屬於專案") + "</div></section>";
+    return h + "</div></div>";
+  }
+
+  /* ═════════ 專案管理（看板） ═════════ */
+  function vBoard(m) {
+    const projs = arr("projects").filter(p => p.area === m.area).sort((a, b) => String(a.name).localeCompare(String(b.name), "zh-Hant"));
+    const pids = new Set(projs.map(p => p.id));
+    const f = ui.bproj[m.id] || "", mid = esc(m.id);
+    let ts = arr("tasks").filter(t => (t.proj && pids.has(t.proj)) || (!t.proj && t.mod === m.id));
+    if (f === "none") ts = ts.filter(t => !t.proj); else if (f) ts = ts.filter(t => t.proj === f);
+    const cut = addDays(today(), -14), showAll = ui.showDone[m.id];
+    const projOpts = sv => projs.filter(p => p.st !== "done" || p.id === sv).map(p => '<option value="' + esc(p.id) + '"' + sel(sv === p.id) + ">" + esc(p.name) + "</option>").join("");
+    let h = '<div class="toolbar"><label class="inline">看 <select id="bf-' + mid + '" data-act="bfilter" data-mod="' + mid + '"><option value="">全部專案</option><option value="none"' + sel(f === "none") + ">不分專案</option>" + projs.map(p => '<option value="' + esc(p.id) + '"' + sel(f === p.id) + ">" + esc(p.name) + "</option>").join("") + "</select></label>"
+      + '<span class="grow"></span><span class="muted small">拖拉卡片換欄，或用 ‹ › 移動</span></div>';
+    h += '<section class="panel" style="margin-bottom:14px"><div class="addline" data-form style="border-top:0"><input type="text" id="ba-t-' + mid + '" placeholder="新增任務到「待辦」" data-enter="badd" aria-label="任務名稱"><select id="ba-p-' + mid + '" aria-label="所屬專案"><option value="">不分專案</option>' + projOpts(f && f !== "none" ? f : "") + '</select><input type="date" id="ba-d-' + mid + '" aria-label="期限"><button class="btn primary" data-act="badd" data-mod="' + mid + '">加入</button></div></section>';
+    const later = addDays(today(), 30), showLater = ui.showLater[m.id], colOn = ui.bcol[m.id] || "todo";
+    const counts = {};
+    ST_ORDER.forEach(k => { counts[k] = ts.filter(t => (t.st || "todo") === k).length; });
+    h += '<div class="seg colpick" role="group" aria-label="切換欄位">' + ST_ORDER.map(k => '<button data-act="bcol" data-mod="' + mid + '" data-k="' + k + '"' + prs(colOn === k) + ">" + TASK_ST[k] + " " + counts[k] + "</button>").join("") + "</div>";
+    h += '<div class="board" data-col="' + colOn + '">';
+    ST_ORDER.forEach(k => {
+      let items = ts.filter(t => (t.st || "todo") === k), hidden = 0, more = "";
+      if (k === "done" && !showAll) { const n = items.length; items = items.filter(t => !t.done || t.done >= cut); hidden = n - items.length; }
+      if (k === "todo" && !showLater) { const n = items.length; items = items.filter(t => !isDate(t.due) || t.due <= later); hidden = n - items.length; }
+      items.sort(k === "done" ? byDoneDesc : byDue);
+      if (k === "done") more = hidden ? '<button class="btn ghost sm" data-act="showdone" data-mod="' + mid + '">再顯示 ' + hidden + " 張較早完成的</button>" : showAll ? '<button class="btn ghost sm" data-act="showdone" data-mod="' + mid + '">只看最近兩週</button>' : "";
+      if (k === "todo") more = hidden ? '<button class="btn ghost sm" data-act="showlater" data-mod="' + mid + '">再顯示 ' + hidden + " 張 30 天後才到期的</button>" : showLater ? '<button class="btn ghost sm" data-act="showlater" data-mod="' + mid + '">只看 30 天內到期</button>' : "";
+      h += '<section class="col" data-drop="' + k + '" aria-label="' + TASK_ST[k] + '"><div class="col-h">' + TASK_ST[k] + ' <span class="n">' + counts[k] + "</span></div>"
+        + items.map(t => card(t, m)).join("")
+        + (!items.length ? '<p class="col-empty">' + (hidden ? "近期沒有卡片" : "沒有卡片") + "</p>" : "")
+        + more + "</section>";
+    });
+    return h + "</div>";
+  }
+  function card(t, m) {
+    const p = t.proj && S.projects[t.proj], open = ui.tedit === t.id, i = ST_ORDER.indexOf(t.st || "todo"), id = esc(t.id);
+    let h = '<article class="card" draggable="' + (open ? "false" : "true") + '" data-drag="' + id + '">'
+      + '<button class="card-t" data-act="tedit" data-id="' + id + '" aria-expanded="' + open + '">' + (t.pri ? '<span class="pri" title="重要"></span>' : "") + "<span>" + esc(t.t) + "</span></button>"
+      + '<div class="card-b">' + (p ? '<span class="chip ctx" style="--ac:' + pcol(p) + '">' + esc(p.name) + "</span>" : "") + dueChip(t.due, t.st === "done")
+      + '<span class="mv">' + (i > 0 ? '<button class="btn ghost sm" data-act="tst" data-id="' + id + '" data-st="' + ST_ORDER[i - 1] + '" aria-label="移到' + TASK_ST[ST_ORDER[i - 1]] + '">‹</button>' : "")
+      + (i < 3 ? '<button class="btn ghost sm" data-act="tst" data-id="' + id + '" data-st="' + ST_ORDER[i + 1] + '" aria-label="移到' + TASK_ST[ST_ORDER[i + 1]] + '">›</button>' : "") + "</span></div>";
+    if (open) h += taskEditor(t);
+    return h + "</article>";
+  }
+
+  /* ═════════ 學習規劃 ═════════ */
+  function vStudyPlan(m) {
+    const goals = arr("goals").filter(g => g.mod === m.id).sort((a, b) => ((a.target || "9") < (b.target || "9") ? -1 : 1));
+    const tasks = arr("tasks"), mid = esc(m.id);
+    let h = '<div class="toolbar"><h3 class="sec">學習目標</h3><span class="grow"></span><button class="btn primary" data-act="gnew" aria-expanded="' + ui.gnew + '">＋ 新目標</button></div>';
+    if (ui.gnew) h += '<section class="panel" style="margin-bottom:14px"><div class="addline" data-form style="border-top:0"><input type="text" id="ng-name" placeholder="目標，例如：多益 750" data-enter="gcreate" aria-label="目標名稱"><input type="text" id="ng-cat" placeholder="分類，例如：檢定" style="flex:0 1 140px" aria-label="分類"><label class="inline">目標日 <input type="date" id="ng-target"></label><button class="btn primary" data-act="gcreate" data-mod="' + mid + '">建立</button><button class="btn ghost" data-act="gnew">取消</button></div></section>';
+    h += goals.length ? '<div class="goals">' + goals.map(g => goalCard(g, tasks)).join("") + "</div>" : '<div class="panel empty"><b>還沒有學習目標</b>例如「多益 750」、「空大 115 上」，建立後把它拆成有期限的步驟。</div>';
+    h += routinePanel(m);
+    return h;
+  }
+  function goalCard(g, tasks) {
+    const steps = tasks.filter(t => t.goal === g.id).sort(byDue), dn = steps.filter(t => t.st === "done"), open = steps.filter(t => t.st !== "done");
+    const pct = steps.length ? Math.round(dn.length / steps.length * 100) : 0, ed = ui.gedit === g.id, gid = esc(g.id);
+    const n = isDate(g.target) ? diff(today(), g.target) : null;
+    let h = '<section class="panel"><div class="goal-h"><h3>' + esc(g.name) + '</h3><div class="ring" style="--p:' + pct + '"><span>' + pct + "%</span></div>"
+      + '<div class="goal-meta">' + (g.cat ? '<span class="chip ctx">' + esc(g.cat) + "</span>" : "")
+      + (n !== null ? '<span class="chip' + (n >= 0 && n <= 30 ? " warn" : "") + '">目標日 ' + mdw(g.target) + "・" + (n > 0 ? "還有 " + n + " 天" : n === 0 ? "就是今天" : "已過 " + -n + " 天") + "</span>" : "")
+      + (safeUrl(g.url) ? linkChip({ t: "資源", url: g.url }) : "")
+      + '<span class="grow"></span><button class="btn ghost sm" data-act="gedit" data-id="' + gid + '" aria-expanded="' + ed + '">' + (ed ? "收起" : "編輯目標") + "</button></div>"
+      + (g.note && !ed ? '<p class="goal-note">' + esc(g.note) + "</p>" : "") + "</div>";
+    if (ed) h += '<div class="pb fields" style="border-bottom:1px solid var(--line)"><span>名稱</span><input type="text" id="g-n-' + gid + '" value="' + esc(g.name) + '" data-act="gfield" data-id="' + gid + '" data-k="name"><span>分類</span><input type="text" id="g-c-' + gid + '" value="' + esc(g.cat || "") + '" data-act="gfield" data-id="' + gid + '" data-k="cat"><span>目標日</span><input type="date" id="g-t-' + gid + '" value="' + esc(g.target || "") + '" data-act="gfield" data-id="' + gid + '" data-k="target"><span>資源網址</span><input type="url" id="g-u-' + gid + '" value="' + esc(g.url || "") + '" data-act="gfield" data-id="' + gid + '" data-k="url" placeholder="https://…"><span>備註</span><textarea id="g-note-' + gid + '" rows="2" data-act="gfield" data-id="' + gid + '" data-k="note">' + esc(g.note || "") + "</textarea><span></span><div>" + confirmBtn("gdel:" + g.id, "刪除目標", "確定刪除？步驟會一起刪掉") + "</div></div>";
+    const lim = ui.gmore[g.id] ? open.length : 6;
+    h += '<div class="rows">' + open.slice(0, lim).map(t => taskRow(t, { noCtx: true })).join("") + "</div>";
+    if (open.length > 6) h += '<button class="btn ghost sm fold" data-act="gmore" data-id="' + gid + '">' + (ui.gmore[g.id] ? "只看最近 6 項" : "再顯示 " + (open.length - 6) + " 個之後的步驟") + "</button>";
+    if (!steps.length) h += '<div class="empty">把這個目標拆成幾個有期限的步驟。</div>';
+    if (dn.length) h += '<button class="btn ghost sm fold" data-act="gfold" data-id="' + gid + '">' + (ui.gopen[g.id] ? "收起" : "顯示") + "已完成的 " + dn.length + " 項</button>" + (ui.gopen[g.id] ? '<div class="rows">' + dn.map(t => taskRow(t, { noCtx: true })).join("") + "</div>" : "");
+    h += '<div class="addline" data-form><input type="text" id="gs-' + gid + '" placeholder="新增步驟" data-enter="gsadd" aria-label="步驟名稱"><input type="date" id="gd-' + gid + '" aria-label="步驟期限"><button class="btn sm" data-act="gsadd" data-id="' + gid + '">加入</button></div></section>';
+    return h;
+  }
+  function routinePanel(m) {
+    const rt = modDoc(m.id).routine || [], t0 = today(), mon = mondayOf(t0), mid = esc(m.id);
+    const order = [1, 2, 3, 4, 5, 6, 0];
+    let h = '<div class="toolbar" style="margin-top:26px"><h3 class="sec">每週固定時段</h3><span class="muted small">勾選會一起記在「今天」頁</span><span class="grow"></span><button class="btn" data-act="rnew" aria-expanded="' + ui.rnew + '">＋ 新時段</button></div>';
+    if (ui.rnew) {
+      h += '<section class="panel" style="margin-bottom:14px"><div class="pb stack" style="gap:10px" data-form><div class="btnrow"><input type="text" id="r-t" placeholder="要做什麼，例如：多益單字 50 個" style="flex:2 1 220px" aria-label="時段內容"><input type="text" id="r-time" placeholder="時間，例如 20:00" style="flex:0 1 130px" aria-label="時間"><label class="inline"><input type="number" id="r-min" min="5" max="600" step="5" style="width:80px" aria-label="分鐘"> 分鐘</label></div>'
+        + '<div class="daypick">' + order.map(wd => '<label><input type="checkbox" id="rd-' + wd + '"' + chk(wd === dow(t0)) + ">週" + WD[wd] + "</label>").join("") + "</div>"
+        + '<div class="btnrow"><input type="url" id="r-url" placeholder="相關網址（可不填）" style="flex:1 1 240px" aria-label="相關網址"><button class="btn primary" data-act="radd" data-mod="' + mid + '">加入</button><button class="btn ghost" data-act="rnew">取消</button></div></div></section>';
+    }
+    h += '<section class="panel"><div class="week">' + order.map((wd, i) => {
+      const date = addDays(mon, i), items = rt.filter(r => (r.days || []).includes(wd)).sort((a, b) => String(a.time || "99").localeCompare(String(b.time || "99")));
+      const log = dayLog(date).r || {}, done = items.filter(r => log[r.id]).length;
+      return '<div class="wday' + (date === t0 ? " is-today" : "") + '"><h4><span>週' + WD[wd] + ' <span class="mono">' + md(date) + "</span>" + (date === t0 ? "・今天" : "") + "</span>" + (items.length ? '<span class="mono">' + done + "/" + items.length + "</span>" : "") + "</h4>"
+        + items.map(r => '<div class="blk' + (log[r.id] ? " done" : "") + '"><input type="checkbox" id="wb-' + esc(r.id) + "-" + date + '" data-act="rtdone" data-id="' + esc(r.id) + '" data-date="' + date + '"' + chk(log[r.id]) + '><label for="wb-' + esc(r.id) + "-" + date + '">' + esc(r.t) + '</label><button class="btn ghost sm" data-act="rdel" data-mod="' + mid + '" data-id="' + esc(r.id) + '" data-wd="' + wd + '" aria-label="週' + WD[wd] + "不排：" + esc(r.t) + '">✕</button>'
+          + ([r.time, r.min ? r.min + " 分" : ""].filter(Boolean).length ? "<small>" + esc([r.time, r.min ? r.min + " 分" : ""].filter(Boolean).join("・")) + "</small>" : "") + "</div>").join("")
+        + "</div>";
+    }).join("") + "</div></section>";
+    if (!rt.length) h += '<p class="empty">還沒有固定時段。按「新時段」排一週的讀書節奏，例如每天 20:00 多益單字。</p>';
+    return h;
+  }
+
+  /* ═════════ 筆記 ═════════ */
+  function mdInline(s) {
+    return esc(s).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/==([^=]+)==/g, "<mark>$1</mark>")
+      .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+  }
+  function mdRender(src) {
+    let out = "", list = null, para = [];
+    const flushP = () => { if (para.length) { out += "<p>" + para.map(mdInline).join("<br>") + "</p>"; para = []; } };
+    const flushL = () => { if (list) { out += "<" + list.t + ">" + list.items.map(x => "<li>" + mdInline(x) + "</li>").join("") + "</" + list.t + ">"; list = null; } };
+    String(src || "").split(/\r?\n/).forEach(line => {
+      let mm;
+      if (/^\s*$/.test(line)) { flushP(); flushL(); return; }
+      if ((mm = /^(#{1,3})\s+(.*)$/.exec(line))) { flushP(); flushL(); out += "<h" + mm[1].length + ">" + mdInline(mm[2]) + "</h" + mm[1].length + ">"; return; }
+      if ((mm = /^\s*[-*]\s+(.*)$/.exec(line))) { flushP(); if (!list || list.t !== "ul") { flushL(); list = { t: "ul", items: [] }; } list.items.push(mm[1]); return; }
+      if ((mm = /^\s*\d+[.)]\s+(.*)$/.exec(line))) { flushP(); if (!list || list.t !== "ol") { flushL(); list = { t: "ol", items: [] }; } list.items.push(mm[1]); return; }
+      if ((mm = /^>\s?(.*)$/.exec(line))) { flushP(); flushL(); out += "<blockquote>" + mdInline(mm[1]) + "</blockquote>"; return; }
+      flushL(); para.push(line);
+    });
+    flushP(); flushL();
+    return out || '<p class="muted">（還沒有內容）</p>';
+  }
+  const snippet = s => String(s || "").replace(/[#>*`=_-]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 140);
+  function vNotes(m) {
+    if (ui.note && S.notes[ui.note]) return noteEditor(m, ui.note);
+    const all = arr("notes").filter(n => n.mod === m.id);
+    const courses = [...new Set(all.map(n => n.course).filter(Boolean))].sort();
+    const q = ui.nq.toLowerCase(), rv = all.filter(n => n.review).length;
+    const list = all.filter(n => (!ui.ncourse || n.course === ui.ncourse) && (!ui.nreview || n.review) && (!q || [n.title, n.body, n.course, (n.tags || []).join(" ")].join(" ").toLowerCase().includes(q)))
+      .sort((a, b) => (b.pin ? 1 : 0) - (a.pin ? 1 : 0) || ((b.up || "") > (a.up || "") ? 1 : (b.up || "") < (a.up || "") ? -1 : 0));
+    let h = '<div class="toolbar"><input type="search" id="n-q" value="' + esc(ui.nq) + '" placeholder="搜尋標題、內容、標籤" data-act="nq" aria-label="搜尋筆記" style="flex:1 1 220px"><button class="btn primary" data-act="nnew" data-mod="' + esc(m.id) + '">＋ 新筆記</button></div>';
+    if (all.length) h += '<div class="toolbar"><div class="seg"><button data-act="ncourse" data-k=""' + prs(!ui.ncourse) + ">全部 " + all.length + "</button>" + courses.map(c => '<button data-act="ncourse" data-k="' + esc(c) + '"' + prs(ui.ncourse === c) + ">" + esc(c) + "</button>").join("") + '<button data-act="nreview"' + prs(ui.nreview) + ">需複習 " + rv + "</button></div></div>";
+    if (!all.length) return h + '<div class="panel empty"><b>還沒有筆記</b>按「新筆記」開始。上面的連結可以直接打開你已經整理好的筆記網站。</div>';
+    h += list.length ? '<div class="ngrid">' + list.map(n => '<button class="ncard" data-act="nopen" data-id="' + esc(n.id) + '"><span class="nc-top">' + (n.pin ? '<span class="chip mark">置頂</span>' : "") + (n.course ? '<span class="chip ctx">' + esc(n.course) + "</span>" : "") + (n.review ? '<span class="chip warn">需複習</span>' : "") + "</span>"
+      + '<span class="nc-title">' + esc(n.title || "未命名筆記") + '</span><span class="nc-body">' + esc(snippet(n.body)) + '</span><span class="nc-date">' + (isDate(n.up) ? mdy(n.up) + " 更新" : "") + "</span></button>").join("") + "</div>" : '<p class="empty">沒有符合的筆記。</p>';
+    return h;
+  }
+  function noteEditor(m, id) {
+    const n = S.notes[id], nid = esc(id);
+    const courses = [...new Set(arr("notes").filter(x => x.mod === m.id).map(x => x.course).filter(Boolean))];
+    let h = '<div class="toolbar"><button class="btn" data-act="nclose">‹ 全部筆記</button><span class="grow"></span>'
+      + '<label class="inline"><input type="checkbox" id="ne-pin" data-act="nfield" data-id="' + nid + '" data-k="pin"' + chk(n.pin) + "> 置頂</label>"
+      + '<label class="inline"><input type="checkbox" id="ne-rev" data-act="nfield" data-id="' + nid + '" data-k="review"' + chk(n.review) + "> 需複習</label>"
+      + confirmBtn("ndel:" + id, "刪除筆記", "確定刪除這篇筆記？") + "</div>";
+    h += '<div class="ned"><section class="panel"><div class="pb stack" style="gap:10px">'
+      + '<input type="text" class="title-input" id="ne-title" value="' + esc(n.title || "") + '" placeholder="標題" data-act="nfield" data-id="' + nid + '" data-k="title" aria-label="標題">'
+      + '<div class="fields"><span>課程</span><input type="text" id="ne-course" list="ne-courses" value="' + esc(n.course || "") + '" placeholder="例如：作業系統" data-act="nfield" data-id="' + nid + '" data-k="course">'
+      + '<span>標籤</span><input type="text" id="ne-tags" value="' + esc((n.tags || []).join("、")) + '" placeholder="用頓號或逗號分開" data-act="nfield" data-id="' + nid + '" data-k="tags">'
+      + '<span>連結</span><input type="url" id="ne-url" value="' + esc(n.url || "") + '" placeholder="講義、影片或筆記網站" data-act="nfield" data-id="' + nid + '" data-k="url"></div>'
+      + '<textarea id="ne-body" rows="18" data-act="nbody" data-id="' + nid + '" placeholder="# 第三章 行程管理&#10;- 行程的五種狀態&#10;- ==考試常考：PCB 內容==">' + esc(n.body || "") + "</textarea>"
+      + '<p class="muted small" style="margin:0">支援 # 標題、- 清單、1. 編號、**粗體**、==螢光筆==、`程式碼`、&gt; 引用。打字會自動儲存。</p></div></section>'
+      + '<section class="panel"><div class="ph"><h3>預覽</h3>' + (safeUrl(n.url) ? '<span class="sum">' + linkChip({ t: host(n.url), url: n.url }) + "</span>" : "") + '</div><div class="pb prose" id="ne-preview">' + mdRender(n.body) + "</div></section></div>"
+      + '<datalist id="ne-courses">' + courses.map(c => '<option value="' + esc(c) + '"></option>').join("") + "</datalist>";
+    return h;
+  }
+
+  /* ═════════ 考試 ═════════ */
+  function vExams(m) {
+    const t0 = today(), all = arr("exams").filter(e => e.mod === m.id);
+    const up = all.filter(e => isDate(e.date) && (isDate(e.end) ? e.end : e.date) >= t0).sort(byDate);
+    const past = all.filter(e => !up.includes(e)).sort((a, b) => ((b.date || "") > (a.date || "") ? 1 : -1));
+    let h = '<div class="toolbar"><h3 class="sec">接下來的考試</h3><span class="grow"></span><button class="btn primary" data-act="enew" aria-expanded="' + ui.enew + '">＋ 新增考試</button></div>';
+    if (ui.enew) h += '<section class="panel" style="margin-bottom:14px"><div class="addline" data-form style="border-top:0"><input type="text" id="ex-name" placeholder="考試名稱" data-enter="ecreate" aria-label="考試名稱"><input type="date" id="ex-date" aria-label="考試日期"><select id="ex-kind" aria-label="種類">' + EXAM_KINDS.map(k => "<option>" + k + "</option>").join("") + '</select><button class="btn primary" data-act="ecreate" data-mod="' + esc(m.id) + '">加入</button><button class="btn ghost" data-act="enew">取消</button></div></section>';
+    h += up.length ? '<div class="exams">' + up.map(examCard).join("") + "</div>" : '<div class="panel empty"><b>沒有排定的考試</b>按「新增考試」寫下名稱和日期，就會出現倒數。</div>';
+    if (past.length) {
+      h += '<h3 class="sec" style="margin:26px 0 12px">已經考完</h3><section class="panel"><div class="tscroll"><table class="t"><thead><tr><th>日期</th><th>考試</th><th>成績</th><th>備註</th><th></th></tr></thead><tbody>'
+        + past.map(e => '<tr><td class="mono">' + (isDate(e.date) ? ymd(e.date) : "未定") + "</td><td>" + esc(e.name) + '</td><td class="mono">' + esc(e.score || "—") + "</td><td>" + esc(e.note || "") + '</td><td><button class="btn ghost sm" data-act="eopen" data-id="' + esc(e.id) + '">' + (ui.exam === e.id ? "收起" : "編輯") + "</button></td></tr>"
+          + (ui.exam === e.id ? '<tr><td colspan="5">' + examEditor(e) + "</td></tr>" : "")).join("") + "</tbody></table></div></section>";
+    }
+    return h;
+  }
+  function examCard(e) {
+    const t0 = today(), n = diff(t0, e.date), during = isDate(e.end) && e.date <= t0 && t0 <= e.end, open = ui.exam === e.id;
+    const prep = e.prep || [], pd = prep.filter(x => x.done).length, pct = prep.length ? Math.round(pd / prep.length * 100) : 0;
+    return '<section class="panel exam' + (n <= 14 ? " soon" : "") + '"><div class="exam-cd">' + (during ? "<b>考</b><small>考試期間</small>" : n === 0 ? "<b>0</b><small>就是今天</small>" : "<b>" + n + "</b><small>天後</small>") + "</div>"
+      + '<div class="exam-body"><h3>' + esc(e.name) + (e.kind ? '<span class="chip">' + esc(e.kind) + "</span>" : "") + "</h3>"
+      + '<div class="row-meta"><span class="chip mono">' + ymd(e.date) + "（" + WD[dow(e.date)] + "）" + (isDate(e.end) && e.end !== e.date ? " – " + (e.end.slice(0, 4) !== e.date.slice(0, 4) ? ymd(e.end) : md(e.end)) : "") + "</span>" + (e.place ? '<span class="chip">' + esc(e.place) + "</span>" : "") + (e.score ? '<span class="chip ok">成績 ' + esc(e.score) + "</span>" : "") + (safeUrl(e.url) ? linkChip({ t: "練習", url: e.url }) : "") + "</div>"
+      + (e.note ? '<p class="muted small">' + esc(e.note) + "</p>" : "")
+      + (prep.length ? '<div class="pc-line"><span>準備進度 ' + pd + " / " + prep.length + "</span><span>" + pct + '%</span></div><span class="meter' + (pct === 100 ? " full" : "") + '"><i style="width:' + pct + '%"></i></span>' : "")
+      + '<div><button class="btn sm" data-act="eopen" data-id="' + esc(e.id) + '" aria-expanded="' + open + '">' + (open ? "收起" : "準備清單與編輯") + "</button></div></div>"
+      + (open ? '<div class="exam-edit">' + examEditor(e) + "</div>" : "") + "</section>";
+  }
+  function examEditor(e) {
+    const id = esc(e.id), f = (k, label, type, v, ph) => "<span>" + label + '</span><input type="' + type + '" id="e-' + k + "-" + id + '" value="' + esc(v || "") + '" data-act="efield" data-id="' + id + '" data-k="' + k + '"' + (ph ? ' placeholder="' + esc(ph) + '"' : "") + ">";
+    return '<div class="pd" style="padding:12px"><div class="stack">' + checklist("準備清單", "例如：第 1–5 章、考古題兩回、模考。", e.prep || [], "exams", e.id, "prep") + "</div>"
+      + '<div class="stack"><div class="fields">' + f("name", "名稱", "text", e.name) + f("date", "日期", "date", e.date) + f("end", "結束日", "date", e.end)
+      + '<span>種類</span><select id="e-kind-' + id + '" data-act="efield" data-id="' + id + '" data-k="kind">' + EXAM_KINDS.map(k => "<option" + sel(e.kind === k) + ">" + k + "</option>").join("") + "</select>"
+      + f("place", "地點", "text", e.place, "考場或線上") + f("url", "練習網址", "url", e.url, "https://…") + f("score", "成績", "text", e.score, "考完再填")
+      + '<span>備註</span><textarea id="e-note-' + id + '" rows="2" data-act="efield" data-id="' + id + '" data-k="note">' + esc(e.note || "") + "</textarea></div>"
+      + "<div>" + confirmBtn("edel:" + e.id, "刪除這場考試", "確定刪除？") + "</div></div></div>";
+  }
+
+  /* ═════════ 單字 ═════════ */
+  function vVocab(m) {
+    if (ui.review && ui.review.mod === m.id) return reviewView(m);
+    const t0 = today(), tgt = vTarget(m.id), n = vCount(m.id, t0), mid = esc(m.id);
+    const words = arr("words").filter(w => w.mod === m.id), due = words.filter(w => !w.due || w.due <= t0);
+    const pct = Math.min(100, Math.round(n / tgt * 100)), sk = streak(m.id);
+    let h = '<div class="vtop"><section class="panel"><div class="ph"><h3>今天的單字</h3><span class="sum">' + (sk ? "連續達標 " + sk + " 天" : "今天達標就開始累積天數") + '</span></div><div class="pb stack" style="gap:12px">'
+      + '<div class="vbig"><b>' + n + '</b><span class="muted">/</span><input type="number" class="tgt-in mono" id="v-tgt" min="1" max="999" value="' + tgt + '" data-act="vtgt" data-mod="' + mid + '" aria-label="每日目標"><span class="muted">個</span>' + (n >= tgt ? '<span class="chip ok">今天達標</span>' : "") + "</div>"
+      + '<span class="meter' + (n >= tgt ? " full" : "") + '"><i style="width:' + pct + '%"></i></span>'
+      + '<div class="btnrow">' + vAddBtns(m.id) + '<button class="btn ghost sm" data-act="vadd" data-mod="' + mid + '" data-n="-10">−10</button></div>'
+      + '<p class="muted small" style="margin:0">在單字練習網站或 App 練完，回來按「+」記下數量；翻卡複習生字本會自動計入。</p></div></section>'
+      + '<section class="panel"><div class="ph"><h3>最近 14 天</h3><span class="sum">虛線是每日目標</span></div><div class="pb">' + bars(m.id, tgt) + "</div></section></div>";
+    const f = ui.wfilter, cnt = { all: words.length, due: due.length, learn: words.filter(w => (w.lv || 0) < 4).length, known: words.filter(w => (w.lv || 0) >= 4).length };
+    h += '<div class="toolbar"><h3 class="sec">生字本</h3><div class="seg">' + [["all", "全部"], ["due", "待複習"], ["learn", "學習中"], ["known", "熟悉"]].map(([k, l]) => '<button data-act="wf" data-k="' + k + '"' + prs(f === k) + ">" + l + " " + cnt[k] + "</button>").join("") + "</div>"
+      + '<span class="grow"></span>' + (due.length ? '<button class="btn primary" data-act="vreview" data-mod="' + mid + '">開始複習 ' + Math.min(30, due.length) + " 個</button>" : "") + "</div>";
+    h += '<section class="panel"><div class="addline" data-form style="border-top:0"><input type="text" id="w-w" placeholder="單字" data-enter="wadd" style="flex:1 1 130px" aria-label="單字"><input type="text" id="w-m" placeholder="中文意思" data-enter="wadd" style="flex:1 1 150px" aria-label="中文意思"><input type="text" id="w-ex" placeholder="例句（可不填）" data-enter="wadd" style="flex:2 1 200px" aria-label="例句"><input type="text" id="w-src" placeholder="出處" data-enter="wadd" style="flex:0 1 110px" aria-label="出處"><button class="btn primary" data-act="wadd" data-mod="' + mid + '">加入</button></div>';
+    if (words.length > 8) h += '<div class="addline"><input type="search" id="w-q" value="' + esc(ui.wq) + '" placeholder="搜尋生字" data-act="wq" aria-label="搜尋生字" style="flex:1 1 200px"></div>';
+    let ws = words.filter(w => f === "all" || (f === "due" && (!w.due || w.due <= t0)) || (f === "learn" && (w.lv || 0) < 4) || (f === "known" && (w.lv || 0) >= 4));
+    if (ui.wq) { const q = ui.wq.toLowerCase(); ws = ws.filter(w => (w.w + " " + (w.m || "")).toLowerCase().includes(q)); }
+    ws.sort((a, b) => ((b.added || "") > (a.added || "") ? 1 : (b.added || "") < (a.added || "") ? -1 : String(a.w).localeCompare(String(b.w))));
+    h += '<div class="rows">' + (ws.length ? ws.slice(0, 200).map(w => {
+      const lv = w.lv || 0;
+      const dl = !w.due || w.due <= t0 ? '<span class="chip warn">待複習</span>' : '<span class="chip">' + mdy(w.due) + "</span>";
+      return '<div class="row wrow"><span class="w">' + esc(w.w) + '</span><span class="grow">' + esc(w.m || "") + (w.ex ? "<small>" + esc(w.ex) + "</small>" : "") + (w.src ? "<small>出處：" + esc(w.src) + "</small>" : "") + "</span>"
+        + '<span class="lv">' + (lv === 0 ? "新字" : lv >= 4 ? "熟悉" : "學習中 " + lv) + "</span>" + dl + '<button class="btn ghost sm" data-act="wdel" data-id="' + esc(w.id) + '" aria-label="刪除 ' + esc(w.w) + '">✕</button></div>';
+    }).join("") + (ws.length > 200 ? '<p class="empty">還有 ' + (ws.length - 200) + " 個，用搜尋找。</p>" : "") : '<div class="empty">' + (words.length ? "這個分類沒有單字。" : "<b>生字本是空的</b>讀筆記或做題遇到不會的字，在上面加進來，之後用翻卡複習。") + "</div>") + "</div></section>";
+    return h;
+  }
+  function bars(mid, tgt) {
+    const t0 = today(), days = [];
+    for (let i = 13; i >= 0; i--) days.push(addDays(t0, -i));
+    const vals = days.map(d => vCount(mid, d)), mx = Math.max(tgt, ...vals, 1), H = 96;
+    return '<div class="bars" style="height:' + (H + 19) + 'px"><span class="tgt" style="bottom:' + (19 + Math.round(tgt / mx * H)) + 'px"></span>'
+      + days.map((d, i) => '<div class="b' + (vals[i] < tgt ? " miss" : "") + (d === t0 ? " now" : "") + '" title="' + mdw(d) + "：" + vals[i] + ' 個"><i style="height:' + Math.round(vals[i] / mx * H) + 'px"></i><small>' + parse(d).getDate() + "</small></div>").join("") + "</div>";
+  }
+  function reviewView(m) {
+    const R = ui.review, id = R.queue[R.i], w = id && S.words[id];
+    if (!w) return '<section class="panel flash"><div class="w">這一輪複習完了</div><p class="muted" style="margin:0">翻了 ' + R.count + " 張卡，已經記進今天的單字數。</p><button class=\"btn primary\" data-act=\"vexit\">回生字本</button></section>";
+    return '<section class="panel"><div class="ph"><h3>複習生字本</h3><span class="sum">' + (R.i + 1) + " / " + R.queue.length + '</span><button class="btn ghost sm" data-act="vexit">結束</button></div><div class="flash">'
+      + '<div class="w">' + esc(w.w) + "</div>"
+      + (R.flip ? '<div class="m">' + esc(w.m || "（沒有填意思）") + "</div>" + (w.ex ? '<div class="ex">' + esc(w.ex) + "</div>" : "")
+        + '<div class="btnrow"><button class="btn" data-act="vans" data-ok="0">不熟 <kbd>1</kbd></button><button class="btn primary" data-act="vans" data-ok="1">記得 <kbd>2</kbd></button></div>'
+        : '<button class="btn primary" data-act="vflip">顯示意思 <kbd>空白鍵</kbd></button>')
+      + "</div></section>";
+  }
+
+  /* ═════════ 任務清單、連結集（通用類型） ═════════ */
+  function vTasks(m) {
+    const all = arr("tasks").filter(t => t.mod === m.id && !t.proj && !t.goal), mid = esc(m.id);
+    const open = all.filter(t => t.st !== "done").sort(byDue), done = all.filter(t => t.st === "done").sort(byDoneDesc);
+    let h = '<section class="panel"><div class="addline" data-form style="border-top:0"><input type="text" id="tk-t-' + mid + '" placeholder="新增待辦" data-enter="tkadd" aria-label="待辦內容"><input type="date" id="tk-d-' + mid + '" aria-label="期限"><label class="inline"><input type="checkbox" id="tk-p-' + mid + '"> 重要</label><button class="btn primary" data-act="tkadd" data-mod="' + mid + '">加入</button></div>'
+      + '<div class="rows">' + (open.length ? open.map(t => taskRow(t, { noCtx: true })).join("") : '<div class="empty"><b>清單是空的</b>在上面輸入第一件事。</div>') + "</div>";
+    if (done.length) h += '<button class="btn ghost sm fold" data-act="tfold" data-mod="' + mid + '">' + (ui.openDone[m.id] ? "收起" : "顯示") + "已完成的 " + done.length + " 項</button>" + (ui.openDone[m.id] ? '<div class="rows">' + done.slice(0, 100).map(t => taskRow(t, { noCtx: true })).join("") + "</div>" : "");
+    return h + "</section>";
+  }
+  function vLinks(m) {
+    const links = modLinks(m.id).filter(l => safeUrl(l.url));
+    if (!links.length) return '<div class="panel empty"><b>還沒有連結</b>按右上「管理連結」新增常用網站。</div>';
+    return '<div class="lgrid">' + links.map(l => '<a class="lcard" href="' + esc(safeUrl(l.url)) + '" target="_blank" rel="noopener"><b>' + esc(l.t || host(l.url)) + '</b><span class="mono">' + esc(host(l.url)) + "</span></a>").join("") + "</div>";
+  }
+
+  /* ═════════ 擴充 ═════════ */
+  function vManage() {
+    const c = cfg();
+    let h = '<div class="mhead"><h2>擴充</h2><span class="muted small">平台＝區域 › 模組。加一個區域、在裡面放模組，資料會自動接到「今天」頁。</span></div><div class="mg"><div class="stack">';
+    h += '<section class="panel"><div class="ph"><h3>區域與模組</h3><span class="sum">改名後按 Enter 或點別處就會儲存</span></div>';
+    c.areas.forEach((a, ai) => {
+      const ms = c.mods.filter(m => m.area === a.id), aid = esc(a.id);
+      h += '<div class="area-h" style="--ac:' + acol(a) + '"><span class="sw"></span><input type="text" id="ar-' + aid + '" value="' + esc(a.name) + '" data-act="arname" data-id="' + aid + '" aria-label="區域名稱">'
+        + '<div class="swatches">' + [1, 2, 3, 4, 5, 6].map(n => '<button style="--sc:var(--c' + n + ')" data-act="arcolor" data-id="' + aid + '" data-n="' + n + '"' + prs((a.color || 6) === n) + ' aria-label="區域顏色 ' + n + '"></button>').join("") + "</div>"
+        + '<button class="btn ghost sm" data-act="armove" data-id="' + aid + '" data-d="-1"' + (ai === 0 ? " disabled" : "") + ' aria-label="區域上移">↑</button><button class="btn ghost sm" data-act="armove" data-id="' + aid + '" data-d="1"' + (ai === c.areas.length - 1 ? " disabled" : "") + ' aria-label="區域下移">↓</button>'
+        + (ms.length ? "" : confirmBtn("areadel:" + a.id, "刪除區域", "確定刪除這個區域？")) + "</div>";
+      ms.forEach((m, mi) => {
+        const mid = esc(m.id);
+        h += '<div class="mrow"><input type="text" id="mn-' + mid + '" value="' + esc(m.name) + '" data-act="mname" data-id="' + mid + '" aria-label="模組名稱"><span class="type">' + esc((TYPES[m.type] || {}).label || m.type) + "</span>"
+          + '<select id="ma-' + mid + '" data-act="marea" data-id="' + mid + '" aria-label="移到哪個區域">' + c.areas.map(x => '<option value="' + esc(x.id) + '"' + sel(x.id === m.area) + ">" + esc(x.name) + "</option>").join("") + "</select>"
+          + '<label class="inline"><input type="checkbox" id="mh-' + mid + '" data-act="mhide" data-id="' + mid + '"' + chk(m.hidden) + "> 隱藏</label>"
+          + '<button class="btn ghost sm" data-act="mmove" data-id="' + mid + '" data-d="-1"' + (mi === 0 ? " disabled" : "") + ' aria-label="模組上移">↑</button><button class="btn ghost sm" data-act="mmove" data-id="' + mid + '" data-d="1"' + (mi === ms.length - 1 ? " disabled" : "") + ' aria-label="模組下移">↓</button>'
+          + confirmBtn("moddel:" + m.id, "刪除", "刪除這個模組？裡面的資料會保留，但不再顯示") + "</div>";
+      });
+      if (!ms.length) h += '<div class="mrow muted small">這個區域還沒有模組，從右邊或下面新增。</div>';
+    });
+    h += '<div class="addline" data-form><input type="text" id="na-name" placeholder="新區域名稱，例如：生活、健康、家庭" data-enter="aradd" aria-label="新區域名稱"><button class="btn" data-act="aradd">新增區域</button></div></section>';
+    h += '<section class="panel"><div class="ph"><h3>新增模組</h3></div><div class="pb stack" style="gap:12px" data-form><div class="fields"><span>放在</span><select id="nm-area" aria-label="放在哪個區域">' + c.areas.map(x => '<option value="' + esc(x.id) + '">' + esc(x.name) + "</option>").join("") + "</select>"
+      + '<span>類型</span><select id="nm-type" aria-label="模組類型">' + Object.keys(TYPES).map(k => '<option value="' + k + '">' + TYPES[k].label + "</option>").join("") + "</select>"
+      + '<span>名稱</span><input type="text" id="nm-name" placeholder="例如：會議紀錄、運動、閱讀清單" data-enter="madd" aria-label="模組名稱"></div><div><button class="btn primary" data-act="madd">新增模組</button></div></div></section>';
+    h += '</div><div class="stack">';
+    h += '<section class="panel"><div class="ph"><h3>模組類型</h3><span class="sum">同一種可以加很多個</span></div><div class="types">' + Object.keys(TYPES).map(k => "<div><b>" + TYPES[k].label + "</b>" + TYPES[k].desc + "</div>").join("") + "</div></section>";
+    h += '<section class="panel"><div class="ph"><h3>匯入資料</h3></div><div class="pb stack" style="gap:8px"><p class="muted small" style="margin:0">選擇之前匯出的備份檔，或從 claude.ai 搬過來的匯入檔（含工作台）。檔案裡有的資料會覆蓋這裡的同一筆，其他資料不動。</p>'
+      + '<div class="btnrow"><label class="btn" for="imp-file">選擇檔案…</label><input type="file" id="imp-file" accept=".json,application/json" data-act="imp" hidden></div></div></section>';
+    h += '<section class="panel"><div class="ph"><h3>備份</h3></div><div class="pb stack" style="gap:8px"><p class="muted small" style="margin:0">把所有區域、模組、工作台和資料匯出成一個 JSON 檔，留一份在自己的電腦。單字練習和考古題的紀錄各自在它們的設定裡匯出。</p><div class="btnrow"><button class="btn" data-act="export">匯出備份</button></div>'
+      + (ui.exportText ? '<textarea id="ex-out" rows="6" readonly aria-label="備份內容">' + esc(ui.exportText) + '</textarea><div class="btnrow"><button class="btn sm" data-act="copyexp">複製全部</button></div>' : "") + "</div></section>";
+    h += '<section class="panel"><div class="ph"><h3>需要新的模組類型？</h3></div><div class="pb small" style="line-height:1.75">例如習慣追蹤、記帳、閱讀清單。把想要的樣子告訴 Claude，請它在這個頁面的 <code>TYPES</code> 加一個新類型；現有資料都不會動。</div></section>';
+    return h + "</div></div>";
+  }
+
+  /* ═════════ 路由與畫面 ═════════ */
+  function route() {
+    const h = decodeURIComponent((location.hash || "").slice(1));
+    let mm;
+    if (h === "manage") return { v: "manage" };
+    if ((mm = /^type-([A-Za-z]+)$/.exec(h))) { const m = cfg().mods.find(x => x.type === mm[1]); if (m) return { v: "mod", id: m.id }; }
+    if ((mm = /^m-([A-Za-z0-9-]+)$/.exec(h))) return { v: "mod", id: mm[1] };
+    if ((mm = /^a-([A-Za-z0-9-]+)$/.exec(h))) return { v: "area", id: mm[1] };
+    return { v: "today" };
+  }
+  function renderNav(r) {
+    const c = cfg();
+    const curArea = r.v === "mod" ? (modById(r.id) || {}).area : r.v === "area" ? r.id : null;
+    let h = '<a href="#today"' + cur(r.v === "today") + ">今天</a>";
+    c.areas.forEach(a => { const first = modsOfArea(a.id)[0]; h += '<a href="#' + (first ? "m-" + esc(first.id) : "a-" + esc(a.id)) + '" style="--ac:' + acol(a) + '"' + cur(curArea === a.id) + '><span class="sw"></span>' + esc(a.name) + "</a>"; });
+    h += '<span class="spacer"></span><a href="#manage"' + cur(r.v === "manage") + ">擴充</a>";
+    tabsEl.innerHTML = h;
+    const ms = curArea ? modsOfArea(curArea) : [];
+    subEl.hidden = ms.length < 2;
+    subEl.style.setProperty("--ac", acolByArea(curArea));
+    subEl.innerHTML = ms.map(m => '<a href="#m-' + esc(m.id) + '"' + cur(r.v === "mod" && r.id === m.id) + ">" + esc(m.name) + "</a>").join("");
+  }
+  function view(r) {
+    if (r.v === "manage") return vManage();
+    if (r.v === "mod") {
+      const m = modById(r.id);
+      if (!m) return '<div class="empty"><b>找不到這個模組</b>它可能被刪除了。回到 <a href="#today">今天</a>。</div>';
+      const T = TYPES[m.type];
+      return '<div style="--ac:' + acolByArea(m.area) + '">' + modHead(m) + (T ? T.view(m) : '<div class="empty"><b>這個模組類型（' + esc(m.type) + "）目前不支援</b>請 Claude 在 TYPES 裡補上它。</div>") + "</div>";
+    }
+    if (r.v === "area") { const a = areaOf(r.id); return a ? '<div class="empty"><b>「' + esc(a.name) + '」還沒有模組</b>到 <a href="#manage">擴充</a> 幫這個區域加一個模組。</div>' : vToday(); }
+    return vToday();
+  }
+
+  let pending = false, pointerDown = false, dragId = null;
+  function busy() {
+    if (pointerDown || dragId) return true;
+    const ae = document.activeElement;
+    return !!(ae && main.contains(ae) && (ae.tagName === "TEXTAREA" || ae.tagName === "SELECT" || (ae.tagName === "INPUT" && /^(text|url|search|number|date)$/.test(ae.type))));
+  }
+  function render(force) {
+    if (!force && busy()) { pending = true; return; }
+    pending = false;
+    const r = route();
+    renderNav(r);
+    const am = r.v === "mod" ? modById(r.id) : null;
+    if (showApp(am && TYPES[am.type] && TYPES[am.type].src ? am : null)) return;
+    const ae = document.activeElement, aid = ae && main.contains(ae) ? ae.id : null;
+    let range = null;
+    try { if (aid && typeof ae.selectionStart === "number") range = [ae.selectionStart, ae.selectionEnd]; } catch (e) { range = null; }
+    const y = window.scrollY, xs = {};
+    main.querySelectorAll("[data-keepx]").forEach(el => { xs[el.dataset.keepx] = el.scrollLeft; });
+    let html;
+    try { html = view(r); } catch (e) { console.error(e); html = '<div class="empty"><b>這一頁顯示時出了問題</b>' + esc(e && e.message) + "</div>"; }
+    main.innerHTML = html;
+    main.querySelectorAll("[data-keepx]").forEach(el => {
+      const k = el.dataset.keepx;
+      el.scrollLeft = k in xs ? xs[k] : Math.max(0, (Number(el.dataset.todayx) || 0) - 220);
+    });
+    if (aid) { const el = document.getElementById(aid); if (el && main.contains(el)) { el.focus({ preventScroll: true }); if (range) try { el.setSelectionRange(range[0], range[1]); } catch (e) { /* 日期欄位不支援 */ } } }
+    window.scrollTo(0, y);
+  }
+  function flush() { if (pending && !busy()) render(true); }
+  // 內建網站：每個模組一個 iframe，開過就留著（切回來時保留原本的進度與捲動位置）
+  const apphost = document.getElementById("apphost");
+  const setNavH = () => document.documentElement.style.setProperty("--navh", document.querySelector(".navbar").offsetHeight + "px");
+  function showApp(m) {
+    const frames = [...apphost.querySelectorAll("iframe")];
+    frames.forEach(f => { f.hidden = !m || f.dataset.mod !== m.id; });
+    if (!m) { apphost.hidden = true; main.hidden = false; return false; }
+    if (!frames.some(f => f.dataset.mod === m.id)) {
+      const f = document.createElement("iframe");
+      f.className = "appframe"; f.dataset.mod = m.id; f.title = m.name; f.src = TYPES[m.type].src;
+      apphost.appendChild(f);
+    }
+    apphost.hidden = false; main.hidden = true; setNavH();
+    return true;
+  }
+  window.addEventListener("resize", setNavH);
+  let rq = null;
+  function schedule() { if (rq) return; rq = setTimeout(() => { rq = null; render(false); }, 30); }
+
+  /* ═════════ 動作 ═════════ */
+  function newTask(title, target, due, extra) {
+    title = String(title || "").trim();
+    if (!title) { toast("先寫下要做什麼"); return false; }
+    const i = String(target || "").indexOf(":"), k = target.slice(0, i), id = target.slice(i + 1);
+    const d = { t: title, st: "todo", due: isDate(due) ? due : "", pri: 0, at: today() };
+    if (k === "p") { const p = S.projects[id]; d.proj = id; d.mod = (p && modOfType(p.area, "projectBoard")) || ""; }
+    else if (k === "g") { const g = S.goals[id]; d.goal = id; d.mod = g ? g.mod : ""; }
+    else d.mod = id;
+    Object.assign(d, extra || {});
+    return put("tasks", uid("t"), d);
+  }
+  function setTaskStatus(id, st) {
+    const t = S.tasks[id]; if (!t || !TASK_ST[st] || (t.st || "todo") === st) return;
+    patch("tasks", id, { st, done: st === "done" ? today() : null });
+  }
+  function toggleTask(id) { const t = S.tasks[id]; if (t) setTaskStatus(id, t.st === "done" ? "todo" : "done"); }
+  const arrOf = (col, id, f) => clone(((S[col][id] || {})[f]) || []);
+  function goModOfType(area, type) { const mid = modOfType(area, type); if (mid && location.hash !== "#m-" + mid) location.hash = "#m-" + mid; }
+  function startReview(mid) {
+    const q = dueWords(mid).sort((a, b) => ((a.due || "") < (b.due || "") ? -1 : 1)).slice(0, 30).map(w => w.id);
+    if (!q.length) { toast("目前沒有要複習的單字"); return false; }
+    ui.review = { mod: mid, queue: q, i: 0, flip: false, count: 0, again: {} };
+    if (location.hash !== "#m-" + mid) location.hash = "#m-" + mid;
+  }
+  function answer(ok) {
+    const R = ui.review; if (!R) return;
+    const id = R.queue[R.i], w = S.words[id]; if (!w) return;
+    const lv = ok ? Math.min(INTERVALS.length - 1, (w.lv || 0) + 1) : 0;
+    patch("words", id, { lv, due: addDays(today(), ok ? INTERVALS[lv] : 1), seen: today() });
+    const d = today(); setDay(d, { vc: { [R.mod]: vCount(R.mod, d) + 1 } });
+    if (!ok && (R.again[id] || 0) < 2) { R.again[id] = (R.again[id] || 0) + 1; R.queue.push(id); }
+    R.count++; R.i++; R.flip = false;
+  }
+  function doConfirm(key) {
+    const i = key.indexOf(":"), kind = key.slice(0, i), id = key.slice(i + 1);
+    ui.confirm = null;
+    if (kind === "tdel") { del("tasks", id); ui.tedit = null; }
+    else if (kind === "pdel") { arr("tasks").filter(t => t.proj === id).forEach(t => patch("tasks", t.id, { proj: null }, true)); del("projects", id); ui.proj = null; }
+    else if (kind === "gdel") { arr("tasks").filter(t => t.goal === id).forEach(t => del("tasks", t.id)); del("goals", id); ui.gedit = null; }
+    else if (kind === "ndel") { del("notes", id); ui.note = null; }
+    else if (kind === "edel") { del("exams", id); ui.exam = null; }
+    else if (kind === "moddel") { const c = clone(cfg()); c.mods = c.mods.filter(m => m.id !== id); setCfg(c); }
+    else if (kind === "areadel") { const c = clone(cfg()); c.areas = c.areas.filter(a => a.id !== id); setCfg(c); }
+  }
+  function moveIn(list, idx, d) { const j = idx + d; if (idx < 0 || j < 0 || j >= list.length) return list; const x = list[idx]; list[idx] = list[j]; list[j] = x; return list; }
+  async function doExport() {
+    const data = { app: "鍾雅婷每日任務", exported: new Date().toISOString(), cfg: cfg() };
+    COLS.forEach(c => { data[c] = S[c]; });
+    if (wbDb) {
+      try { const qs = await wbDb.collection("plan").get(); data.workbench = { plan: {} }; qs.docs.forEach(d => { data.workbench.plan[d.id] = d.data(); }); }
+      catch (e) { toast("工作台的資料沒有一起匯出，請稍後再試"); }
+    }
+    const json = JSON.stringify(data, null, 2);
+    let dl = null;
+    try { dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null; } catch (e) { dl = null; }
+    if (dl) {
+      try { await dl.save({ filename: "每日任務備份-" + today() + ".json", data: json }); return; }
+      catch (e) { if (e && (e.code === "cancelled" || e.code === "declined" || e.code === "dismissed")) return; }
+    }
+    ui.exportText = json; render(true);
+  }
+
+  async function doImport(file) {
+    if (!db) { toast("請先用 Google 登入，再匯入資料"); return; }
+    let data;
+    try { data = JSON.parse(await file.text()); } catch (e) { toast("這個檔案不是正確的 JSON"); return; }
+    const daily = data.daily || (data.tasks || data.projects || data.cfg ? data : null), wb = data.workbench;
+    if (!daily && !(wb && wb.plan)) { toast("檔案裡沒有可以匯入的資料"); return; }
+    const jobs = [];
+    if (daily) {
+      const c = daily.cfg && (daily.cfg.main || daily.cfg);
+      if (c && Array.isArray(c.areas) && Array.isArray(c.mods)) jobs.push(() => db.doc("cfg/main").set(c));
+      COLS.forEach(col => Object.keys(daily[col] || {}).forEach(id => jobs.push(() => db.collection(col).doc(id).set(daily[col][id]))));
+    }
+    if (wb && wb.plan) {
+      const w = await DT.dbFor("workbench");
+      if (w) Object.keys(wb.plan).forEach(id => jobs.push(() => w.collection("plan").doc(id).set(wb.plan[id])));
+    }
+    setStatus("wait", "匯入中… 0 / " + jobs.length);
+    let n = 0, bad = 0;
+    for (let i = 0; i < jobs.length; i += 20) {
+      await Promise.all(jobs.slice(i, i + 20).map(j => j().then(() => n++, () => bad++)));
+      setStatus("wait", "匯入中… " + (n + bad) + " / " + jobs.length);
+    }
+    setStatus(bad ? "warn" : "live", bad ? "有 " + bad + " 筆沒有匯入" : "已同步");
+    toast("匯入完成：" + n + " 筆資料" + (bad ? "，" + bad + " 筆失敗" : ""));
+  }
+  const CLICK = {
+    ledit: el => { ui.ledit = ui.ledit === el.dataset.mod ? null : el.dataset.mod; },
+    ladd: el => {
+      const t = val("ln-t"), u = safeUrl(val("ln-u"));
+      if (!u) { toast("網址要以 https:// 開頭"); return false; }
+      const links = arrOf("mods", el.dataset.mod, "links"); links.push({ id: uid("l"), t: t || host(u), url: u });
+      patch("mods", el.dataset.mod, { links });
+      const f = document.getElementById("ln-t"); if (f) f.focus();
+    },
+    ldel: el => { const links = arrOf("mods", el.dataset.mod, "links"); links.splice(Number(el.dataset.i), 1); patch("mods", el.dataset.mod, { links }); },
+    qadd: () => {
+      const to = val("qa-to"); ui.qaTo = to;
+      if (newTask(val("qa-t"), to, val("qa-d"))) { const f = document.getElementById("qa-t"); if (f) { f.value = ""; f.focus(); } } else return false;
+    },
+    tmove: el => { patch("tasks", el.dataset.id, { due: el.dataset.to }); toast("已改到 " + mdw(el.dataset.to)); },
+    tedit: el => { ui.tedit = ui.tedit === el.dataset.id ? null : el.dataset.id; ui.confirm = null; },
+    tst: el => setTaskStatus(el.dataset.id, el.dataset.st),
+    showdone: el => { ui.showDone[el.dataset.mod] = !ui.showDone[el.dataset.mod]; },
+    showlater: el => { ui.showLater[el.dataset.mod] = !ui.showLater[el.dataset.mod]; },
+    bcol: el => { ui.bcol[el.dataset.mod] = el.dataset.k; },
+    tfold: el => { ui.openDone[el.dataset.mod] = !ui.openDone[el.dataset.mod]; },
+    tkadd: el => {
+      const mid = el.dataset.mod;
+      if (!newTask(val("tk-t-" + mid), "m:" + mid, val("tk-d-" + mid), isChecked("tk-p-" + mid) ? { pri: 1 } : null)) return false;
+      const f = document.getElementById("tk-t-" + mid); if (f) { f.value = ""; f.focus(); }
+    },
+    badd: el => {
+      const mid = el.dataset.mod, p = val("ba-p-" + mid);
+      if (!newTask(val("ba-t-" + mid), p ? "p:" + p : "m:" + mid, val("ba-d-" + mid))) return false;
+      const f = document.getElementById("ba-t-" + mid); if (f) { f.value = ""; f.focus(); }
+    },
+    pstat: el => { ui.pstat = el.dataset.k; },
+    pnew: () => { ui.pnew = !ui.pnew; },
+    pcreate: el => {
+      const name = val("np-name"); if (!name) { toast("先寫專案名稱"); return false; }
+      let s = val("np-start"), e = val("np-end"); if (isDate(s) && isDate(e) && e < s) { const x = s; s = e; e = x; }
+      const id = uid("p"), n = arr("projects").filter(p => p.area === el.dataset.area).length;
+      if (put("projects", id, { name, area: el.dataset.area, st: "plan", start: isDate(s) ? s : today(), end: isDate(e) ? e : addDays(today(), 30), goal: "", scope: [], ms: [], risk: "", c: (n % 6) + 1, at: today() })) { ui.proj = id; ui.pnew = false; window.scrollTo(0, 0); }
+    },
+    popen: el => { const p = S.projects[el.dataset.id]; if (!p) return false; ui.proj = el.dataset.id; ui.tedit = null; goModOfType(p.area, "projectPlan"); window.scrollTo(0, 0); },
+    pclose: () => { ui.proj = null; ui.confirm = null; },
+    pcolor: el => patch("projects", el.dataset.id, { c: Number(el.dataset.n) }),
+    toboard: el => { const p = S.projects[el.dataset.id]; if (!p) return false; const b = modOfType(p.area, "projectBoard"); if (b) { ui.bproj[b] = el.dataset.id; location.hash = "#m-" + b; } },
+    cladd: el => {
+      const { col, id, f } = el.dataset, input = document.getElementById("cl-new-" + f + "-" + id), t = input ? input.value.trim() : "";
+      if (!t) return false;
+      const list = arrOf(col, id, f); list.push({ id: uid("c"), t, done: false }); patch(col, id, { [f]: list });
+      if (input) { input.value = ""; input.focus(); }
+    },
+    cldel: el => { const { col, id, f } = el.dataset, list = arrOf(col, id, f); list.splice(Number(el.dataset.i), 1); patch(col, id, { [f]: list }); },
+    msadd: el => {
+      const t = val("pm-new-t"), d = val("pm-new-d"); if (!t) { toast("先寫里程碑名稱"); return false; }
+      const ms = arrOf("projects", el.dataset.p, "ms"); ms.push({ id: uid("ms"), t, date: isDate(d) ? d : "", done: false }); patch("projects", el.dataset.p, { ms });
+    },
+    msdel: el => { const ms = arrOf("projects", el.dataset.p, "ms").filter(x => x.id !== el.dataset.id); patch("projects", el.dataset.p, { ms }); },
+    ptadd: el => {
+      const s = val("pt-s"), d = val("pt-d");
+      if (!newTask(val("pt-t"), "p:" + el.dataset.id, d, isDate(s) ? { start: s } : null)) return false;
+      const f = document.getElementById("pt-t"); if (f) { f.value = ""; f.focus(); }
+    },
+    gnew: () => { ui.gnew = !ui.gnew; },
+    gcreate: el => {
+      const name = val("ng-name"); if (!name) { toast("先寫目標名稱"); return false; }
+      if (put("goals", uid("g"), { mod: el.dataset.mod, name, cat: val("ng-cat"), target: isDate(val("ng-target")) ? val("ng-target") : "", url: "", note: "", at: today() })) ui.gnew = false;
+    },
+    gedit: el => { ui.gedit = ui.gedit === el.dataset.id ? null : el.dataset.id; ui.confirm = null; },
+    gfold: el => { ui.gopen[el.dataset.id] = !ui.gopen[el.dataset.id]; },
+    gmore: el => { ui.gmore[el.dataset.id] = !ui.gmore[el.dataset.id]; },
+    gsadd: el => {
+      const id = el.dataset.id;
+      if (!newTask(val("gs-" + id), "g:" + id, val("gd-" + id))) return false;
+      const f = document.getElementById("gs-" + id); if (f) { f.value = ""; f.focus(); }
+    },
+    rnew: () => { ui.rnew = !ui.rnew; },
+    radd: el => {
+      const t = val("r-t"); if (!t) { toast("先寫這個時段要做什麼"); return false; }
+      const days = [0, 1, 2, 3, 4, 5, 6].filter(wd => isChecked("rd-" + wd)); if (!days.length) { toast("至少選一天"); return false; }
+      const rt = arrOf("mods", el.dataset.mod, "routine"), min = Number(val("r-min")) || 0;
+      rt.push({ id: uid("r"), t, time: val("r-time"), min: min > 0 ? min : 0, days, url: safeUrl(val("r-url")) });
+      if (patch("mods", el.dataset.mod, { routine: rt })) ui.rnew = false;
+    },
+    rdel: el => {
+      const wd = Number(el.dataset.wd);
+      const rt = arrOf("mods", el.dataset.mod, "routine").map(r => (r.id === el.dataset.id ? Object.assign(r, { days: (r.days || []).filter(x => x !== wd) }) : r)).filter(r => (r.days || []).length);
+      patch("mods", el.dataset.mod, { routine: rt });
+    },
+    nnew: el => {
+      const id = uid("n");
+      if (put("notes", id, { mod: el.dataset.mod, title: "", course: ui.ncourse || "", tags: [], url: "", body: "", pin: false, review: false, at: today(), up: today() })) {
+        ui.note = id; setTimeout(() => { const f = document.getElementById("ne-title"); if (f) f.focus(); }, 0);
+      }
+    },
+    nopen: el => { ui.note = el.dataset.id; window.scrollTo(0, 0); },
+    nclose: () => { saveNoteBody(); ui.note = null; ui.confirm = null; },
+    ncourse: el => { ui.ncourse = el.dataset.k; },
+    nreview: () => { ui.nreview = !ui.nreview; },
+    enew: () => { ui.enew = !ui.enew; },
+    ecreate: el => {
+      const name = val("ex-name"), d = val("ex-date");
+      if (!name || !isDate(d)) { toast("請填考試名稱和日期"); return false; }
+      if (put("exams", uid("e"), { mod: el.dataset.mod, name, date: d, end: "", kind: val("ex-kind"), place: "", url: "", prep: [], score: "", note: "" })) ui.enew = false;
+    },
+    eopen: el => { ui.exam = ui.exam === el.dataset.id ? null : el.dataset.id; ui.confirm = null; },
+    vadd: el => { const d = today(), mid = el.dataset.mod; setDay(d, { vc: { [mid]: Math.max(0, vCount(mid, d) + Number(el.dataset.n)) } }); },
+    vreview: el => startReview(el.dataset.mod),
+    vflip: () => { if (ui.review) ui.review.flip = true; },
+    vans: el => answer(el.dataset.ok === "1"),
+    vexit: () => { ui.review = null; },
+    wf: el => { ui.wfilter = el.dataset.k; },
+    wadd: el => {
+      const w = val("w-w"); if (!w) { toast("先輸入單字"); return false; }
+      const dup = arr("words").find(x => x.mod === el.dataset.mod && String(x.w).toLowerCase() === w.toLowerCase());
+      if (dup) { toast("「" + w + "」已經在生字本裡"); return false; }
+      if (!put("words", uid("w"), { mod: el.dataset.mod, w, m: val("w-m"), ex: val("w-ex"), src: val("w-src"), lv: 0, due: today(), added: today() })) return false;
+      ["w-w", "w-m", "w-ex"].forEach(i => { const f = document.getElementById(i); if (f) f.value = ""; });
+      const f = document.getElementById("w-w"); if (f) f.focus();
+    },
+    wdel: el => {
+      const id = el.dataset.id, data = S.words[id]; if (!data) return false;
+      const copy = clone(data);
+      if (del("words", id)) toast("已刪除「" + copy.w + "」", () => put("words", id, copy));
+    },
+    aradd: () => {
+      const name = val("na-name"); if (!name) { toast("先寫區域名稱"); return false; }
+      const c = clone(cfg()), used = c.areas.map(a => a.color);
+      c.areas.push({ id: uid("a"), name, color: [3, 4, 5, 6, 1, 2].find(n => !used.includes(n)) || 6 });
+      setCfg(c);
+    },
+    armove: el => { const c = clone(cfg()); moveIn(c.areas, c.areas.findIndex(a => a.id === el.dataset.id), Number(el.dataset.d)); setCfg(c); },
+    arcolor: el => { const c = clone(cfg()); const a = c.areas.find(x => x.id === el.dataset.id); if (a) { a.color = Number(el.dataset.n); setCfg(c); } },
+    mmove: el => {
+      const c = clone(cfg()), m = c.mods.find(x => x.id === el.dataset.id); if (!m) return false;
+      const sib = c.mods.filter(x => x.area === m.area), j = sib.indexOf(m) + Number(el.dataset.d);
+      if (j < 0 || j >= sib.length) return false;
+      const other = sib[j], ia = c.mods.indexOf(m), ib = c.mods.indexOf(other);
+      c.mods[ia] = other; c.mods[ib] = m; setCfg(c);
+    },
+    madd: () => {
+      const area = val("nm-area"), type = val("nm-type"), name = val("nm-name") || (TYPES[type] || {}).label;
+      if (!areaOf(area) || !TYPES[type]) return false;
+      const c = clone(cfg()), id = uid("m");
+      c.mods.push({ id, area, type, name });
+      if (setCfg(c)) location.hash = "#m-" + id;
+    },
+    signin: () => {
+      if (!window.DT) return false;
+      DT.signIn().then(() => location.reload()).catch(e => toast("登入沒有完成：" + ((e && e.code) || "請再試一次")));
+      return false;
+    },
+    signout: () => { if (window.DT) DT.signOut().then(() => location.reload()); return false; },
+    askconfirm: el => { ui.confirm = el.dataset.k; },
+    unconfirm: () => { ui.confirm = null; },
+    confirm: el => doConfirm(el.dataset.k),
+    export: () => { doExport(); return false; },
+    copyexp: () => {
+      const ta = document.getElementById("ex-out"); if (!ta) return false;
+      const fallback = () => { ta.focus(); ta.select(); toast("已選取全部，按 Ctrl+C 複製"); };
+      try { navigator.clipboard.writeText(ta.value).then(() => toast("已複製"), fallback); } catch (e) { fallback(); }
+      return false;
+    },
+  };
+  function editTask(el) {
+    const id = el.dataset.id, k = el.dataset.k, t = S.tasks[id]; if (!t) return;
+    if (k === "t") { const v = el.value.trim(); if (v && v !== t.t) patch("tasks", id, { t: v }); }
+    else if (k === "due" || k === "start") patch("tasks", id, { [k]: isDate(el.value) ? el.value : "" });
+    else if (k === "pri") patch("tasks", id, { pri: el.checked ? 1 : 0 });
+    else if (k === "note") patch("tasks", id, { note: el.value });
+    else if (k === "st") setTaskStatus(id, el.value);
+    else if (k === "proj") {
+      if (el.value) patch("tasks", id, { proj: el.value });
+      else patch("tasks", id, { proj: null, mod: t.mod || modOfType(taskArea(t), "projectBoard") || "" });
+    }
+  }
+  let noteTimer = null;
+  function saveNoteBody() {
+    clearTimeout(noteTimer); noteTimer = null;
+    const ta = document.getElementById("ne-body"); if (!ta) return;
+    const id = ta.dataset.id, n = S.notes[id];
+    if (n && n.body !== ta.value) patch("notes", id, { body: ta.value, up: today() }, true);
+  }
+  const CHANGE = {
+    tdone: el => toggleTask(el.dataset.id),
+    msdone: el => { const ms = arrOf("projects", el.dataset.p, "ms").map(x => (x.id === el.dataset.id ? Object.assign(x, { done: el.checked }) : x)); patch("projects", el.dataset.p, { ms }); },
+    rtdone: el => setDay(el.dataset.date || today(), { r: { [el.dataset.id]: el.checked } }),
+    lfield: el => {
+      const links = arrOf("mods", el.dataset.mod, "links"), l = links[Number(el.dataset.i)]; if (!l) return;
+      if (el.dataset.k === "url") { const u = safeUrl(el.value); if (!u) { toast("網址要以 https:// 開頭，這次沒有改"); render(true); return; } l.url = u; } else l.t = el.value.trim();
+      patch("mods", el.dataset.mod, { links });
+    },
+    tfield: editTask,
+    pfield: el => {
+      const { id, k } = el.dataset, p = S.projects[id]; if (!p) return;
+      const v = el.value.trim();
+      if (k === "name" && !v) { render(true); return; }
+      if ((k === "start" || k === "end") && !isDate(v)) return;
+      patch("projects", id, { [k]: k === "goal" || k === "risk" ? el.value : v });
+    },
+    clck: el => { const { col, id, f } = el.dataset, list = arrOf(col, id, f), x = list[Number(el.dataset.i)]; if (x) { x.done = el.checked; patch(col, id, { [f]: list }); } },
+    nfield: el => {
+      const { id, k } = el.dataset; let v;
+      if (k === "pin" || k === "review") v = el.checked;
+      else if (k === "tags") v = el.value.split(/[、,，;；]+/).map(s => s.trim()).filter(Boolean);
+      else if (k === "url") { v = el.value.trim(); if (v && !safeUrl(v)) { toast("網址要以 https:// 開頭"); return; } }
+      else v = el.value.trim();
+      patch("notes", id, { [k]: v, up: today() });
+    },
+    nbody: () => saveNoteBody(),
+    efield: el => {
+      const { id, k } = el.dataset, v = k === "note" ? el.value : el.value.trim();
+      if (k === "name" && !v) { render(true); return; }
+      if (k === "date" && !isDate(v)) return;
+      if (k === "url" && v && !safeUrl(v)) { toast("網址要以 https:// 開頭"); return; }
+      patch("exams", id, { [k]: v });
+    },
+    gfield: el => {
+      const { id, k } = el.dataset, v = k === "note" ? el.value : el.value.trim();
+      if (k === "name" && !v) { render(true); return; }
+      if (k === "url" && v && !safeUrl(v)) { toast("網址要以 https:// 開頭"); return; }
+      patch("goals", id, { [k]: v });
+    },
+    wbdone: el => {
+      const id = el.dataset.id, mon = today().slice(0, 7), it = ((S.wb && S.wb.items) || {})[id];
+      if (!wbDb || !it) return;
+      const p = { items: { [id]: { done: el.checked, doneAt: el.checked ? today() : null } } };
+      S.wb = merge(clone(S.wb), p);
+      wbDb.doc("plan/m-" + mon).update(p).catch(() => toast("工作台沒有存到，請稍後再試"));
+    },
+    imp: el => { const f = el.files && el.files[0]; el.value = ""; if (f) doImport(f); },
+    vtgt: el => { const n = Math.round(Number(el.value)); if (n >= 1 && n <= 999) patch("mods", el.dataset.mod, { target: n }); },
+    bfilter: el => { ui.bproj[el.dataset.mod] = el.value; },
+    arname: el => { const v = el.value.trim(); const c = clone(cfg()), a = c.areas.find(x => x.id === el.dataset.id); if (a && v && v !== a.name) { a.name = v; setCfg(c); } },
+    mname: el => { const v = el.value.trim(); const c = clone(cfg()), m = c.mods.find(x => x.id === el.dataset.id); if (m && v && v !== m.name) { m.name = v; setCfg(c); } },
+    marea: el => { const c = clone(cfg()), m = c.mods.find(x => x.id === el.dataset.id); if (m && areaOf(el.value)) { m.area = el.value; setCfg(c); } },
+    mhide: el => { const c = clone(cfg()), m = c.mods.find(x => x.id === el.dataset.id); if (m) { m.hidden = el.checked; setCfg(c); } },
+  };
+
+  /* ═════════ 事件 ═════════ */
+  document.addEventListener("click", e => {
+    const el = e.target.closest && e.target.closest("[data-act]");
+    if (!el || el.disabled || ["INPUT", "SELECT", "TEXTAREA"].includes(el.tagName)) return;
+    const fn = CLICK[el.dataset.act]; if (!fn) return;
+    e.preventDefault();
+    if (fn(el) !== false) render(true);
+  });
+  document.addEventListener("change", e => {
+    const el = e.target, fn = el.dataset && CHANGE[el.dataset.act]; if (!fn) return;
+    fn(el);
+    if (el.type === "checkbox" || el.tagName === "SELECT") render(true);
+  });
+  document.addEventListener("input", e => {
+    const el = e.target, a = el.dataset && el.dataset.act;
+    if (a === "nq") { ui.nq = el.value; render(true); }
+    else if (a === "wq") { ui.wq = el.value; render(true); }
+    else if (a === "nbody") {
+      const pv = document.getElementById("ne-preview"); if (pv) pv.innerHTML = mdRender(el.value);
+      clearTimeout(noteTimer); noteTimer = setTimeout(saveNoteBody, 1200);
+    }
+  });
+  document.addEventListener("keydown", e => {
+    const el = e.target;
+    if (e.key === "Enter" && el.dataset && el.dataset.enter && !e.isComposing) {
+      const box = el.closest("[data-form]"), btn = box && box.querySelector('[data-act="' + el.dataset.enter + '"]');
+      if (btn) { e.preventDefault(); btn.click(); }
+      return;
+    }
+    if (e.key === "Escape" && (ui.confirm || ui.tedit)) { ui.confirm = null; ui.tedit = null; render(true); return; }
+    const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName);
+    if (ui.review && !typing && route().v === "mod" && route().id === ui.review.mod) {
+      if ((e.key === " " || e.key === "Enter") && !ui.review.flip) { e.preventDefault(); ui.review.flip = true; render(true); }
+      else if (ui.review.flip && (e.key === "1" || e.key === "2")) { e.preventDefault(); answer(e.key === "2"); render(true); }
+    }
+  });
+  document.addEventListener("pointerdown", () => { pointerDown = true; }, true);
+  const up = () => { pointerDown = false; setTimeout(flush, 0); };
+  document.addEventListener("pointerup", up, true);
+  document.addEventListener("pointercancel", up, true);
+  main.addEventListener("focusout", () => setTimeout(flush, 0));
+  document.addEventListener("dragstart", e => {
+    const c = e.target.closest && e.target.closest("[data-drag]"); if (!c) return;
+    dragId = c.dataset.drag; pointerDown = false;
+    try { e.dataTransfer.setData("text/plain", dragId); e.dataTransfer.effectAllowed = "move"; } catch (err) { /* 部分瀏覽器限制 */ }
+    c.classList.add("dragging");
+  });
+  document.addEventListener("dragover", e => {
+    if (!dragId) return;
+    const col = e.target.closest && e.target.closest("[data-drop]"); if (!col) return;
+    e.preventDefault();
+    document.querySelectorAll(".col.over").forEach(x => { if (x !== col) x.classList.remove("over"); });
+    col.classList.add("over");
+  });
+  document.addEventListener("drop", e => {
+    if (!dragId) return;
+    const col = e.target.closest && e.target.closest("[data-drop]"); if (!col) return;
+    e.preventDefault();
+    const id = dragId; dragId = null;
+    setTaskStatus(id, col.dataset.drop); render(true);
+  });
+  document.addEventListener("dragend", () => { dragId = null; document.querySelectorAll(".dragging, .col.over").forEach(x => x.classList.remove("dragging", "over")); flush(); });
+  window.addEventListener("hashchange", () => {
+    const r = route(), m = r.v === "mod" ? modById(r.id) : null;
+    if (!m || m.type !== "projectPlan") ui.proj = null;
+    if (!m || m.type !== "notes") { saveNoteBody(); ui.note = null; }
+    if (!m || !ui.review || ui.review.mod !== m.id) ui.review = null;
+    ui.confirm = null; ui.ledit = null; ui.tedit = null; ui.exportText = null;
+    window.scrollTo(0, 0); render(true);
+  });
+  let lastDay = today();
+  setInterval(() => { if (today() !== lastDay) { lastDay = today(); wbSubscribe(); render(false); } }, 60000);
+
+  /* ═════════ 連線資料庫 ═════════ */
+  function setStatus(s, text) { statusEl.dataset.s = s; statusEl.textContent = text; }
+  function noteSnap(key, meta) {
+    firstSeen.add(key);
+    if (meta && !meta.fromCache) confirmed.add(key);
+    if (!live && confirmed.size >= COLS.length + 1) { live = true; clearTimeout(loadTimer); setStatus(canWrite ? "live" : "warn", canWrite ? "已同步" : "唯讀檢視"); }
+  }
+  function subErr(err) {
+    const code = err && err.code;
+    setStatus(code === "revoked" ? "off" : "warn", code === "revoked" ? "已經無法讀取資料" : "同步中斷，重新整理頁面可以恢復");
+  }
+  let loadTimer = null;
+  function renderAcct(u) {
+    const el = document.getElementById("acct"); if (!el) return;
+    el.innerHTML = u ? '<span class="who">' + esc(u.displayName || "已登入") + '</span><button class="btn ghost sm" data-act="signout">登出</button>'
+      : '<button class="btn primary sm" data-act="signin">用 Google 登入</button>';
+  }
+  let wbUnsub = null, wbMonth = null;
+  function wbSubscribe() {
+    if (!wbDb) return;
+    const mon = today().slice(0, 7); if (mon === wbMonth) return;
+    wbMonth = mon; if (wbUnsub) wbUnsub();
+    wbUnsub = wbDb.doc("plan/m-" + mon).onSnapshot(s => { S.wb = s.exists ? s.data() : null; S.wbReady = true; schedule(); }, () => { S.wbReady = true; schedule(); });
+  }
+  window.addEventListener("message", e => {
+    if (e.origin !== location.origin || !e.data || !e.data.dt) return;
+    if (e.data.dt === "nav") {
+      const m = cfg().mods.find(x => x.type === e.data.type && !x.hidden) || cfg().mods.find(x => x.type === e.data.type);
+      if (m) location.hash = "#m-" + m.id; else toast("平台裡沒有這個模組，可以到「擴充」加回來");
+    } else if (e.data.dt === "changed") schedule();
+  });
+  window.addEventListener("storage", () => schedule());
+  async function boot() {
+    if (window.DT) DT.user().then(renderAcct, () => renderAcct(null));
+    render(true);
+    loadTimer = setTimeout(() => { if (!live) setStatus("warn", db ? "資料暫時連不上，畫面可能不是最新" : "沒有連上資料庫"); }, 10000);
+    let d = null;
+    try { d = window.claude && typeof window.claude.use === "function" ? await window.claude.use("db") : null; } catch (e) { d = null; }
+    if (!d) { clearTimeout(loadTimer); signedOut = true; setStatus("off", "還沒登入：修改只會留在這個畫面"); render(false); return; }
+    db = d;
+    try { const u = await window.claude.use("user"); if (u) { const can = await u.can("data.write"); if (can === false) canWrite = false; } } catch (e) { /* 沒有回答就照常 */ }
+    COLS.forEach(c => {
+      db.collection(c).onSnapshot(snap => {
+        const m = {};
+        snap.docs.forEach(x => { m[x.id] = x.data(); known.add(c + "/" + x.id); });
+        S[c] = m; noteSnap(c, snap.metadata); schedule();
+      }, subErr);
+    });
+    db.doc("cfg/main").onSnapshot(snap => {
+      S.cfg = snap.exists ? snap.data() : null;
+      if (snap.exists) known.add("cfg/main");
+      noteSnap("cfg", snap.metadata); schedule();
+    }, subErr);
+    try { wbDb = window.DT ? await DT.dbFor("workbench") : null; } catch (e) { wbDb = null; }
+    wbSubscribe(); schedule();
+  }
+  boot();
+})();
+</script>
+
+</body>
+</html>

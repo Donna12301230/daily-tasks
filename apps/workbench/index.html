@@ -1,0 +1,728 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><script>document.documentElement.dataset.dtApp="workbench";if(window.parent!==window)document.documentElement.classList.add("in-dt")</script><style id="dt-theme">html.in-dt:root{--bg:#f3f5f9;--surface:#ffffff;--ink:#1c2333;--muted:#5b6678;--line:#d8dee8;--soft:#e9edf3;--accent:#2b3f7a;--accent-ink:#ffffff}@media (prefers-color-scheme: dark){html.in-dt:root:not([data-theme="light"]){--bg:#12151c;--surface:#1a1f29;--ink:#e3e7ef;--muted:#98a2b4;--line:#2e3544;--soft:#232a37;--accent:#9fb4f0;--accent-ink:#10162a;color-scheme:dark}}html.in-dt:root[data-theme="dark"]{--bg:#12151c;--surface:#1a1f29;--ink:#e3e7ef;--muted:#98a2b4;--line:#2e3544;--soft:#232a37;--accent:#9fb4f0;--accent-ink:#10162a;color-scheme:dark}</style><script>window.DT_APP="workbench"</script><script src="../../fb.js"></script><link rel="stylesheet" href="../../apps/embed.css">
+</head><body>
+<title>赫滋與羊工作台</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a studio planner — sticky tab bar, one working surface per tab; tag colours carried over from the Excel sheet (★ red, 交 brown, 課 blue, 讀 purple, IG green) */
+:root {
+  --bg: #f3f5f1; --surface: #ffffff; --ink: #1f2a22; --muted: #66726a; --line: #d9dfd6; --soft: #e9eee6;
+  --accent: #3f6b4a; --accent-ink: #ffffff;
+  --t-star: #c0262d; --t-due: #8a4a12; --t-class: #1f4e79; --t-study: #6b35a3; --t-ig: #2f7d52;
+  --pp: #fbe7ee; --rest: #eceeea; --warn: #b26a00; --warn-soft: #fbefd9; --bad: #b3263e; --bad-soft: #f8e1e5; --ok: #2f7d52; --ok-soft: #e1f2e7;
+  --load-g: #dcefd9; --load-y: #fbe3a3; --load-r: #f6b3b8;
+  --font-body: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141815; --surface: #1c221e; --ink: #e4ebe5; --muted: #9aa69d; --line: #2e3831; --soft: #232b25;
+  --accent: #7fbf8f; --accent-ink: #10180f;
+  --t-star: #f07b80; --t-due: #e0a46b; --t-class: #82b4e6; --t-study: #c29cf0; --t-ig: #78cf9c;
+  --pp: #3a2430; --rest: #222823; --warn: #e8b45f; --warn-soft: #3a2d14; --bad: #f08a9b; --bad-soft: #3a1c23; --ok: #78cf9c; --ok-soft: #173426;
+  --load-g: #1f3a24; --load-y: #4a3d14; --load-r: #4d2227; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141815; --surface: #1c221e; --ink: #e4ebe5; --muted: #9aa69d; --line: #2e3831; --soft: #232b25;
+  --accent: #7fbf8f; --accent-ink: #10180f;
+  --t-star: #f07b80; --t-due: #e0a46b; --t-class: #82b4e6; --t-study: #c29cf0; --t-ig: #78cf9c;
+  --pp: #3a2430; --rest: #222823; --warn: #e8b45f; --warn-soft: #3a2d14; --bad: #f08a9b; --bad-soft: #3a1c23; --ok: #78cf9c; --ok-soft: #173426;
+  --load-g: #1f3a24; --load-y: #4a3d14; --load-r: #4d2227; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); margin: 0 }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg) }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 56px }
+header.top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; padding-block: 18px 6px }
+h1 { margin: 0; font-size: 1.45rem; letter-spacing: .03em }
+.status { font-size: .8rem; color: var(--muted) }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); display: flex; gap: 4px; padding-block: 8px; border-bottom: 1px solid var(--line); overflow-x: auto }
+nav.tabs a { text-decoration: none; color: var(--muted); padding: 6px 13px; border-radius: 999px; font-weight: 500; white-space: nowrap }
+nav.tabs a[aria-current="page"] { background: var(--accent); color: var(--accent-ink) }
+a { color: var(--accent) }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+button, select, input, textarea { font: inherit; color: inherit }
+button { cursor: pointer }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 7px; padding: 4px 11px; font-size: .85rem }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent) }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--muted) }
+.btn:disabled { opacity: .5; cursor: default }
+input[type="date"], input[type="number"], input[type="text"], select, textarea { border: 1px solid var(--line); background: var(--surface); border-radius: 7px; padding: 4px 8px; font-size: .88rem; max-width: 100% }
+textarea { width: 100%; resize: vertical; min-height: 44px }
+.view { padding-top: 16px }
+.empty { color: var(--muted); padding: 30px 0; text-align: center }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums }
+
+/* tags */
+.tag { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 20px; padding: 0 6px; border-radius: 5px; font-size: .74rem; font-weight: 700; color: #fff; flex: none }
+.tag.s { background: var(--t-star) } .tag.d { background: var(--t-due) } .tag.c { background: var(--t-class) } .tag.r { background: var(--t-study) } .tag.i { background: var(--t-ig) }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tag { color: #111 } }
+:root[data-theme="dark"] .tag { color: #111 }
+.chip { font-size: .74rem; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 0 7px; white-space: nowrap }
+.chip.warn { color: var(--warn); border-color: var(--warn); background: var(--warn-soft) }
+.chip.bad { color: var(--bad); border-color: var(--bad); background: var(--bad-soft) }
+
+/* today */
+.dayhead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 10px }
+.dayhead h2 { margin: 0; font-size: 1.35rem }
+.dayhead .nav { display: flex; gap: 4px; align-items: center }
+.badges { display: flex; flex-wrap: wrap; gap: 6px }
+.notes { margin: 0 0 12px; padding: 10px 14px; border-radius: 8px; background: var(--warn-soft); color: var(--warn); font-size: .88rem }
+.notes p { margin: 0 }
+.grid2 { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 18px; align-items: start }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 14px; overflow: hidden }
+.panel > h3 { margin: 0; padding: 10px 14px; font-size: .95rem; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--line) }
+.panel > h3 .sum { margin-left: auto; font-weight: 400; font-size: .8rem; color: var(--muted) }
+.panel.overdue > h3 { color: var(--bad) }
+.it { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 2px 8px; padding: 9px 14px; border-top: 1px solid var(--line); align-items: start }
+.panel > h3 + .it, .panel > h3 + div > .it:first-child { border-top: 0 }
+.it input[type="checkbox"] { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--accent) }
+.it .tt { min-width: 0 }
+.it .tt b { font-weight: 500 }
+.it.done .tt b { text-decoration: line-through; color: var(--muted) }
+.it .meta { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; align-items: center }
+.it .detail { grid-column: 2 / -1; font-size: .84rem; color: var(--muted); white-space: pre-wrap; margin-top: 4px }
+.it .acts { display: flex; gap: 2px }
+.pp { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 10px; margin-top: 6px; background: var(--soft); border-radius: 8px; font-size: .85rem }
+.pp .sep { width: 100%; height: 0 }
+.addrow { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 14px; border-top: 1px solid var(--line) }
+.addrow input[type="text"] { flex: 1 1 180px }
+.track-h { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: .86rem; padding: 8px 14px 0; color: var(--t-study) }
+.habit { display: flex; gap: 8px; padding: 8px 14px; border-top: 1px solid var(--line); align-items: start }
+.habit:first-of-type { border-top: 0 }
+.habit small { display: block; color: var(--muted) }
+
+/* calendar */
+.calhead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px }
+.calhead h2 { margin: 0 8px 0 0; font-size: 1.3rem }
+.legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: .78rem; color: var(--muted); margin-left: auto }
+.legend span { display: inline-flex; align-items: center; gap: 4px }
+.cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px }
+.cal .wd { text-align: center; font-size: .78rem; color: var(--muted); padding: 2px 0 }
+.cell { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; min-height: 108px; padding: 5px 6px; display: flex; flex-direction: column; gap: 2px; text-align: left; cursor: pointer; min-width: 0 }
+.cell.out { opacity: .38 }
+.cell.ppd { background: var(--pp) }
+.cell.rest { background: var(--rest) }
+.cell.today { outline: 2px solid var(--accent); outline-offset: -1px }
+.cell .dn { font: 600 .82rem var(--font-mono); display: flex; justify-content: space-between; color: var(--ink) }
+.cell .dn i { font-style: normal; color: var(--bad); font-family: var(--font-body); font-weight: 500; font-size: .72rem }
+.ln { display: flex; gap: 4px; align-items: baseline; font-size: .74rem; line-height: 1.35; min-width: 0 }
+.ln::before { content: ""; width: 6px; height: 6px; border-radius: 50%; flex: none; transform: translateY(-1px); background: var(--c) }
+.ln span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0 }
+.ln.done span { text-decoration: line-through; color: var(--muted) }
+.more { font-size: .72rem; color: var(--muted) }
+.cell .lns { display: grid; gap: 2px; min-width: 0 }
+
+/* gantt */
+.gctl { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px }
+.gctl .chipbtn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 3px 11px; font-size: .82rem }
+.gctl .chipbtn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent) }
+.gwrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface) }
+table.g { border-collapse: separate; border-spacing: 0; font-size: .8rem }
+table.g th, table.g td { border-bottom: 1px solid var(--line); padding: 0; height: 30px; white-space: nowrap }
+table.g thead th { position: sticky; top: 0; background: var(--surface); z-index: 2; font-weight: 500; color: var(--muted) }
+table.g .nm { position: sticky; left: 0; background: var(--surface); z-index: 1; min-width: 300px; max-width: 300px; padding: 0 10px; text-align: left; border-right: 1px solid var(--line) }
+table.g thead .nm { z-index: 3 }
+table.g .nm .w { display: block; overflow: hidden; text-overflow: ellipsis; cursor: pointer }
+table.g .nm small { color: var(--muted) }
+table.g .wk { min-width: 26px; max-width: 26px; text-align: center; font-family: var(--font-mono); font-size: .68rem; border-left: 1px solid var(--soft) }
+table.g .wk.now { background: var(--soft) }
+table.g td.wk.bar { background: var(--bar) }
+table.g td.wk.bar.done { opacity: .45 }
+table.g tr.grp td { background: var(--soft); font-weight: 700; color: var(--ink) }
+table.g tr.grp td.nm { background: var(--soft) }
+table.g tr.load td.wk { font-weight: 600 }
+table.g tr.edit td { height: auto; white-space: normal; padding: 8px 10px; background: var(--soft) }
+.gform { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: .85rem }
+
+/* IG */
+.igsum { overflow-x: auto; margin-bottom: 14px }
+table.t { border-collapse: collapse; width: 100%; font-size: .84rem; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden }
+table.t th, table.t td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap }
+table.t th { color: var(--muted); font-weight: 500; background: var(--soft) }
+table.t td.n { text-align: right; font-family: var(--font-mono) }
+.post { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 4px 14px; padding: 12px 14px; border-top: 1px solid var(--line) }
+.post:first-child { border-top: 0 }
+.post .when { font-family: var(--font-mono); font-size: .85rem }
+.post .when small { display: block; color: var(--muted); font-family: var(--font-body) }
+.post h4 { margin: 0; font-size: .98rem; display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
+.post .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 6px; font-size: .84rem }
+.post dl { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 3px 10px; margin: 8px 0 0; font-size: .84rem }
+.post dt { color: var(--muted) }
+.post dd { margin: 0 }
+.post input[type="number"] { width: 70px }
+.st-pub { color: var(--ok) } .st-late { color: var(--bad) }
+
+/* study */
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px }
+.card h3 { margin: 0 0 6px; font-size: 1.05rem; color: var(--t-study) }
+.stat { display: flex; gap: 16px; margin: 6px 0 10px }
+.stat div { display: grid }
+.stat b { font: 600 1.25rem var(--font-mono) }
+.stat small { color: var(--muted); font-size: .76rem }
+.prog { height: 7px; border-radius: 4px; background: var(--soft); overflow: hidden; margin-bottom: 10px }
+.prog span { display: block; height: 100%; background: var(--t-study) }
+.card ol { margin: 0; padding-left: 18px; font-size: .84rem; display: grid; gap: 4px }
+.card ol li span { color: var(--muted); font-family: var(--font-mono); margin-right: 6px }
+.shift { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); font-size: .84rem }
+.shift input[type="number"] { width: 64px }
+
+/* lists */
+.lists { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start }
+.ms { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto; gap: 8px; padding: 7px 14px; border-top: 1px solid var(--line); font-size: .88rem; align-items: center }
+.ms.past { opacity: .5 }
+.ms .mono { font-size: .82rem }
+.q { padding: 10px 14px; border-top: 1px solid var(--line); display: grid; gap: 4px }
+.q small { color: var(--muted) }
+.refsec { padding: 10px 14px; font-size: .88rem }
+.refsec dl { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 6px 12px; margin: 0 }
+.refsec dt { font-weight: 600 }
+.refsec dd { margin: 0 }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 16px; border-radius: 8px; font-size: .88rem; z-index: 30 }
+
+@media (max-width: 900px) {
+  .grid2, .lists { grid-template-columns: minmax(0, 1fr) }
+  .cards { grid-template-columns: minmax(0, 1fr) }
+}
+@media (max-width: 640px) {
+  .cell { min-height: 64px; padding: 4px }
+  .ln span { display: none }
+  .ln { display: inline-flex }
+  .cell .lns { display: flex; flex-wrap: wrap; gap: 3px }
+  .legend { margin-left: 0 }
+  table.g .nm { min-width: 190px; max-width: 190px }
+  .post { grid-template-columns: minmax(0, 1fr) }
+}
+@media (prefers-reduced-motion: no-preference) { .it, .cell { transition: background-color .15s } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>赫滋與羊工作台</h1>
+    <span class="status" id="status">連線中…</span>
+  </header>
+  <nav class="tabs" aria-label="分頁">
+    <a href="#today" data-v="today">今天</a>
+    <a href="#cal" data-v="cal">月曆</a>
+    <a href="#gantt" data-v="gantt">甘特圖</a>
+    <a href="#ig" data-v="ig">IG 發文</a>
+    <a href="#study" data-v="study">讀書</a>
+    <a href="#lists" data-v="lists">清單</a>
+  </nav>
+  <main id="main" class="view"><p class="empty">正在讀取工作台資料…</p></main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  // ---------------- helpers
+  const $main = document.getElementById("main");
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const pad = n => String(n).padStart(2, "0");
+  const fmt = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  const parse = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+  const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return fmt(d); };
+  const dow = s => parse(s).getDay();
+  const WD = "日一二三四五六";
+  const md = s => { const d = parse(s); return (d.getMonth() + 1) + "/" + d.getDate(); };
+  const mdw = s => md(s) + "（" + WD[dow(s)] + "）";
+  const diffDays = (a, b) => Math.round((parse(b) - parse(a)) / 864e5);
+  const today = () => fmt(new Date());
+  const mondayOf = s => addDays(s, -((dow(s) + 6) % 7));
+  const TAGCLS = { "★": "s", "交": "d", "課": "c", "讀": "r", "IG": "i" };
+  const TAGVAR = { "★": "--t-star", "交": "--t-due", "課": "--t-class", "讀": "--t-study", "IG": "--t-ig" };
+  const TAGNAME = { "★": "里程碑", "交": "截止與交件", "課": "課程與行程", "讀": "讀書", "IG": "IG 發文" };
+  const POST_ST = ["未開始", "製作中", "已排程", "已發布", "取消"];
+  const TASK_ST = ["未開始", "進行中", "完成", "延後", "取消"];
+  const TRACKS = ["多益", "iPAS", "碩班"];
+  const LINKS = { daily: "https://claude.ai/artifact/KvWTWGrLts9Pg7fjH5pa6w", practice: "https://claude.ai/artifact/UrvKirykZ36DuoPtDuQFHE" };
+  const tagChip = t => '<span class="tag ' + TAGCLS[t] + '" title="' + esc(TAGNAME[t]) + '">' + esc(t) + "</span>";
+  function toast(msg) {
+    const t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status"); t.textContent = msg;
+    document.body.appendChild(t); setTimeout(() => t.remove(), 2200);
+  }
+
+  // ---------------- state
+  const S = { docs: {}, exists: {}, loaded: false };
+  const pending = {}, chains = {};
+  let db = null, col = null, rev = 0, cache = null;
+  const ui = { open: new Set(), det: new Set(), day: null, month: null, gcat: "全部", gedit: null, igShowAll: false };
+
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  function merge(t, p) {
+    for (const k in p) {
+      const v = p[k];
+      if (v && typeof v === "object" && !Array.isArray(v)) { if (!t[k] || typeof t[k] !== "object") t[k] = {}; merge(t[k], v); }
+      else t[k] = v;
+    }
+    return t;
+  }
+  function derive() {
+    if (cache && cache.rev === rev) return cache;
+    const items = [], dayMeta = {};
+    for (const id in S.docs) {
+      if (!id.startsWith("m-")) continue;
+      const d = S.docs[id];
+      for (const iid in (d.items || {})) { const it = d.items[iid]; if (!it || it.deleted) continue; items.push(Object.assign({ id: iid, bucket: id }, it)); }
+      Object.assign(dayMeta, d.days || {});
+    }
+    items.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+    const byDate = {};
+    items.forEach(it => (byDate[it.date] = byDate[it.date] || []).push(it));
+    const posts = Object.entries((S.docs.posts || {}).posts || {}).map(([id, p]) => Object.assign({ id }, p)).filter(p => !p.deleted).sort((a, b) => a.date < b.date ? -1 : 1);
+    const postsByDate = {};
+    posts.forEach(p => (postsByDate[p.date] = postsByDate[p.date] || []).push(p));
+    const tasks = Object.entries((S.docs.tasks || {}).tasks || {}).map(([id, t]) => Object.assign({ id }, t)).filter(t => !t.deleted).sort((a, b) => (a.order || 0) - (b.order || 0));
+    cache = { rev, items, byDate, dayMeta, posts, postsByDate, tasks };
+    return cache;
+  }
+  function changed() { rev++; render(); }
+
+  function write(docId, patch) {
+    S.docs[docId] = merge(S.docs[docId] || {}, clone(patch));
+    changed();
+    if (!col) { toast("還沒連上資料庫，這次修改沒有存到"); return; }
+    pending[docId] = (pending[docId] || 0) + 1;
+    chains[docId] = (chains[docId] || Promise.resolve()).then(async () => {
+      const ref = col.doc(docId);
+      if (!S.exists[docId]) { const snap = await ref.get(); S.exists[docId] = !!snap.exists; }
+      if (S.exists[docId]) return ref.update(patch);
+      await ref.set(clone(S.docs[docId])); S.exists[docId] = true;
+    }).catch(err => {
+      toast(err && err.code === "invalid_argument" ? "你目前只能檢視，沒有修改權限" : "儲存失敗，稍後再試一次");
+    }).finally(() => { pending[docId]--; });
+  }
+
+  // ---------------- actions
+  const itemById = id => derive().items.find(x => x.id === id);
+  function setItem(it, patch) { write(it.bucket, { items: { [it.id]: patch } }); }
+  function toggleItem(id) { const it = itemById(id); if (it) setItem(it, { done: !it.done, doneAt: !it.done ? today() : null }); }
+  function moveItem(id, to) {
+    const it = itemById(id); if (!it || !to || to === it.date) return;
+    setItem(it, { date: to, moved: (it.moved || 0) + 1, orig: it.orig || it.date });
+    ui.open.delete(id);
+    toast("已移到 " + mdw(to));
+  }
+  function isRest(s) { const m = derive().dayMeta[s]; return m ? !!m.rest : dow(s) === 0; }
+  function addWorkdays(s, n) { let x = s, k = 0; while (k < n) { x = addDays(x, 1); if (!isRest(x)) k++; } return x; }
+  function shiftTrack(track, from, n) {
+    n = Math.max(1, Math.min(60, Number(n) || 0));
+    const list = derive().items.filter(it => it.tag === "讀" && it.track === track && !it.done && !it.review && it.date >= from);
+    if (!list.length) { toast("從 " + md(from) + " 起沒有未完成的" + track + "進度"); return; }
+    const byDoc = {};
+    list.forEach(it => { (byDoc[it.bucket] = byDoc[it.bucket] || {})[it.id] = { date: addWorkdays(it.date, n), moved: (it.moved || 0) + 1, orig: it.orig || it.date }; });
+    Object.keys(byDoc).forEach(doc => write(doc, { items: byDoc[doc] }));
+    toast(track + "：" + list.length + " 天的進度往後挪 " + n + " 天（跳過週日與假日）");
+  }
+  function addItem(date, tag, title, track) {
+    title = (title || "").trim(); if (!title) return;
+    const id = "u-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const it = { date, orig: date, tag, title, done: false, added: today() };
+    if (tag === "讀") it.track = track || "碩班";
+    write("m-" + date.slice(0, 7), { items: { [id]: it } });
+  }
+  function delItem(id) { const it = itemById(id); if (it) setItem(it, { deleted: true }); }
+  const setPost = (id, patch) => write("posts", { posts: { [id]: patch } });
+  const setTask = (id, patch) => write("tasks", { tasks: { [id]: patch } });
+  const setQ = (id, patch) => write("questions", { questions: { [id]: patch } });
+  function habitDoc(date) { return "h-" + date.slice(0, 7); }
+  function habitState(date) { const d = S.docs[habitDoc(date)]; return (d && d.d && d.d[date]) || {}; }
+  function toggleHabit(date, i) { const cur = !!habitState(date)["h" + i]; write(habitDoc(date), { d: { [date]: { ["h" + i]: !cur } } }); }
+
+  // ---------------- item row
+  function itemRow(it, opts) {
+    opts = opts || {};
+    const open = ui.open.has(it.id), det = ui.det.has(it.id);
+    const meta = [];
+    if (opts.showDate) meta.push('<span class="chip bad">' + esc(mdw(it.date)) + "</span>");
+    if (it.track && !opts.noTrack) meta.push('<span class="chip">' + esc(it.track) + (it.hours ? " " + it.hours + " 小時" : "") + "</span>");
+    else if (it.hours) meta.push('<span class="chip">' + it.hours + " 小時</span>");
+    if (it.owner) meta.push('<span class="chip">' + esc(it.owner) + "</span>");
+    if (it.moved) meta.push('<span class="chip warn" title="原訂 ' + esc(it.orig) + '">延後過 ' + it.moved + " 次</span>");
+    if (it.important && it.tag !== "★") meta.push('<span class="chip">重要</span>');
+    let h = '<div class="it' + (it.done ? " done" : "") + '">'
+      + '<input type="checkbox" id="ck-' + esc(it.id) + '" data-act="toggle" data-id="' + esc(it.id) + '"' + (it.done ? " checked" : "") + ' aria-label="完成：' + esc(it.title) + '">'
+      + '<div class="tt"><label for="ck-' + esc(it.id) + '">' + (opts.noTag ? "" : tagChip(it.tag) + " ") + "<b>" + esc(it.title) + "</b></label>"
+      + (meta.length ? '<div class="meta">' + meta.join("") + "</div>" : "") + "</div>"
+      + '<div class="acts">'
+      + (it.detail ? '<button class="btn ghost" data-act="det" data-id="' + esc(it.id) + '" aria-expanded="' + det + '">' + (det ? "收起" : "內容") + "</button>" : "")
+      + (it.done ? "" : '<button class="btn" data-act="pp" data-id="' + esc(it.id) + '" aria-expanded="' + open + '">延後</button>')
+      + "</div>";
+    if (it.detail && det) h += '<div class="detail">' + esc(it.detail) + (it.tag === "讀" && it.track === "碩班" && /做題|看題/.test(it.detail) ? '\n<a href="' + LINKS.practice + '" target="_blank" rel="noopener">到考古題練習頁找題 ↗</a>' : "") + "</div>";
+    if (open) {
+      const base = it.date < today() ? today() : it.date;
+      const nextMon = addDays(mondayOf(base), 7);
+      h += '<div class="pp" role="group" aria-label="延後到">'
+        + '<span>移到</span>'
+        + (it.date < today() ? '<button class="btn" data-act="move" data-id="' + esc(it.id) + '" data-to="' + today() + '">今天</button>' : "")
+        + '<button class="btn" data-act="move" data-id="' + esc(it.id) + '" data-to="' + addDays(base, 1) + '">' + (it.date < today() ? "明天" : "隔天") + "</button>"
+        + '<button class="btn" data-act="move" data-id="' + esc(it.id) + '" data-to="' + addDays(base, 2) + '">再隔一天</button>'
+        + '<button class="btn" data-act="move" data-id="' + esc(it.id) + '" data-to="' + nextMon + '">下週一 ' + md(nextMon) + "</button>"
+        + '<input type="date" id="dt-' + esc(it.id) + '" value="' + addDays(base, 1) + '" aria-label="選日期">'
+        + '<button class="btn primary" data-act="movepick" data-id="' + esc(it.id) + '">確定</button>';
+      if (it.tag === "讀" && !it.review) {
+        h += '<span class="sep"></span><span>或把' + esc(it.track) + '從這天起整條線往後挪</span>'
+          + '<input type="number" min="1" max="60" value="1" id="sh-' + esc(it.id) + '" aria-label="往後挪幾天"><span>天</span>'
+          + '<button class="btn" data-act="shiftfrom" data-id="' + esc(it.id) + '">整條線挪</button>';
+      }
+      if (it.id.startsWith("u-")) h += '<span class="sep"></span><button class="btn ghost" data-act="del" data-id="' + esc(it.id) + '">刪除這個事項</button>';
+      h += "</div>";
+    }
+    return h + "</div>";
+  }
+
+  // ---------------- views
+  function viewToday() {
+    const c = derive(), t = today();
+    const day = ui.day || t;
+    const isToday = day === t;
+    const meta = c.dayMeta[day] || {};
+    const list = (c.byDate[day] || []);
+    const posts = c.postsByDate[day] || [];
+    let h = '<div class="dayhead"><div class="nav">'
+      + '<button class="btn" data-act="day" data-to="' + addDays(day, -1) + '" aria-label="前一天">‹</button>'
+      + '<button class="btn" data-act="day" data-to="' + addDays(day, 1) + '" aria-label="後一天">›</button></div>'
+      + "<h2>" + (isToday ? "今天　" : "") + esc(mdw(day)) + "</h2>"
+      + (isToday ? "" : '<button class="btn" data-act="day" data-to="' + t + '">回到今天</button>')
+      + '<input type="date" id="jump" value="' + day + '" aria-label="跳到日期">'
+      + '<div class="badges">'
+      + (meta.ph ? '<span class="chip">' + esc(meta.ph) + "</span>" : "")
+      + (meta.pp ? '<span class="chip bad">休養期・讀書減半</span>' : "")
+      + (meta.rest ? '<span class="chip">複習日</span>' : "")
+      + (meta.nou ? '<span class="chip">空大 ' + meta.nou + " 小時（照你的空大進度）</span>" : "")
+      + "</div></div>";
+    if (meta.notes && meta.notes.length) h += '<div class="notes">' + meta.notes.map(n => "<p>" + esc(n) + "</p>").join("") + "</div>";
+    h += '<div class="grid2"><div>';
+    if (isToday) {
+      const od = c.items.filter(it => it.date < t && !it.done && (it.tag === "交" || it.tag === "讀"));
+      const odp = c.posts.filter(p => p.date < t && p.status !== "已發布" && p.status !== "取消");
+      if (od.length || odp.length) {
+        h += '<section class="panel overdue"><h3>逾期還沒完成<span class="sum">' + (od.length + odp.length) + " 項・勾掉、移到今天或延後</span></h3>";
+        od.slice(-40).forEach(it => { h += itemRow(it, { showDate: true }); });
+        odp.forEach(p => { h += postMini(p, true); });
+        h += "</section>";
+      }
+    }
+    ["★", "交", "課"].forEach(tag => {
+      const rows = list.filter(it => it.tag === tag);
+      if (!rows.length) return;
+      h += '<section class="panel"><h3>' + tagChip(tag) + " " + TAGNAME[tag] + '<span class="sum">' + rows.filter(r => r.done).length + " / " + rows.length + "</span></h3>";
+      rows.forEach(it => { h += itemRow(it, { noTag: true }); });
+      h += "</section>";
+    });
+    if (posts.length) {
+      h += '<section class="panel"><h3>' + tagChip("IG") + ' IG 發文<span class="sum"><a href="#ig">全部發文</a></span></h3>';
+      posts.forEach(p => { h += postMini(p, false); });
+      h += "</section>";
+    }
+    h += '<section class="panel"><h3>新增事項<span class="sum">' + esc(mdw(day)) + '</span></h3><div class="addrow">'
+      + '<select id="addtag" aria-label="類別"><option value="交">交｜截止與交件</option><option value="課">課｜課程與行程</option><option value="★">★｜里程碑</option><option value="讀">讀｜讀書</option></select>'
+      + '<input type="text" id="addtitle" placeholder="要做什麼" aria-label="事項內容">'
+      + '<button class="btn primary" data-act="add">加入</button></div></section>';
+    h += "</div><div>";
+    const study = list.filter(it => it.tag === "讀");
+    if (study.length) {
+      const tot = study.reduce((a, b) => a + (b.hours || 0), 0);
+      h += '<section class="panel"><h3>' + tagChip("讀") + ' 讀書<span class="sum">' + study.filter(s => s.done).length + " / " + study.length + "・" + tot + ' 小時</span></h3>';
+      TRACKS.forEach(tr => {
+        const rows = study.filter(s => s.track === tr);
+        if (!rows.length) return;
+        rows.forEach(it => { h += itemRow(it, { noTag: true }); });
+      });
+      study.filter(s => !TRACKS.includes(s.track)).forEach(it => { h += itemRow(it, { noTag: true }); });
+      h += "</section>";
+    }
+    const ref = S.docs.ref || {};
+    if (ref.habits && ref.habits.length) {
+      const hs = habitState(day);
+      h += '<section class="panel"><h3>每天固定<span class="sum">' + ref.habits.filter((x, i) => hs["h" + i]).length + " / " + ref.habits.length + "</span></h3>";
+      ref.habits.forEach((x, i) => {
+        h += '<label class="habit"><input type="checkbox" data-act="habit" data-i="' + i + '"' + (hs["h" + i] ? " checked" : "") + "><span>" + esc(x.name) + "<small>" + esc(x.desc) + "</small></span></label>";
+      });
+      h += "</section>";
+    }
+    if (!list.length && !posts.length) h += '<p class="empty">這天沒有排事項。</p>';
+    h += "</div></div>";
+    return h;
+  }
+  function postMini(p, late) {
+    return '<div class="it"><span class="tag i">IG</span><div class="tt"><b>' + esc(p.title) + "</b>"
+      + '<div class="meta">' + (late ? '<span class="chip bad">' + esc(mdw(p.date)) + "</span>" : "") + '<span class="chip">' + esc((p.time || "") + " " + (p.fmt || "")) + "</span>"
+      + (p.moved ? '<span class="chip warn">延後過 ' + p.moved + " 次</span>" : "") + "</div></div>"
+      + '<div class="acts"><select data-act="poststatus" data-id="' + esc(p.id) + '" aria-label="發文狀態">' + POST_ST.map(s => "<option" + (s === (p.status || "未開始") ? " selected" : "") + ">" + s + "</option>").join("") + "</select>"
+      + '<input type="date" data-act="postdate" data-id="' + esc(p.id) + '" value="' + esc(p.date) + '" aria-label="改發文日期"></div></div>';
+  }
+
+  function viewCal() {
+    const c = derive(), t = today();
+    const mon = ui.month || t.slice(0, 7);
+    const first = mon + "-01";
+    const start = mondayOf(first);
+    const [y, m] = mon.split("-").map(Number);
+    const prev = fmt(new Date(y, m - 2, 1)).slice(0, 7), next = fmt(new Date(y, m, 1)).slice(0, 7);
+    let h = '<div class="calhead"><button class="btn" data-act="month" data-to="' + prev + '" aria-label="上個月">‹</button><h2>' + y + " 年 " + m + ' 月</h2><button class="btn" data-act="month" data-to="' + next + '" aria-label="下個月">›</button>'
+      + (mon === t.slice(0, 7) ? "" : '<button class="btn" data-act="month" data-to="' + t.slice(0, 7) + '">本月</button>')
+      + '<div class="legend">' + ["★", "交", "課", "IG", "讀"].map(k => '<span>' + tagChip(k) + esc(TAGNAME[k]) + "</span>").join("") + "</div></div>";
+    h += '<div class="cal">' + "一二三四五六日".split("").map(w => '<div class="wd">' + w + "</div>").join("");
+    for (let i = 0; i < 42; i++) {
+      const d = addDays(start, i);
+      if (i >= 35 && d.slice(0, 7) !== mon) break;
+      const meta = c.dayMeta[d] || {};
+      const its = c.byDate[d] || [], ps = c.postsByDate[d] || [];
+      const lines = [];
+      its.filter(x => x.tag !== "讀").forEach(x => lines.push({ tag: x.tag, text: x.title, done: x.done }));
+      ps.forEach(p => lines.push({ tag: "IG", text: p.title, done: p.status === "已發布" }));
+      its.filter(x => x.tag === "讀").forEach(x => lines.push({ tag: "讀", text: x.track + " " + x.title, done: x.done }));
+      const late = d < t && its.some(x => !x.done && (x.tag === "交" || x.tag === "讀"));
+      const cls = ["cell", d.slice(0, 7) !== mon ? "out" : "", meta.pp ? "ppd" : (meta.rest || dow(d) === 0 ? "rest" : ""), d === t ? "today" : ""].join(" ");
+      h += '<button class="' + cls + '" data-act="openday" data-to="' + d + '" aria-label="' + esc(mdw(d)) + "，" + lines.length + ' 項">'
+        + '<span class="dn"><span>' + parse(d).getDate() + "</span>" + (late ? "<i>未完成</i>" : "") + '</span><span class="lns">'
+        + lines.slice(0, 6).map(l => '<span class="ln' + (l.done ? " done" : "") + '" style="--c: var(' + TAGVAR[l.tag] + ')"><span>' + esc(l.text) + "</span></span>").join("")
+        + (lines.length > 6 ? '<span class="more">還有 ' + (lines.length - 6) + " 項</span>" : "") + "</span></button>";
+    }
+    return h + "</div>";
+  }
+
+  function viewGantt() {
+    const c = derive();
+    const cats = ["全部"].concat([...new Set(c.tasks.map(t => t.cat))]);
+    const tasks = c.tasks.filter(t => ui.gcat === "全部" || t.cat === ui.gcat);
+    const all = c.tasks;
+    if (!all.length) return '<p class="empty">還沒有甘特圖資料。</p>';
+    let minD = all.reduce((a, t) => t.start < a ? t.start : a, all[0].start), maxD = all.reduce((a, t) => t.end > a ? t.end : a, all[0].end);
+    const w0 = mondayOf(minD), weeks = [];
+    for (let w = w0; w <= maxD; w = addDays(w, 7)) weeks.push(w);
+    const nowW = mondayOf(today());
+    const BAR = { "未開始": "var(--soft)", "進行中": "var(--t-ig)", "完成": "var(--muted)", "延後": "var(--warn)", "取消": "var(--line)" };
+    const catColor = cat => /學業|讀書/.test(cat) ? "var(--t-study)" : /商品/.test(cat) ? "var(--t-star)" : /IG|社群/.test(cat) ? "var(--t-ig)" : /課程|行程/.test(cat) ? "var(--t-class)" : "var(--t-due)";
+    let h = '<div class="gctl">' + cats.map(k => '<button class="chipbtn" data-act="gcat" data-k="' + esc(k) + '" aria-pressed="' + (ui.gcat === k) + '">' + esc(k) + "</button>").join("")
+      + '<span class="status">點工作名稱可以改日期、狀態或整段延後</span></div>';
+    h += '<div class="gwrap"><table class="g"><thead><tr><th class="nm">工作（' + tasks.length + "）</th>"
+      + weeks.map(w => '<th class="wk' + (w === nowW ? " now" : "") + '" title="' + w + '">' + (parse(w).getDate() <= 7 ? (parse(w).getMonth() + 1) + "月" : "") + "</th>").join("") + "</tr></thead><tbody>";
+    let lastCat = null;
+    tasks.forEach(t => {
+      if (t.cat !== lastCat) { lastCat = t.cat; h += '<tr class="grp"><td class="nm">' + esc(t.cat) + '</td><td colspan="' + weeks.length + '"></td></tr>'; }
+      const done = t.status === "完成";
+      const color = t.status === "進行中" || t.status === "延後" ? BAR[t.status] : catColor(t.cat);
+      h += "<tr><td class=\"nm\"><span class=\"w\" data-act=\"gedit\" data-id=\"" + esc(t.id) + "\" title=\"" + esc(t.item + "｜" + t.work) + "\">" + esc(t.work) + "</span><small>" + esc(t.item) + "・" + esc(md(t.start)) + (t.start !== t.end ? "–" + esc(md(t.end)) : "") + "・" + esc(t.status || "未開始") + (t.owner ? "・" + esc(t.owner) : "") + "</small></td>";
+      weeks.forEach(w => {
+        const we = addDays(w, 6), on = t.start <= we && t.end >= w;
+        h += '<td class="wk' + (w === nowW ? " now" : "") + (on ? " bar" + (done ? " done" : "") : "") + '"' + (on ? ' style="--bar:' + color + '"' : "") + ">" + (on && t.start === t.end ? "◆" : "") + "</td>";
+      });
+      h += "</tr>";
+      if (ui.gedit === t.id) {
+        h += '<tr class="edit"><td colspan="' + (weeks.length + 1) + '"><div class="gform">'
+          + "<b>" + esc(t.work) + "</b>"
+          + '<label>開始 <input type="date" id="g-start" value="' + esc(t.start) + '"></label>'
+          + '<label>結束 <input type="date" id="g-end" value="' + esc(t.end) + '"></label>'
+          + '<label>狀態 <select id="g-status">' + TASK_ST.map(s => "<option" + (s === (t.status || "未開始") ? " selected" : "") + ">" + s + "</option>").join("") + "</select></label>"
+          + '<label>工時 <input type="number" id="g-hours" min="0" step="0.5" value="' + esc(t.hours == null ? "" : t.hours) + '" style="width:80px"></label>'
+          + '<button class="btn primary" data-act="gsave" data-id="' + esc(t.id) + '">儲存</button>'
+          + '<span>整段延後</span>' + [1, 3, 7, 14].map(n => '<button class="btn" data-act="gshift" data-id="' + esc(t.id) + '" data-n="' + n + '">' + n + " 天</button>").join("")
+          + '<button class="btn ghost" data-act="gclose">關閉</button></div></td></tr>';
+      }
+    });
+    // weekly load: every task's hours spread evenly across its days
+    const load = weeks.map(() => 0);
+    all.forEach(t => {
+      const hrs = Number(t.hours) || 0; if (!hrs) return;
+      const n = diffDays(t.start, t.end) + 1, per = hrs / n;
+      weeks.forEach((w, i) => { const a = t.start > w ? t.start : w, b = t.end < addDays(w, 6) ? t.end : addDays(w, 6); const ov = diffDays(a, b) + 1; if (ov > 0) load[i] += per * ov; });
+    });
+    h += '<tr class="load"><td class="nm"><b>每週負載（小時）</b><small>綠 &lt;20・黃 20–29・紅 ≥30</small></td>'
+      + load.map((v, i) => { const r = Math.round(v); return '<td class="wk' + (weeks[i] === nowW ? " now" : "") + '" style="background:var(' + (r < 20 ? "--load-g" : r < 30 ? "--load-y" : "--load-r") + ')">' + r + "</td>"; }).join("") + "</tr>";
+    return h + "</tbody></table></div>";
+  }
+
+  function viewIG() {
+    const c = derive(), t = today(), ref = S.docs.ref || {};
+    const posts = c.posts;
+    // weekly summary
+    const weeks = (ref.weeks || []).map(w => ({ week: w.week, start: w.start, theme: w.theme }));
+    let h = '<div class="igsum"><table class="t"><thead><tr><th>週次</th><th>日期</th><th>主打</th><th>發文</th><th>Reels</th><th>已發布</th><th>平均讚</th><th>總留言</th></tr></thead><tbody>';
+    let tp = 0, tr = 0, tpub = 0, likes = [], tc = 0;
+    weeks.forEach(w => {
+      const e = addDays(w.start, 6);
+      const ps = posts.filter(p => p.date >= w.start && p.date <= e && p.status !== "取消");
+      const pub = ps.filter(p => p.status === "已發布");
+      const ls = pub.map(p => Number(p.likes)).filter(n => !isNaN(n) && n > 0);
+      const cm = pub.reduce((a, p) => a + (Number(p.comments) || 0), 0);
+      tp += ps.length; tr += ps.filter(p => p.fmt === "Reel").length; tpub += pub.length; likes = likes.concat(ls); tc += cm;
+      h += "<tr" + (t >= w.start && t <= e ? ' style="font-weight:600"' : "") + "><td>" + esc(w.week) + '</td><td class="mono">' + md(w.start) + "–" + md(e) + "</td><td>" + esc(w.theme) + '</td><td class="n">' + ps.length + '</td><td class="n">' + ps.filter(p => p.fmt === "Reel").length + '</td><td class="n">' + pub.length + '</td><td class="n">' + (ls.length ? (ls.reduce((a, b) => a + b, 0) / ls.length).toFixed(1) : "–") + '</td><td class="n">' + cm + "</td></tr>";
+    });
+    h += '<tr style="font-weight:600"><td>合計</td><td></td><td></td><td class="n">' + tp + '</td><td class="n">' + tr + '</td><td class="n">' + tpub + '</td><td class="n">' + (likes.length ? (likes.reduce((a, b) => a + b, 0) / likes.length).toFixed(1) : "–") + '</td><td class="n">' + tc + "</td></tr></tbody></table>"
+      + (ref.baseline ? '<p class="status">' + esc(ref.baseline) + "</p>" : "") + "</div>";
+    const shown = ui.igShowAll ? posts : posts.filter(p => p.date >= addDays(t, -14) || (p.status !== "已發布" && p.status !== "取消"));
+    h += '<div class="gctl"><button class="chipbtn" data-act="igall" aria-pressed="' + ui.igShowAll + '">' + (ui.igShowAll ? "顯示全部" : "只看兩週前以後＋未發布") + "</button>"
+      + (ref.igNote ? '<span class="status">' + esc(ref.igNote) + "</span>" : "") + "</div>";
+    h += '<section class="panel">';
+    shown.forEach(p => {
+      const late = p.date < t && p.status !== "已發布" && p.status !== "取消";
+      h += '<article class="post"><div class="when">' + esc(mdw(p.date)) + "<small>" + esc((p.time || "") + "・" + (p.week || "")) + "</small></div><div>"
+        + "<h4>" + esc(p.title) + ' <span class="chip">' + esc(p.fmt || "") + '</span><span class="chip">' + esc(p.campaign || "") + "</span>" + (p.goal ? '<span class="chip">' + esc(p.goal) + "</span>" : "")
+        + (late ? '<span class="chip bad">過了發文日</span>' : "") + (p.moved ? '<span class="chip warn">延後過 ' + p.moved + " 次</span>" : "") + "</h4>"
+        + '<div class="row"><label>狀態 <select data-act="poststatus" data-id="' + esc(p.id) + '">' + POST_ST.map(s => "<option" + (s === (p.status || "未開始") ? " selected" : "") + ">" + s + "</option>").join("") + "</select></label>"
+        + '<label>日期 <input type="date" data-act="postdate" data-id="' + esc(p.id) + '" value="' + esc(p.date) + '"></label>'
+        + '<label>讚 <input type="number" min="0" data-act="postnum" data-k="likes" data-id="' + esc(p.id) + '" value="' + esc(p.likes == null ? "" : p.likes) + '"></label>'
+        + '<label>留言 <input type="number" min="0" data-act="postnum" data-k="comments" data-id="' + esc(p.id) + '" value="' + esc(p.comments == null ? "" : p.comments) + '"></label></div>'
+        + "<dl>" + [["內容角度", p.angle], ["開頭第一句", p.hook], ["留言設計", p.cta], ["當天限動", p.story], ["備註", p.note]].filter(x => x[1]).map(x => "<dt>" + x[0] + "</dt><dd>" + esc(x[1]) + "</dd>").join("") + "</dl>"
+        + "</div></article>";
+    });
+    if (!shown.length) h += '<p class="empty">沒有符合的發文。</p>';
+    return h + "</section>";
+  }
+
+  function viewStudy() {
+    const c = derive(), t = today();
+    let h = '<p class="status">讀書進度來自每日進度表。落後了就在這裡把整條線往後挪（跳過週日與春節），或在「今天」逐項延後。對照：<a href="' + LINKS.daily + '" target="_blank" rel="noopener">每日進度</a>・<a href="' + LINKS.practice + '" target="_blank" rel="noopener">考古題練習頁</a></p><div class="cards">';
+    TRACKS.forEach(tr => {
+      const all = c.items.filter(it => it.tag === "讀" && it.track === tr && !it.review);
+      const done = all.filter(it => it.done).length;
+      const behind = all.filter(it => !it.done && it.date < t);
+      const upcoming = all.filter(it => !it.done && it.date >= t).slice(0, 6);
+      const last = all.length ? all[all.length - 1].date : null;
+      h += '<section class="card"><h3>' + tr + "</h3>"
+        + '<div class="stat"><div><b>' + done + "</b><small>已完成天數</small></div><div><b" + (behind.length ? ' style="color:var(--bad)"' : "") + ">" + behind.length + "</b><small>落後天數</small></div><div><b>" + all.length + "</b><small>總天數</small></div></div>"
+        + '<div class="prog"><span style="width:' + (all.length ? (100 * done / all.length).toFixed(1) : 0) + '%"></span></div>'
+        + (last ? '<p class="status">目前排到 ' + esc(mdw(last)) + "</p>" : "")
+        + "<ol>" + upcoming.map(it => "<li><span>" + md(it.date) + "</span>" + esc(it.title) + "</li>").join("") + "</ol>"
+        + (upcoming.length ? "" : '<p class="status">沒有未完成的進度。</p>')
+        + '<div class="shift"><label>從 <input type="date" id="sf-' + tr + '" value="' + (behind.length ? behind[0].date : t) + '"></label><label>起往後挪 <input type="number" min="1" max="60" id="sn-' + tr + '" value="' + Math.max(1, Math.min(60, behind.length || 1)) + '"> 天</label>'
+        + '<button class="btn primary" data-act="shifttrack" data-k="' + tr + '">整條線往後挪</button></div></section>';
+    });
+    return h + "</div>";
+  }
+
+  function viewLists() {
+    const c = derive(), t = today(), ref = S.docs.ref || {};
+    const ms = c.items.filter(it => it.important);
+    const up = ms.filter(x => x.date >= t), past = ms.filter(x => x.date < t);
+    let h = '<div class="lists"><div><section class="panel"><h3>重要日期<span class="sum">標記為重要的事項會列在這裡</span></h3>';
+    up.forEach(x => { const n = diffDays(t, x.date); h += '<div class="ms"><span class="mono">' + esc(mdw(x.date)) + "</span><span>" + tagChip(x.tag) + " " + esc(x.title) + (x.done ? "（已完成）" : "") + '</span><span class="chip' + (n <= 7 ? " warn" : "") + '">' + (n === 0 ? "今天" : "還有 " + n + " 天") + "</span></div>"; });
+    if (past.length) {
+      h += '<div class="ms"><span></span><span class="status">已經過去的 ' + past.length + " 項</span><span></span></div>";
+      past.slice(-8).forEach(x => { h += '<div class="ms past"><span class="mono">' + esc(mdw(x.date)) + "</span><span>" + tagChip(x.tag) + " " + esc(x.title) + "</span><span></span></div>"; });
+    }
+    h += "</section>";
+    h += '<section class="panel"><h3>每天固定與寫稿原則</h3><div class="refsec"><dl>'
+      + (ref.habits || []).map(x => "<dt>" + esc(x.name) + "</dt><dd>" + esc(x.desc) + "</dd>").join("")
+      + (ref.principles || []).map(x => "<dt>" + esc(x.k) + "</dt><dd>" + esc(x.v) + "</dd>").join("") + "</dl></div></section></div><div>";
+    const qs = Object.entries((S.docs.questions || {}).questions || {}).sort((a, b) => (a[1].n || 0) - (b[1].n || 0));
+    h += '<section class="panel"><h3>待確認<span class="sum">' + qs.filter(([, q]) => q.answer).length + " / " + qs.length + " 已有答案</span></h3>";
+    qs.forEach(([id, q]) => {
+      h += '<div class="q"><label for="qa-' + esc(id) + '"><b>' + esc(q.n) + ". " + esc(q.q) + "</b></label><small>影響：" + esc(q.affects || "—") + "</small>"
+        + '<textarea id="qa-' + esc(id) + '" data-act="qans" data-id="' + esc(id) + '" rows="2" placeholder="你的答案">' + esc(q.answer || "") + "</textarea></div>";
+    });
+    h += "</section>";
+    h += '<section class="panel"><h3>2026/11～2027/12 路線圖</h3><div class="igsum" style="margin:0"><table class="t"><thead><tr><th>時間</th><th>主系列</th><th>產品檔期</th><th>重點</th></tr></thead><tbody>'
+      + (ref.roadmap || []).map(r => "<tr><td>" + esc(r.time) + '</td><td style="white-space:normal">' + esc(r.main) + '</td><td style="white-space:normal">' + esc(r.product) + '</td><td style="white-space:normal">' + esc(r.focus) + "</td></tr>").join("")
+      + "</tbody></table></div></section></div></div>";
+    return h;
+  }
+
+  // ---------------- routing & render
+  function route() {
+    const h = (location.hash || "#today").slice(1);
+    let v = "today";
+    const md_ = /^day-(\d{4}-\d{2}-\d{2})$/.exec(h), mm = /^cal-(\d{4}-\d{2})$/.exec(h);
+    if (md_) { v = "today"; ui.day = md_[1]; }
+    else if (mm) { v = "cal"; ui.month = mm[1]; }
+    else if (["today", "cal", "gantt", "ig", "study", "lists"].includes(h)) { v = h; if (h === "today") ui.day = null; }
+    return v;
+  }
+  let curView = "today";
+  function render() {
+    document.querySelectorAll("nav.tabs a").forEach(a => a.setAttribute("aria-current", a.dataset.v === curView ? "page" : "false"));
+    if (!S.loaded) return;
+    const y = window.scrollY, gx = document.querySelector(".gwrap") ? document.querySelector(".gwrap").scrollLeft : null;
+    const f = { today: viewToday, cal: viewCal, gantt: viewGantt, ig: viewIG, study: viewStudy, lists: viewLists }[curView];
+    const act = document.activeElement && document.activeElement.id;
+    $main.innerHTML = f();
+    if (act && document.getElementById(act) && document.getElementById(act).tagName !== "TEXTAREA") document.getElementById(act).focus({ preventScroll: true });
+    window.scrollTo(0, y);
+    const g = document.querySelector(".gwrap");
+    if (g) {
+      if (gx != null) g.scrollLeft = gx;
+      else { const now = g.querySelector("th.now"); if (now) g.scrollLeft = Math.max(0, now.offsetLeft - 360); }
+    }
+  }
+  function go() { curView = route(); window.scrollTo(0, 0); render(); }
+  window.addEventListener("hashchange", go);
+
+  // ---------------- events
+  $main.addEventListener("click", e => {
+    const b = e.target.closest("[data-act]"); if (!b) return;
+    const a = b.dataset.act, id = b.dataset.id;
+    if (a === "toggle") { toggleItem(id); return; }
+    if (a === "habit") { toggleHabit(ui.day || today(), Number(b.dataset.i)); return; }
+    if (b.tagName === "SELECT" || b.tagName === "INPUT" || b.tagName === "TEXTAREA") return;
+    if (a === "det") { ui.det.has(id) ? ui.det.delete(id) : ui.det.add(id); render(); }
+    else if (a === "pp") { ui.open.has(id) ? ui.open.delete(id) : ui.open.add(id); render(); }
+    else if (a === "move") moveItem(id, b.dataset.to);
+    else if (a === "movepick") { const v = document.getElementById("dt-" + id).value; if (v) moveItem(id, v); }
+    else if (a === "shiftfrom") { const it = itemById(id); if (it) { ui.open.delete(id); shiftTrack(it.track, it.date, document.getElementById("sh-" + id).value); } }
+    else if (a === "del") delItem(id);
+    else if (a === "day") location.hash = "day-" + b.dataset.to;
+    else if (a === "openday") location.hash = "day-" + b.dataset.to;
+    else if (a === "month") location.hash = "cal-" + b.dataset.to;
+    else if (a === "add") { const day = ui.day || today(); addItem(day, document.getElementById("addtag").value, document.getElementById("addtitle").value); }
+    else if (a === "gcat") { ui.gcat = b.dataset.k; ui.gedit = null; render(); }
+    else if (a === "gedit") { ui.gedit = ui.gedit === id ? null : id; render(); }
+    else if (a === "gclose") { ui.gedit = null; render(); }
+    else if (a === "gsave") {
+      const s = document.getElementById("g-start").value, en = document.getElementById("g-end").value;
+      if (!s || !en || en < s) { toast("結束日要在開始日之後"); return; }
+      const hv = document.getElementById("g-hours").value;
+      setTask(id, { start: s, end: en, status: document.getElementById("g-status").value, hours: hv === "" ? null : Number(hv) });
+      toast("已儲存");
+    }
+    else if (a === "gshift") { const t = derive().tasks.find(x => x.id === id); const n = Number(b.dataset.n); if (t) { setTask(id, { start: addDays(t.start, n), end: addDays(t.end, n), moved: (t.moved || 0) + 1 }); toast("整段延後 " + n + " 天"); } }
+    else if (a === "igall") { ui.igShowAll = !ui.igShowAll; render(); }
+    else if (a === "shifttrack") { const k = b.dataset.k; shiftTrack(k, document.getElementById("sf-" + k).value || today(), document.getElementById("sn-" + k).value); }
+  });
+  $main.addEventListener("change", e => {
+    const b = e.target; const a = b.dataset && b.dataset.act, id = b.dataset && b.dataset.id;
+    if (b.id === "jump" && b.value) { location.hash = "day-" + b.value; return; }
+    if (a === "poststatus") setPost(id, { status: b.value });
+    else if (a === "postdate" && b.value) { const p = derive().posts.find(x => x.id === id); if (p && p.date !== b.value) { setPost(id, { date: b.value, moved: (p.moved || 0) + 1, orig: p.orig || p.date }); toast("發文移到 " + mdw(b.value)); } }
+    else if (a === "postnum") setPost(id, { [b.dataset.k]: b.value === "" ? null : Number(b.value) });
+  });
+  const qTimers = {};
+  $main.addEventListener("input", e => {
+    const b = e.target;
+    if (b.dataset && b.dataset.act === "qans") { const id = b.dataset.id; clearTimeout(qTimers[id]); qTimers[id] = setTimeout(() => setQ(id, { answer: b.value.trim() }), 700); }
+  });
+  $main.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.id === "addtitle") document.querySelector('[data-act="add"]').click(); });
+
+  // ---------------- boot
+  curView = route();
+  render();
+  const status = document.getElementById("status");
+  (async function () {
+    if (!window.claude || !window.claude.use) { status.textContent = "沒有連上資料庫"; $main.innerHTML = '<p class="empty">請從每日任務平台開啟工作台。</p>'; return; }
+    db = await window.claude.use("db");
+    if (!db) { status.textContent = "還沒登入"; $main.innerHTML = '<p class="empty">在平台右上角用 Google 登入後，就能看到工作台的資料。</p>'; return; }
+    col = db.collection("plan");
+    const timer = setTimeout(() => { if (!S.loaded) status.textContent = "資料庫暫時連不上，稍後會自動重試"; }, 10000);
+    col.onSnapshot(snap => {
+      let touched = false;
+      snap.docs.forEach(d => {
+        if (!d.exists) return;
+        S.exists[d.id] = true;
+        if (pending[d.id] > 0) return;
+        const body = d.data();
+        if (JSON.stringify(body) === JSON.stringify(S.docs[d.id])) return;
+        S.docs[d.id] = clone(body); touched = true;
+      });
+      if (!snap.metadata.fromCache) { clearTimeout(timer); status.textContent = "已同步・" + derive().items.length + " 個事項"; }
+      if (!S.loaded && (snap.size || !snap.metadata.fromCache)) {
+        S.loaded = true; touched = true;
+        if (!snap.size) { $main.innerHTML = '<p class="empty">工作台還沒有資料。到平台的「擴充」頁按「匯入資料」，把工作台的資料匯進來。</p>'; return; }
+      }
+      if (touched) { rev++; const a = document.activeElement; if (!a || (a.tagName !== "TEXTAREA" && a.type !== "text" && a.type !== "number")) render(); else status.textContent = "有新資料，離開輸入框後更新"; }
+    }, err => { clearTimeout(timer); status.textContent = "資料庫連線中斷：" + (err && err.code || ""); });
+  })();
+})();
+</script>
+
+<script src="../../apps/embed.js"></script>
+</body></html>
