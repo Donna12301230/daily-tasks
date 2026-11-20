@@ -458,6 +458,9 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
      每個類型 = { label, desc, view(mod) }。view 回傳 HTML 字串，
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
+  // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
+  const BUILD = "20261120c";
+  const appSrc = (m, sub) => TYPES[m.type].src + "?v=" + BUILD + (sub ? "#" + sub : "");
   const TYPES = {
     projectPlan: { label: "專案計畫", desc: "每個專案的目標、範圍、里程碑，加上跨專案的時程總覽。", view: vProjectPlan },
     projectBoard: { label: "專案管理", desc: "看板：待辦、進行中、等待中、完成，可以拖拉或用箭頭移動。", view: vBoard },
@@ -1420,10 +1423,10 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     let f = frames.find(x => x.dataset.mod === m.id);
     if (!f) {
       f = document.createElement("iframe");
-      f.className = "appframe"; f.dataset.mod = m.id; f.title = m.name; f.src = TYPES[m.type].src + (sub ? "#" + sub : "");
+      f.className = "appframe"; f.dataset.mod = m.id; f.title = m.name; f.src = appSrc(m, sub);
       apphost.appendChild(f);
     } else if (sub) {
-      try { f.contentWindow.location.hash = sub; } catch (e) { f.src = TYPES[m.type].src + "#" + sub; }
+      try { f.contentWindow.location.hash = sub; } catch (e) { f.src = appSrc(m, sub); }
     }
     // 子頁只套用一次：網址改回模組本身，之後重畫不會把使用者在網站裡的位置拉回來，再點同一個連結也有效
     if (sub) history.replaceState(null, "", "#m-" + m.id);

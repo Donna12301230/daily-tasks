@@ -45,6 +45,8 @@ git add -A && git commit -m "同步內建網站" && git push
 
 工作台（`apps/workbench/`）直接在這個 repo 裡維護。
 
+改了 `apps/` 底下任何網站後，把 `index.html` 裡的 `BUILD` 換一個值，使用者打開平台時才會載入新版（GitHub Pages 會讓瀏覽器快取 10 分鐘）。
+
 ## 擴充新的模組類型
 
 在 `index.html` 的 `TYPES` 加一個類型（`label`、`desc`、`view(mod)`），或像內建網站一樣指定 `src` 放一個獨立頁面。
