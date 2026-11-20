@@ -1,0 +1,3 @@
+html.in-dt nav.tabs a.dt-back { color: var(--accent) }
+html:not(.in-dt) nav.tabs a.dt-back { display: none }
+html.in-dt nav.tabs a.dt-hide { display: none }

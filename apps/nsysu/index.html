@@ -157,7 +157,10 @@ nav.tabs a:focus-visible, button:focus-visible, textarea:focus-visible, select:f
 </style>
 
 
-<script>document.documentElement.dataset.dtApp="nsysu";if(window.parent!==window)document.documentElement.classList.add("in-dt")</script><style id="dt-theme">html.in-dt:root{--bg:#f3f5f9;--paper:#ffffff;--ink:#1c2333;--muted:#5b6678;--line:#d8dee8;--accent:#2b3f7a;--accent-soft:#e2e7f5}@media (prefers-color-scheme: dark){html.in-dt:root:not([data-theme="light"]){--bg:#12151c;--paper:#1a1f29;--ink:#e3e7ef;--muted:#98a2b4;--line:#2e3544;--accent:#9fb4f0;--accent-soft:#263055;color-scheme:dark}}html.in-dt:root[data-theme="dark"]{--bg:#12151c;--paper:#1a1f29;--ink:#e3e7ef;--muted:#98a2b4;--line:#2e3544;--accent:#9fb4f0;--accent-soft:#263055;color-scheme:dark}</style><script>window.DT_APP="nsysu"</script><script src="../../fb.js"></script><link rel="stylesheet" href="../../apps/embed.css">
+<script>document.documentElement.dataset.dtApp="nsysu";if(window.parent!==window)document.documentElement.classList.add("in-dt")</script><style id="dt-theme">html.in-dt:root{--bg:#f3f5f9;--paper:#ffffff;--ink:#1c2333;--muted:#5b6678;--line:#d8dee8;--accent:#2b3f7a;--accent-soft:#e2e7f5}@media (prefers-color-scheme: dark){html.in-dt:root:not([data-theme="light"]){--bg:#12151c;--paper:#1a1f29;--ink:#e3e7ef;--muted:#98a2b4;--line:#2e3544;--accent:#9fb4f0;--accent-soft:#263055;color-scheme:dark}}html.in-dt:root[data-theme="dark"]{--bg:#12151c;--paper:#1a1f29;--ink:#e3e7ef;--muted:#98a2b4;--line:#2e3544;--accent:#9fb4f0;--accent-soft:#263055;color-scheme:dark}</style><script>window.DT_APP="nsysu"</script><script src="../../fb.js"></script><link rel="stylesheet" href="../../apps/embed.css?v=84fc0e08"><style>html.in-dt nav.tabs a.dt-back { color: var(--accent) }
+html:not(.in-dt) nav.tabs a.dt-back { display: none }
+html.in-dt nav.tabs a.dt-hide { display: none }
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -167,10 +170,11 @@ nav.tabs a:focus-visible, button:focus-visible, textarea:focus-visible, select:f
     <span class="sync" id="sync"><i></i><span id="synctext">作答紀錄存在這個瀏覽器</span></span>
   </header>
   <nav class="tabs" aria-label="檢視方式">
+    <a href="#" class="dt-back" onclick="parent.postMessage({dt:'nav',type:'examBanks'},location.origin);return false;">← 選擇考古題</a>
     <a href="#year" data-v="year">依年度</a>
     <a href="#chapters" data-v="chapters">依章節</a>
     <a href="#wrong" data-v="wrong">錯題本</a>
-    <a href="#terms" data-v="terms">英文術語</a>
+    <a href="#terms" data-v="terms" class="dt-hide">英文術語</a>
     <span class="stats" id="stats"></span>
   </nav>
   <main id="main"></main>
@@ -569,7 +573,7 @@ nav.tabs a:focus-visible, button:focus-visible, textarea:focus-visible, select:f
     const h = (location.hash || "#year").slice(1);
     let view = "year", focus = null;
     if (h === "chapters") view = "chapters";
-    else if (h === "terms") view = "terms";
+    else if (h === "terms") view = document.documentElement.classList.contains("in-dt") ? "year" : "terms";
     else if (h === "wrong") view = "wrong";
     else {
       const m = /^y(cs|mis)(\d{2,3})(?:-p(\d+)(?:-(.+))?)?$/.exec(h);
@@ -623,6 +627,6 @@ nav.tabs a:focus-visible, button:focus-visible, textarea:focus-visible, select:f
 })();
 </script>
 
-<script src="../../apps/embed.js"></script>
+<script src="../../apps/embed.js?v=84fc0e08"></script>
 </body>
 </html>

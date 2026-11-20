@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}img{max-width:100%}</style>
-<title>鍾雅婷每日任務</title>
+<title>每日任務平台</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -49,7 +49,10 @@ h2, h3, h4 { text-wrap: balance }
 /* header + nav */
 header.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; padding-block: 18px 6px }
 .brand { display: flex; align-items: baseline; gap: 10px }
-.brand-name { font: 700 1.55rem/1.2 var(--font-display); letter-spacing: .05em }
+.brand-name { font: 700 1.2rem/1.2 var(--font-display); letter-spacing: .06em; white-space: nowrap }
+.navrow { display: flex; align-items: center; gap: 4px 20px; padding-top: 8px }
+.navrow .tabs { flex: 1 1 auto; min-width: 0 }
+.navrow .acct { flex: none }
 .brand-sub { color: var(--muted); font-size: .88rem; letter-spacing: .14em }
 .status { font-size: .8rem; color: var(--muted); display: inline-flex; align-items: center; gap: 6px }
 .status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--line) }
@@ -64,7 +67,7 @@ header.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-cont
 .tabs a[aria-current="page"] { color: var(--ink) }
 .tabs a[aria-current="page"]::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--ac, var(--accent)) }
 .tabs .spacer { flex: 1 }
-.subtabs { display: flex; gap: 6px; overflow-x: auto; padding-block: 0 10px; scrollbar-width: none }
+.subtabs { display: flex; gap: 6px; overflow-x: auto; padding-block: 8px 10px; scrollbar-width: none }
 .subtabs a { text-decoration: none; color: var(--muted); padding: 3px 13px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); white-space: nowrap; font-size: .88rem }
 .subtabs a:hover { color: var(--ink); border-color: var(--ac) }
 .subtabs a[aria-current="page"] { background: var(--ac); border-color: var(--ac); color: var(--surface) }
@@ -350,6 +353,85 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
   .row, .card, .pcard, .ncard { transition: background-color .15s, border-color .15s }
 }
 
+/* 專案類別卡片、麵包屑 */
+.crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 14px; font-size: .9rem; color: var(--muted) }
+.crumbs b { color: var(--ink); font-weight: 500 }
+.lnk { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; text-underline-offset: 3px; font: inherit; cursor: pointer }
+.catcard { --pc: var(--ac, var(--accent)) }
+.catcard .pc-top b { font-size: 1.1rem }
+.catnames { display: flex; flex-wrap: wrap; gap: 4px }
+/* 細項表格 */
+.pmg { margin-bottom: 18px }
+.pmg-h { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; color: var(--gc) }
+.pmg-t { display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; padding: 2px 0; color: var(--gc); font: 700 1.02rem/1.3 var(--font-display); cursor: pointer }
+.pmg-name { font: 700 1.02rem/1.3 var(--font-display) !important; color: var(--gc) !important; border-color: transparent !important; background: transparent !important; padding: 2px 4px !important; width: auto; min-width: 8em }
+.pmg-name:hover, .pmg-name:focus { border-color: var(--line) !important }
+.pmg .tscroll { border: 1px solid var(--line); border-left: 4px solid var(--gc); border-radius: 10px; background: var(--surface) }
+table.pm { width: 100%; min-width: 760px; border-collapse: collapse; font-size: .86rem; table-layout: fixed }
+table.pm th.c-st { width: 88px } table.pm th.c-d { width: 124px } table.pm th.c-pri { width: 78px } table.pm th.c-note { width: 18% } table.pm th.c-grp { width: 112px } table.pm th.c-more { width: 52px }
+table.pm th { font-weight: 500; color: var(--muted); text-align: center; padding: 7px 6px; border-bottom: 1px solid var(--line); white-space: nowrap }
+table.pm td { padding: 0; border-bottom: 1px solid var(--line); border-left: 1px solid var(--line); height: 38px; vertical-align: middle }
+table.pm td:first-child { border-left: 0 }
+table.pm th.c-t, table.pm td.c-t { text-align: left; min-width: 220px; position: sticky; left: 34px; background: var(--surface); z-index: 1 }
+table.pm .c-ck { width: 34px; text-align: center; position: sticky; left: 0; background: var(--surface); z-index: 1 }
+table.pm .c-more { text-align: center }
+table.pm .num { width: 92px }
+table.pm td.c-t input { text-overflow: ellipsis }
+table.pm tr:not(.pm-edit) > td > input[type="text"], table.pm tr:not(.pm-edit) > td > input[type="number"], table.pm tr:not(.pm-edit) > td > input[type="date"], table.pm tr:not(.pm-edit) > td > select { width: 100%; height: 37px; border: 0; border-radius: 0; background: transparent; padding: 0 8px; font: inherit; color: inherit; box-shadow: none }
+table.pm tr:not(.pm-edit) > td > input:focus, table.pm tr:not(.pm-edit) > td > select:focus { outline: 2px solid var(--accent); outline-offset: -2px }
+.pm-cedit { display: grid; gap: 12px; max-width: 760px }
+.pm-cedit .field { display: grid; gap: 4px; font-size: .84rem; color: var(--muted) }
+.pm-cedit .field select, .pm-cedit .field textarea { color: var(--ink); background: var(--surface) }
+table.pm td .lnk { padding: 0 8px; color: inherit; text-decoration: none; text-align: left; width: 100%; height: 37px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+table.pm td.late input { color: var(--bad); font-weight: 600 }
+table.pm tr.is-done td.c-t input { text-decoration: line-through; color: var(--muted) }
+table.pm select.stsel, table.pm select.prisel { text-align: center; text-align-last: center; font-weight: 600; appearance: none; -webkit-appearance: none; cursor: pointer }
+.s-todo { background: var(--sunk) !important; color: var(--muted) !important }
+.s-doing { background: var(--warn-soft) !important; color: var(--warn) !important }
+.s-wait { background: color-mix(in srgb, var(--c2) 18%, transparent) !important; color: var(--c2) !important }
+.s-done { background: var(--ok-soft) !important; color: var(--ok) !important }
+.p1 { background: var(--bad-soft) !important; color: var(--bad) !important }
+.p0 { background: color-mix(in srgb, var(--c1) 14%, transparent) !important; color: var(--c1) !important }
+.pm1 { background: var(--sunk) !important; color: var(--muted) !important }
+table.pm tr.pm-add td { border-bottom: 0 }
+table.pm tr.pm-add input { color: var(--muted) }
+table.pm tr.pm-edit td { padding: 10px 12px 12px 46px; background: var(--sunk) }
+table.pm tfoot td { border-bottom: 0; height: 34px; padding: 0 8px; font-size: .8rem; color: var(--muted); text-align: center }
+table.pm tfoot td.num { text-align: right }
+table.pm tfoot td.c-t { text-align: left }
+.dist { display: flex; height: 14px; border-radius: 4px; overflow: hidden; min-width: 90px }
+.dist i { display: block; min-width: 4px }
+.dist i.pm1 { background: var(--line) !important }
+.dist i.s-todo, .dist i.s-doing, .dist i.s-wait, .dist i.s-done, .dist i.p1, .dist i.p0 { color: transparent !important }
+.dist i.s-todo { background: var(--line) !important }
+.dist i.s-doing { background: var(--warn) !important }
+.dist i.s-wait { background: var(--c2) !important }
+.dist i.s-done { background: var(--ok) !important }
+.dist i.p1 { background: var(--bad) !important }
+.dist i.p0 { background: var(--c1) !important }
+.chipbtn { cursor: pointer; background: none; font: inherit }
+.pagehead { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; margin: 0 0 16px }
+.pagehead p { margin: 4px 0 0 }
+@keyframes flash { 0%, 30% { background: var(--mark-soft) } 100% { background: transparent } }
+.flash, tr.flash td { animation: flash 2.2s ease-out }
+.ppbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 14px 10px 42px; background: var(--sunk); border-top: 1px dashed var(--line) }
+.ppbar input[type="date"] { width: auto }
+.warnbar { background: var(--warn-soft); color: var(--warn); border-radius: 10px; padding: 9px 14px; margin: 0 0 12px; font-size: .88rem }
+table.pm th.c-key { width: 78px }
+table.pm td.c-key { text-align: center }
+.keybtn { background: none; border: 0; width: 100%; height: 37px; font-size: 1.15rem; line-height: 1; color: var(--muted); cursor: pointer }
+.keybtn.on { color: var(--warn) }
+.keybtn:hover { color: var(--warn) }
+/* 選擇單字庫／課程：跟單字練習的單字庫清單同一種樣子 */
+.pick-h { margin: 0; font: 700 1.5rem/1.3 var(--font-display) }
+.picks { list-style: none; margin: 14px 0 18px; padding: 0; display: grid; gap: 10px }
+.pick { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; flex-wrap: wrap }
+.pick-main { min-width: 0; flex: 1 1 220px }
+.pick-title { font-weight: 700; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 2px }
+.pick-act { display: flex; gap: 6px; flex-wrap: wrap }
+.parts { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px }
+.parts .chipbtn { font-size: .8rem; padding: 2px 10px }
+
 @media (max-width: 900px) {
   .today-grid, .pd, .ned, .mg, .goals { grid-template-columns: minmax(0, 1fr) }
   .hero { grid-template-columns: minmax(0, 1fr) }
@@ -357,6 +439,10 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
   .board { grid-template-columns: repeat(2, minmax(0, 1fr)) }
 }
 @media (max-width: 680px) {
+  .navrow { flex-wrap: wrap; gap: 0 12px }
+  .navrow .brand { flex: 1 1 auto }
+  .navrow .tabs { order: 3; flex-basis: 100% }
+  .navrow .acct .who { display: none }
   .board, .vtop { grid-template-columns: minmax(0, 1fr) }
   .colpick { display: inline-flex }
   .board[data-col="todo"] .col:not([data-drop="todo"]), .board[data-col="doing"] .col:not([data-drop="doing"]),
@@ -385,15 +471,13 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
 </head>
 <body>
 
-<header class="top wrap">
-  <div class="brand"><span class="brand-name">鍾雅婷</span><span class="brand-sub">每日任務</span></div>
-  <div class="acct"><span class="status" id="status" role="status" data-s="wait">連線中…</span><span id="acct"></span></div>
-</header>
 <div class="navbar">
-  <div class="wrap">
+  <div class="wrap navrow">
+    <div class="brand"><span class="brand-name">每日任務平台</span></div>
     <nav class="tabs" id="tabs" aria-label="區域"></nav>
-    <nav class="subtabs" id="subtabs" aria-label="模組" hidden></nav>
+    <div class="acct"><span class="status" id="status" role="status" data-s="wait">連線中…</span><span id="acct"></span></div>
   </div>
+  <div class="wrap"><nav class="subtabs" id="subtabs" aria-label="模組" hidden></nav></div>
 </div>
 <main id="main" class="wrap view"><p class="empty">正在準備今天的任務…</p></main>
 <div id="apphost" hidden></div>
@@ -459,12 +543,17 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
   // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
-  const BUILD = "20261120d";
-  const appSrc = (m, sub) => TYPES[m.type].src + "?v=" + BUILD + (sub ? "#" + sub : "");
+  const BUILD = "20261120p";
   const TYPES = {
-    projectPlan: { label: "專案計畫", desc: "每個專案的目標、範圍、里程碑，加上跨專案的時程總覽。", view: vProjectPlan },
+    today: { label: "今天", desc: "一份清單看完今天：任務、里程碑、考試、工作台的課程與讀書、固定時段。", view: vToday },
+    // 總覽的月曆、甘特圖、重要日期共用同一個工作台頁面（frame），只是打開不同的畫面（hash）
+    wbCal: { label: "月曆", desc: "整個月的課程、截止、讀書、IG 發文、專案期限、里程碑和考試。", src: "apps/workbench/index.html", frame: "workbench", hash: "cal" },
+    wbGantt: { label: "甘特圖", desc: "專案、學習目標、考試和工作台排程的時程與每週負載。", src: "apps/workbench/index.html", frame: "workbench", hash: "gantt" },
+    wbIG: { label: "IG 發文日程表", desc: "每一篇 IG 的日期、格式、開頭、結尾提問和狀態。", src: "apps/workbench/index.html", frame: "workbench", hash: "ig" },
+    wbDates: { label: "重要日期", desc: "里程碑、考試、重要截止日，加上待確認事項、寫稿原則與路線圖。", src: "apps/workbench/index.html", frame: "workbench", hash: "lists" },
+    projectPlan: { label: "專案計畫", desc: "專案依類別分成卡片：類別 › 專案 › 細項表格（狀態、開始、到期日、優先順序、備註）。", view: vProjectPlan },
     projectBoard: { label: "專案管理", desc: "看板：待辦、進行中、等待中、完成，可以拖拉或用箭頭移動。", view: vBoard },
-    studyPlan: { label: "學習規劃", desc: "把學習目標拆成有期限的步驟，再排每週固定讀書時段。", view: vStudyPlan },
+    studyPlan: { label: "學習目標", desc: "課程與考試目標：拆成有期限的步驟，考試倒數、成績和每週固定時段也在這裡。", view: vStudyPlan },
     notes: { label: "筆記", desc: "可以搜尋、依課程分類的筆記，支援簡單排版與螢光筆。", view: vNotes },
     exams: { label: "考試", desc: "考試倒數、準備清單，考完記下成績。", view: vExams },
     vocab: { label: "單字", desc: "每日單字目標、14 天紀錄、生字本與翻卡複習。", view: vVocab },
@@ -472,25 +561,36 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     links: { label: "連結集", desc: "常用網站與工具的入口。", view: vLinks },
     // 內建網站：程式碼放在 apps/，由 tools/build.py 從原本的 repo 複製進來（工作台直接在 apps/workbench 維護）
     workbenchApp: { label: "工作台", desc: "月曆、甘特圖、IG 發文、讀書進度與清單（原本的赫滋與羊工作台）。", src: "apps/workbench/index.html" },
-    vocabApp: { label: "單字練習", desc: "閃卡、不熟清單、每天 10 個今日複習、考試和發音。", src: "apps/vocab/index.html" },
-    nsysuApp: { label: "考古題練習", desc: "中山資管 94–115 學年度考古題：依年度、依章節、錯題本、英文術語。", src: "apps/nsysu/index.html" },
+    vocabApp: { label: "單字練習", desc: "先選單字庫，再做閃卡、不熟清單、每天 10 個今日複習、考試和發音；中山資管英文術語的題號點了會跳到考古題。", src: "apps/vocab/index.html", hash: "/banks" },
+    // 考古題：平台的「選擇考古題」頁列出每一套（group: "examBanks" 的模組會收在它底下）
+    examBanks: { label: "考古題", desc: "選一套考古題進去練習：目前有中山資管，之後可以加多益、iPAS 等。", view: vExamBanks },
+    nsysuApp: { label: "中山資管考古題", desc: "資管碩士班甲組・計算機概論＋管理資訊系統・94–115 學年度：依年度、依章節、錯題本。", src: "apps/nsysu/index.html", group: "examBanks" },
     // group：預設收進同一區的這種模組頁裡（不佔分頁），可在「擴充」改成獨立分頁
     osNotesApp: { label: "作業系統筆記", desc: "空大作業系統的白話筆記、考試重點、小測驗和互動示範。", src: "apps/os-notes/index.html", group: "notes" },
     genaiApp: { label: "生成式 AI 講義", desc: "一講一頁的課程講義、名詞對照和自我檢核。", src: "apps/genai/index.html", group: "notes" },
   };
+  const CFG_V = 2;
   const DEFAULT_CFG = {
-    areas: [{ id: "work", name: "工作", color: 1 }, { id: "learn", name: "學習", color: 2 }],
+    v: CFG_V,
+    areas: [{ id: "overview", name: "總覽", color: 6 }, { id: "work", name: "工作", color: 1 }, { id: "learn", name: "學習", color: 2 }],
     mods: [
+      { id: "today", area: "overview", type: "today", name: "今天" },
+      { id: "ov-cal", area: "overview", type: "wbCal", name: "月曆" },
+      { id: "ov-gantt", area: "overview", type: "wbGantt", name: "甘特圖" },
+      { id: "ov-dates", area: "overview", type: "wbDates", name: "重要日期" },
       { id: "proj-plan", area: "work", type: "projectPlan", name: "專案計畫" },
-      { id: "proj-board", area: "work", type: "projectBoard", name: "專案管理" },
-      { id: "workbench", area: "work", type: "workbenchApp", name: "工作台" },
-      { id: "study-plan", area: "learn", type: "studyPlan", name: "規劃" },
+      { id: "ig-posts", area: "work", type: "wbIG", name: "IG 發文日程表", parent: "proj-plan" },
+      { id: "study-plan", area: "learn", type: "studyPlan", name: "目標" },
+      { id: "vocab", area: "learn", type: "vocabApp", name: "單字" },
       { id: "notes", area: "learn", type: "notes", name: "筆記" },
       { id: "os-notes", area: "learn", type: "osNotesApp", name: "作業系統" },
       { id: "genai", area: "learn", type: "genaiApp", name: "生成式 AI" },
-      { id: "exams", area: "learn", type: "exams", name: "考試" },
-      { id: "nsysu", area: "learn", type: "nsysuApp", name: "考古題" },
-      { id: "vocab", area: "learn", type: "vocabApp", name: "單字" },
+      { id: "pq", area: "learn", type: "examBanks", name: "考古題" },
+      { id: "nsysu", area: "learn", type: "nsysuApp", name: "中山資管考古題" },
+      // 已經併進別頁的舊模組：資料還在，只是不放在選單（可在「擴充」打開）
+      { id: "proj-board", area: "work", type: "projectBoard", name: "專案管理", hidden: true },
+      { id: "exams", area: "learn", type: "exams", name: "考試", hidden: true },
+      { id: "workbench", area: "overview", type: "workbenchApp", name: "工作台", hidden: true },
     ],
   };
   const TASK_ST = { todo: "待辦", doing: "進行中", wait: "等待中", done: "完成" };
@@ -504,7 +604,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
   const S = { cfg: null, mods: {}, tasks: {}, projects: {}, goals: {}, notes: {}, exams: {}, words: {}, days: {} };
   const ui = { proj: null, pstat: "all", pnew: false, tedit: null, bproj: {}, showDone: {}, showLater: {}, bcol: {}, gedit: null, gnew: false, gopen: {}, gmore: {}, rnew: false,
     note: null, nq: "", ncourse: "", nreview: false, exam: null, enew: false, wfilter: "all", wq: "", review: null, ledit: null, confirm: null,
-    qaTo: null, exportText: null, openDone: {} };
+    qaTo: null, exportText: null, openDone: {}, pcat: null, pdone: false, pgfold: {}, pgopen: {}, rtOpen: false };
   let db = null, canWrite = true, live = false, warnedNoDb = false, signedOut = false, wbDb = null;
 
   const cfg = () => (S.cfg && Array.isArray(S.cfg.areas) && Array.isArray(S.cfg.mods) ? S.cfg : DEFAULT_CFG);
@@ -633,17 +733,21 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     if (open) h += '<div class="row-edit">' + taskEditor(t) + "</div>";
     return h;
   }
-  function taskEditor(t) {
+  // compact：在專案表格裡展開時，只放表格沒有的（所屬專案、完整備註、刪除）
+  function taskEditor(t, o) {
+    o = o || {};
     const area = taskArea(t), id = esc(t.id);
     const projs = area ? arr("projects").filter(p => p.area === area) : [];
     const projSel = t.goal || (!projs.length && !t.proj) ? "" : '<select id="te-p-' + id + '" data-act="tfield" data-id="' + id + '" data-k="proj" aria-label="所屬專案"><option value="">不分專案</option>' + projs.map(p => '<option value="' + esc(p.id) + '"' + sel(t.proj === p.id) + ">" + esc(p.name) + "</option>").join("") + "</select>";
+    const priSel = '<label class="inline">優先順序 <select id="te-pri-' + id + '" data-act="tfield" data-id="' + id + '" data-k="pri">' + PRI.map(([v, l]) => '<option value="' + v + '"' + sel(priOf(t) === v) + ">" + l + "</option>").join("") + "</select></label>";
+    if (o.compact) return '<div class="cedit pm-cedit">' + (projSel ? '<label class="field"><span>所屬專案</span>' + projSel + "</label>" : "")
+      + '<label class="field"><span>備註（可以寫很多行）</span><textarea id="te-n-' + id + '" rows="3" data-act="tfield" data-id="' + id + '" data-k="note" placeholder="備註">' + esc(t.note || "") + "</textarea></label>"
+      + '<div class="btnrow">' + confirmBtn("tdel:" + t.id, "刪除任務", "確定刪除這個任務？") + '<span class="grow"></span><button class="btn sm" data-act="tedit" data-id="' + id + '">收起</button></div></div>';
     return '<div class="cedit"><input type="text" id="te-t-' + id + '" value="' + esc(t.t) + '" data-act="tfield" data-id="' + id + '" data-k="t" aria-label="任務名稱">'
       + '<div class="r2"><label class="inline">開始 <input type="date" id="te-s-' + id + '" value="' + esc(t.start || "") + '" data-act="tfield" data-id="' + id + '" data-k="start"></label>'
       + '<label class="inline">期限 <input type="date" id="te-d-' + id + '" value="' + esc(t.due || "") + '" data-act="tfield" data-id="' + id + '" data-k="due"></label></div>'
       + '<div class="r2"><select id="te-st-' + id + '" data-act="tfield" data-id="' + id + '" data-k="st" aria-label="狀態">' + ST_ORDER.map(s => '<option value="' + s + '"' + sel((t.st || "todo") === s) + ">" + TASK_ST[s] + "</option>").join("") + "</select>" + projSel + "</div>"
-      + '<div class="r2"><label class="inline">工時 <input type="number" id="te-h-' + id + '" min="0" step="0.5" value="' + esc(t.hours == null ? "" : t.hours) + '" data-act="tfield" data-id="' + id + '" data-k="hours" style="width:80px" aria-label="工時（小時）"> 小時</label>'
-      + '<label class="inline">負責 <input type="text" id="te-o-' + id + '" value="' + esc(t.owner || "") + '" placeholder="雅婷" data-act="tfield" data-id="' + id + '" data-k="owner" style="width:140px" aria-label="負責人"></label></div>'
-      + '<label class="inline"><input type="checkbox" id="te-pri-' + id + '" data-act="tfield" data-id="' + id + '" data-k="pri"' + chk(t.pri) + "> 標為重要</label>"
+      + priSel
       + '<textarea id="te-n-' + id + '" rows="2" data-act="tfield" data-id="' + id + '" data-k="note" placeholder="備註">' + esc(t.note || "") + "</textarea>"
       + '<div class="btnrow">' + confirmBtn("tdel:" + t.id, "刪除任務", "確定刪除這個任務？") + '<span class="grow"></span><button class="btn sm" data-act="tedit" data-id="' + id + '">收起</button></div></div>';
   }
@@ -658,13 +762,21 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     arr("projects").forEach(p => (p.ms || []).forEach(m => { if (isDate(m.date)) out.push({ pid: p.id, id: m.id, t: m.t, date: m.date, done: !!m.done, pname: p.name, c: p.c }); }));
     return out.sort(byDate);
   }
-  function msRow(m) {
+  function msRow(m, o) {
     const id = "ms-" + esc(m.pid) + "-" + esc(m.id);
     return '<div class="row' + (m.done ? " is-done" : "") + '"><input type="checkbox" id="' + id + '" data-act="msdone" data-p="' + esc(m.pid) + '" data-id="' + esc(m.id) + '"' + chk(m.done) + ' aria-label="里程碑完成：' + esc(m.t) + '">'
-      + '<label class="row-main" for="' + id + '"><span class="row-title">◆ ' + esc(m.t) + '</span><span class="row-meta"><span class="chip ctx" style="--ac:' + pcol(m) + '">' + esc(m.pname) + "</span></span></label></div>";
+      + '<label class="row-main" for="' + id + '"><span class="row-title">◆ ' + esc(m.t) + '</span><span class="row-meta"><span class="chip ctx" style="--ac:' + pcol(m) + '">' + esc(m.pname) + "</span></span></label>" + (o && o.acts ? '<span class="row-acts">' + o.acts + "</span>" : "") + "</div>";
+  }
+  // 考試連到它所屬的學習目標
+  function examHref(e) {
+    const g = e.goal && S.goals[e.goal], gm = g && modById(g.mod);
+    if (gm && !gm.hidden) return "#m-" + gm.id;
+    const em = modById(e.mod); if (em && !em.hidden) return "#m-" + em.id;
+    const sp = cfg().mods.find(x => x.type === "studyPlan" && !x.hidden);
+    return sp ? "#m-" + sp.id : "#today";
   }
   function examRow(e) {
-    return '<div class="row"><span class="ms-dot" aria-hidden="true">考</span><a class="row-main" href="#m-' + esc(e.mod) + '" style="text-decoration:none;color:inherit"><span class="row-title">' + esc(e.name) + '</span><span class="row-meta"><span class="chip bad">考試</span>' + (e.place ? '<span class="chip">' + esc(e.place) + "</span>" : "") + "</span></a></div>";
+    return '<div class="row"><span class="ms-dot" aria-hidden="true">考</span><a class="row-main" href="' + examHref(e) + '" style="text-decoration:none;color:inherit"><span class="row-title">' + esc(e.name) + '</span><span class="row-meta"><span class="chip bad">考試</span>' + (e.place ? '<span class="chip">' + esc(e.place) + "</span>" : "") + "</span></a></div>";
   }
   const upcomingExams = () => { const t0 = today(); return arr("exams").filter(e => isDate(e.date) && (isDate(e.end) ? e.end : e.date) >= t0).sort(byDate); };
 
@@ -689,6 +801,52 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     goals.forEach(g => { const sc = simScore(g.name, e.name); if (sc >= bs) { bs = sc; best = g; } });
     return best ? best.id : "";
   }
+  // 舊版面（今天＋工作 3 頁＋學習 5 頁）升級成 總覽／工作／學習；自己加的模組保留
+  let cfgUpgrading = false;
+  function upgradeCfg() {
+    if (cfgUpgrading || !live || !canWrite || !db || !S.cfg || (S.cfg.v || 0) >= CFG_V) return;
+    cfgUpgrading = true;
+    const old = S.cfg, next = clone(DEFAULT_CFG), known = new Set(next.mods.map(m => m.id));
+    (old.areas || []).forEach(a => { const x = next.areas.find(y => y.id === a.id); if (x) { if (a.color) x.color = a.color; } else next.areas.push(a); });
+    (old.mods || []).forEach(m => { if (!known.has(m.id)) next.mods.push(m); });
+    setCfg(next);
+  }
+  // 專案類別：沿用工作台原本的分類（商品開發、策展與補助、官網與系統…）
+  const projSeen = new Set();
+  function fillProjCats() {
+    if (!live || !canWrite || !db || !S.wbDocs || !S.wbDocs.tasks) return;
+    const wt = Object.values(S.wbDocs.tasks.tasks || {});
+    arr("projects").filter(p => p.cat === undefined && !projSeen.has(p.id)).forEach(p => {
+      projSeen.add(p.id);
+      const votes = {};
+      wt.forEach(t => { const b = t.board && S.tasks[t.board]; if (t.cat && ((b && b.proj === p.id) || normT(t.item) === normT(p.name))) votes[t.cat] = (votes[t.cat] || 0) + 1; });
+      const cat = Object.keys(votes).sort((a, b) => votes[b] - votes[a])[0] || "";
+      patch("projects", p.id, { cat }, true);
+    });
+  }
+  const IG_CAT = "IG 規劃";
+  let igMaking = false;
+  function makeIgProjects() {
+    if (igMaking || !live || !canWrite || !db || !wbDb || !S.wbDocs || !S.wbDocs.tasks || S.wbDocs.tasks.igLinked) return;
+    const wt = Object.entries(S.wbDocs.tasks.tasks || {}).map(([id, t]) => Object.assign({ id }, t)).filter(t => !t.deleted && /IG/.test(t.cat || "") && !t.board && isDate(t.start) && isDate(t.end));
+    igMaking = true;
+    const byItem = {};
+    wt.forEach(t => { (byItem[t.item || "IG"] = byItem[t.item || "IG"] || []).push(t); });
+    const links = {}, board = (cfg().mods.find(x => x.type === "projectBoard") || {}).id || "proj-board", t0 = today();
+    Object.keys(byItem).forEach((item, i) => {
+      const ts = byItem[item].sort((a, b) => (a.start < b.start ? -1 : 1));
+      const pid = "p-ig-" + (item === "主系列" ? "main" : item === "產品檔期" ? "launch" : String(i + 1));
+      const start = ts[0].start, end = ts.map(t => t.end).sort().pop();
+      if (!S.projects[pid]) put("projects", pid, { name: item, cat: IG_CAT, area: "work", st: end < t0 ? "done" : start > t0 ? "plan" : "active", start, end, goal: "", scope: [], ms: [], risk: "", c: item === "主系列" ? 3 : 5, at: t0, from: "workbench" });
+      ts.forEach(t => {
+        const tid = "t-wb-" + t.id, st = t.status === "完成" ? "done" : t.status === "進行中" ? "doing" : "todo";
+        if (!S.tasks[tid]) { const d = { t: t.work, st, start: t.start, due: t.end, pri: 0, proj: pid, mod: board, at: t0, from: "workbench" }; if (t.hours != null && t.hours !== "") d.hours = Number(t.hours); if (st === "done") d.done = t0; put("tasks", tid, d); }
+        links[t.id] = { board: tid };
+      });
+    });
+    wbWrite("tasks", { igLinked: 1, tasks: links });
+  }
+  function afterLive() { upgradeCfg(); mergeExamPrep(); fillProjCats(); makeIgProjects(); linkTwins(); }
   function mergeExamPrep() {
     if (!live || !canWrite || !db) return;
     arr("exams").filter(e => !prepSeen.has(e.id) && e.prepMerged === undefined && (e.goal === undefined || (e.prep || []).length)).forEach(e => {
@@ -721,7 +879,8 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
 
   /* ═════════ 工作台資料（今天頁直接讀，不再另外列一份） ═════════ */
   let wbMemo = null;
-  const wbModId = () => (cfg().mods.find(x => x.type === "workbenchApp" && !x.hidden) || {}).id || "";
+  const WB_TYPES = ["wbCal", "wbGantt", "wbDates", "wbIG", "workbenchApp"];
+  const wbModId = () => { for (const t of WB_TYPES) { const m = cfg().mods.find(x => x.type === t && !x.hidden); if (m) return m.id; } return ""; };
   function wbData() {
     const docs = S.wbDocs; if (!docs || !wbModId()) return null;
     if (wbMemo && wbMemo.docs === docs) return wbMemo;
@@ -766,6 +925,22 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     return (2 * n) / (x.length - 1 + y.length - 1);
   }
   const similarT = (a, b) => simScore(a, b) >= 0.45;
+  // 連括號裡的字一起比（同分時用來分高下，例如「月曆卡開賣（官網＋LINE）」對「月曆卡（趕工幕後 → 開賣）」）
+  function fullSim(a, b) {
+    const n = s => String(s || "").toLowerCase().replace(/[^0-9a-z\u3400-\u9fff]/g, ""), x = n(a), y = n(b);
+    if (!x || !y) return 0;
+    if (x === y) return 2;
+    const bg = s => { const o = {}; for (let i = 0; i < s.length - 1; i++) { const k = s.slice(i, i + 2); o[k] = (o[k] || 0) + 1; } return o; };
+    const A = bg(x), B = bg(y); let c = 0;
+    Object.keys(A).forEach(k => { if (B[k]) c += Math.min(A[k], B[k]); });
+    return (2 * c) / Math.max(1, x.length - 1 + y.length - 1);
+  }
+  // 候選 [{key, title}] 裡挑跟 title 最像的一個
+  function bestMatch(title, cands) {
+    let best = null, bs = -1;
+    cands.forEach(c => { const a = simScore(c.title, title); if (a < 0.45) return; const sc = a * 10 + fullSim(c.title, title); if (sc > bs) { bs = sc; best = c; } });
+    return best;
+  }
   let twinMemo = { k: null, m: {} };
   function twinsOn(d) {
     const W = wbData(); if (!W) return new Map();
@@ -773,10 +948,56 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     if (twinMemo.m[d]) return twinMemo.m[d];
     const ts = arr("tasks").filter(t => t.due === d), ms = milestones().filter(m => m.date === d), out = new Map();
     (W.byDate[d] || []).forEach(it => {
-      const t = ts.find(x => similarT(x.t, it.title)); if (t) { out.set(it.id, "t:" + t.id); return; }
-      const m = ms.find(x => similarT(x.t, it.title)); if (m) out.set(it.id, "m:" + m.pid + ":" + m.id);
+      if (it.link && linkAlive(it.link)) { out.set(it.id, it.link); return; }
+      if (it.link) return;
+      const c = bestMatch(it.title, ts.map(x => ({ key: "t:" + x.id, title: x.t })).concat(ms.map(x => ({ key: "m:" + x.pid + ":" + x.id, title: x.t }))));
+      if (c) out.set(it.id, c.key);
     });
     return (twinMemo.m[d] = out);
+  }
+  function linkAlive(link) {
+    const [k, a, b] = String(link).split(":");
+    if (k === "t") return !!S.tasks[a];
+    if (k === "e") return !!S.exams[a];
+    if (k === "m") return !!(S.projects[a] && (S.projects[a].ms || []).some(x => x.id === b));
+    return false;
+  }
+  const linkedItems = key => { const W = wbData(); return W ? W.items.filter(it => it.link === key) : []; };
+  // 平台這邊勾完成或改日期 → 對應的工作台事項跟著變
+  function syncLinkedDone(key, d, done) {
+    const seen = new Set();
+    linkedItems(key).concat(isDate(d) ? twinItems(key, d) : []).forEach(it => { if (seen.has(it.id)) return; seen.add(it.id); if (!!it.done !== done) wbSetDone(it, done); });
+  }
+  function syncLinkedDate(key, to) {
+    if (!isDate(to)) return;
+    linkedItems(key).forEach(it => { if (it.date !== to) wbWrite(it.bucket, { items: { [it.id]: { date: to, moved: (it.moved || 0) + 1, orig: it.orig || it.date } } }); });
+  }
+  // 一次性：把現在「同一天、名稱相近」的配對記下來（之後日期改了也還認得）
+  let twinLinking = false;
+  function linkTwins() {
+    if (twinLinking || !live || !canWrite || !db || !wbDb || !S.wbDocs || !S.wbDocs.tasks || S.wbDocs.tasks.twinLinked) return;
+    const W = wbData(); if (!W) return;
+    twinLinking = true;
+    const used = new Set(), wbPatch = {}, taskP = {}, msP = {}, exP = {};
+    const ms = milestones(), exams = arr("exams"), tasks = arr("tasks");
+    W.items.forEach(it => {
+      if (it.link || it.tag === "讀") return;
+      const d = it.date, ref = it.bucket + "/" + it.id;
+      const c = bestMatch(it.title, [].concat(
+        tasks.filter(x => x.due === d).map(x => ({ key: "t:" + x.id, title: x.t, id: x.id })),
+        ms.filter(x => x.date === d).map(x => ({ key: "m:" + x.pid + ":" + x.id, title: x.t, pid: x.pid, id: x.id })),
+        exams.filter(x => x.date === d).map(x => ({ key: "e:" + x.id, title: x.name, id: x.id }))).filter(x => !used.has(x.key)));
+      const link = c ? c.key : null;
+      if (c && link.startsWith("t:")) taskP[c.id] = ref;
+      else if (c && link.startsWith("m:")) (msP[c.pid] = msP[c.pid] || {})[c.id] = ref;
+      else if (c) exP[c.id] = ref;
+      if (link) { used.add(link); (wbPatch[it.bucket] = wbPatch[it.bucket] || {})[it.id] = { link }; }
+    });
+    Object.keys(taskP).forEach(id => patch("tasks", id, { wb: taskP[id] }, true));
+    Object.keys(exP).forEach(id => patch("exams", id, { wb: exP[id] }, true));
+    Object.keys(msP).forEach(pid => patch("projects", pid, { ms: (S.projects[pid].ms || []).map(x => (msP[pid][x.id] ? Object.assign({}, x, { wb: msP[pid][x.id] }) : x)) }, true));
+    Object.keys(wbPatch).forEach(b => wbWrite(b, { items: wbPatch[b] }));
+    wbWrite("tasks", { twinLinked: 1 });
   }
   function twinItems(key, d) { const tw = twinsOn(d), W = wbData(); return W ? (W.byDate[d] || []).filter(it => tw.get(it.id) === key) : []; }
   const twinDone = (key, d) => { const xs = twinItems(key, d); return xs.length > 0 && xs.every(it => it.done); };
@@ -793,6 +1014,20 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     return m ? (+m[1] * 60 + +(m[2] || 0)) + "-" + (+m[3] * 60 + +(m[4] || 0)) : "";
   }
 
+  function routineParts(r) {
+    if (Array.isArray(r.parts) && r.parts.length) return r.parts;
+    const m = /[（(]([^）)]+)[）)]/.exec(r.t || ""), xs = m ? m[1].split(/[、,，／/]/).map(x => x.trim()).filter(Boolean) : [];
+    return xs.length >= 2 ? xs : [];
+  }
+  const routineTitle = r => (!(Array.isArray(r.parts) && r.parts.length) && routineParts(r).length ? String(r.t).replace(/\s*[（(][^）)]+[）)]\s*/, " ").trim() || r.t : r.t);
+  const routineSel = (r, d) => ((dayLog(d).rp || {})[r.id]) || {};
+  // 完成＝整個勾掉，或至少選了一個子項目
+  const routineDone = (r, d) => !!((dayLog(d).r || {})[r.id]) || Object.values(routineSel(r, d)).some(Boolean);
+  function findRoutine(id) {
+    for (const m of cfg().mods) { const r = (modDoc(m.id).routine || []).find(x => x.id === id); if (r) return r; }
+    return null;
+  }
+
   // 某一天要做的所有事：平台任務、里程碑、考試、工作台事項、固定時段、每天固定、IG 發文
   function dayPlan(d) {
     const W = wbData(), tw = twinsOn(d);
@@ -806,7 +1041,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
       const tr = routineTrack(r), tk = timeKey(r.time);
       const cover = wb.filter(it => (tr && it.tag === "讀" && it.track === tr) || (tk && timeKey(it.title) === tk));
       if (cover.length) { if (r.to && modById(r.to) && !links[cover[0].id]) links[cover[0].id] = r.to; return; }
-      routines.push(Object.assign({ mod: m.id, done: !!rlog[r.id] }, r));
+      routines.push(Object.assign({}, r, { mod: m.id, done: routineDone(r, d), partList: routineParts(r), sel: routineSel(r, d) }));
     }));
     routines.sort((a, b) => String(a.time || "99").localeCompare(String(b.time || "99")));
     const hs = habitState(d), habits = (W ? W.habits : []).map((x, i) => ({ i, name: x.name, desc: x.desc, done: !!hs["h" + i] }));
@@ -829,24 +1064,45 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
       + '<label class="row-main" for="wb-' + id + k + '"><span class="row-title">' + (it.tag === "★" ? "◆ " : "") + esc(it.title) + "</span>" + note + (meta ? '<span class="row-meta">' + meta + "</span>" : "") + "</label>"
       + (acts ? '<span class="row-acts">' + acts + "</span>" : "") + "</div>";
   }
+  // 延後：每一列一個按鈕，點開選明天、後天、下週一或自己挑日期（key：t:任務、w:工作台事項、m:專案:里程碑、p:IG 發文）
+  const ppBtn = key => '<button class="btn ghost sm" data-act="pp" data-k="' + esc(key) + '" aria-expanded="' + (ui.pp === key) + '">延後</button>';
+  const lateBtns = key => '<button class="btn sm" data-act="ppgo" data-k="' + esc(key) + '" data-to="' + today() + '">移到今天</button>' + ppBtn(key);
+  function ppBar(key, cur) {
+    if (ui.pp !== key) return "";
+    const t0 = today(), from = !isDate(cur) || cur < t0 ? t0 : cur, isT = from === t0, nm = addDays(mondayOf(from), 7);
+    const opt = (d, l) => '<button class="btn sm" data-act="ppgo" data-k="' + esc(key) + '" data-to="' + d + '">' + l + "・" + md(d) + "</button>";
+    return '<div class="ppbar" data-form><span class="muted small">延到</span>' + opt(addDays(from, 1), isT ? "明天" : "隔天") + opt(addDays(from, 2), isT ? "後天" : "再隔一天") + opt(nm, "下週一")
+      + '<input type="date" id="pp-d" value="' + addDays(from, 1) + '" aria-label="選日期"><button class="btn primary sm" data-act="ppgo" data-k="' + esc(key) + '">確定</button><button class="btn ghost sm" data-act="pp" data-k="' + esc(key) + '">取消</button></div>';
+  }
+  function moveWb(it, to) {
+    wbWrite(it.bucket, { items: { [it.id]: { date: to, moved: (it.moved || 0) + 1, orig: it.orig || it.date } } });
+    const [lk, la, lb] = String(it.link || "").split(":");
+    if (lk === "t" && S.tasks[la]) patch("tasks", la, { due: to }, true);
+    else if (lk === "m" && S.projects[la]) patch("projects", la, { ms: (S.projects[la].ms || []).map(x => (x.id === lb ? Object.assign({}, x, { date: to }) : x)) }, true);
+  }
   const wbMoveBtns = (it, t0) => (it.date < t0 ? '<button class="btn sm" data-act="wbmove" data-id="' + esc(it.id) + '" data-to="' + t0 + '">移到今天</button>' : "")
     + '<button class="btn ghost sm" data-act="wbmove" data-id="' + esc(it.id) + '" data-to="' + addDays(it.date < t0 ? t0 : it.date, 1) + '">' + (it.date < t0 ? "明天" : "延到明天") + "</button>";
   function routineRow(r, d) {
-    const id = esc(r.id), to = r.to && modById(r.to);
-    return '<div class="row' + (r.done ? " is-done" : "") + '"><input type="checkbox" id="rt-' + id + '" data-act="rtdone" data-id="' + id + '" data-date="' + d + '"' + chk(r.done) + ">"
-      + '<label class="row-main" for="rt-' + id + '"><span class="row-title">' + esc(r.t) + '</span><span class="row-meta"><span class="chip">每週固定</span>' + (r.time ? '<span class="chip mono">' + esc(r.time) + "</span>" : "") + (r.min ? '<span class="chip">' + esc(r.min) + " 分鐘</span>" : "") + "</span></label>"
+    const id = esc(r.id), to = r.to && modById(r.to), ps = r.partList || [], sel = r.sel || {}, n = ps.filter(x => sel[x]).length;
+    const meta = '<span class="row-meta"><span class="chip">每週固定</span>' + (r.time ? '<span class="chip mono">' + esc(r.time) + "</span>" : "") + (r.min ? '<span class="chip">' + esc(r.min) + " 分鐘</span>" : "") + (ps.length ? '<span class="chip' + (n ? " ok" : "") + '">選了 ' + n + " / " + ps.length + "</span>" : "") + "</span>";
+    const parts = ps.length ? '<span class="parts" role="group" aria-label="今天上了哪幾堂（可複選）">' + ps.map(x => '<button class="chip chipbtn' + (sel[x] ? " ok" : "") + '" data-act="rtpart" data-id="' + id + '" data-date="' + d + '" data-k="' + esc(x) + '" aria-pressed="' + !!sel[x] + '">' + (sel[x] ? "✓ " : "") + esc(x) + "</button>").join("") + "</span>" : "";
+    return '<div class="row' + (r.done ? " is-done" : "") + '"><input type="checkbox" id="rt-' + id + '" data-act="rtdone" data-id="' + id + '" data-date="' + d + '"' + chk(r.done) + ' aria-label="完成：' + esc(routineTitle(r)) + '">'
+      + (ps.length ? '<div class="row-main"><label class="row-title" for="rt-' + id + '">' + esc(routineTitle(r)) + "</label>" + parts + meta + "</div>"
+        : '<label class="row-main" for="rt-' + id + '"><span class="row-title">' + esc(r.t) + "</span>" + meta + "</label>")
       + (to ? '<span class="row-acts"><a class="btn ghost sm" href="#m-' + esc(to.id) + '">打開' + esc(to.name) + "</a></span>" : safeUrl(r.url) ? '<span class="row-acts"><a class="btn ghost sm" href="' + esc(r.url) + '" target="_blank" rel="noopener">開啟 ↗</a></span>' : "") + "</div>";
   }
   function habitRow(h, d) {
     return '<div class="row' + (h.done ? " is-done" : "") + '"><input type="checkbox" id="hb-' + h.i + '" data-act="habit" data-i="' + h.i + '" data-date="' + d + '"' + chk(h.done) + ">"
       + '<label class="row-main" for="hb-' + h.i + '"><span class="row-title">' + esc(h.name) + "</span>" + (h.desc ? '<span class="row-note">' + esc(h.desc) + "</span>" : "") + "</label></div>";
   }
-  function postRow(p, wbMod, late) {
-    return '<div class="row' + (p.status === "已發布" ? " is-done" : "") + '"><span class="ms-dot" aria-hidden="true">IG</span><a class="row-main" href="#m-' + esc(wbMod) + "/ig" + '" style="text-decoration:none;color:inherit"><span class="row-title">' + esc(p.title || "IG 發文") + '</span><span class="row-meta"><span class="chip' + (p.status === "已發布" ? " ok" : "") + '">' + esc(p.status || "未開始") + "</span>"
-      + (p.time || p.fmt ? '<span class="chip">' + esc([p.time, p.fmt].filter(Boolean).join(" ")) + "</span>" : "") + (late ? '<span class="chip bad">過了發文日・' + mdw(p.date) + "</span>" : "") + "</span></a></div>";
+  // IG 發文：勾選＝已發布（取消勾選回到原本的狀態）；點標題到月曆的那一天看細節
+  function postRow(p, wbMod, late, acts) {
+    const id = esc(p.id), done = p.status === "已發布", day = p.date !== today() && wbMod;
+    return '<div class="row' + (done ? " is-done" : "") + '"><input type="checkbox" id="ig-' + id + (late ? "-o" : "") + '" data-act="postdone" data-id="' + id + '"' + chk(done) + ' aria-label="已發布：' + esc(p.title || "IG 發文") + '">'
+      + (day ? '<a class="row-main" href="#m-' + esc(wbMod) + "/day-" + esc(p.date) + '" style="text-decoration:none;color:inherit">' : '<label class="row-main" for="ig-' + id + (late ? "-o" : "") + '">')
+      + '<span class="row-title">IG・' + esc(p.title || "發文") + '</span><span class="row-meta"><span class="chip' + (done ? " ok" : "") + '">' + esc(p.status || "未開始") + "</span>"
+      + (p.time || p.fmt ? '<span class="chip">' + esc([p.time, p.fmt].filter(Boolean).join(" ")) + "</span>" : "") + (late ? '<span class="chip bad">過了發文日・' + mdw(p.date) + "</span>" : "") + "</span>" + (day ? "</a>" : "</label>") + (acts ? '<span class="row-acts">' + acts + "</span>" : "") + "</div>";
   }
-
-  /* ═════════ 今天 ═════════ */
   function vToday() {
     const t0 = today(), W = wbData(), wbMod = wbModId();
     const tasks = arr("tasks"), P = dayPlan(t0), tl = P.links;
@@ -883,26 +1139,28 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
       + (M.notes && M.notes.length ? M.notes.map(n => '<p class="muted small" style="margin:6px 0 0">' + esc(n) + "</p>").join("") : "") + "</div>"
       + '<div class="countdowns">' + exams.slice(0, 3).map(e => {
         const n = Math.max(0, diff(t0, e.date));
-        return '<a class="cd' + (n <= 14 ? " soon" : "") + '" href="#m-' + esc(e.mod) + '"><b>' + n + "</b><span>" + esc(e.name) + "</span><small>" + (n === 0 ? "就是今天" : "天後・" + mdw(e.date)) + "</small></a>";
+        return '<a class="cd' + (n <= 14 ? " soon" : "") + '" href="' + examHref(e) + '"><b>' + n + "</b><span>" + esc(e.name) + "</span><small>" + (n === 0 ? "就是今天" : "天後・" + mdw(e.date)) + "</small></a>";
       }).join("") + "</div></section>";
 
     h += '<div class="today-grid"><div class="stack">';
     if (lateN) {
       const LIM = 8, wl = wbLate.slice(-LIM);
-      h += '<section class="panel"><div class="ph bad"><h3>逾期還沒完成</h3><span class="sum">勾掉，或改到今天、明天</span></div><div class="rows">'
-        + overdue.map(t => taskRow(t, { k: "-o", acts: '<button class="btn sm" data-act="tmove" data-id="' + esc(t.id) + '" data-to="' + t0 + '">移到今天</button><button class="btn ghost sm" data-act="tmove" data-id="' + esc(t.id) + '" data-to="' + addDays(t0, 1) + '">明天</button>' })).join("")
-        + wl.map(it => wbRow(it, { k: "-o", late: true, tag: true, acts: wbMoveBtns(it, t0) })).join("")
+      h += '<section class="panel"><div class="ph bad"><h3>逾期還沒完成</h3><span class="sum">勾掉、移到今天，或按「延後」</span></div><div class="rows">'
+        + overdue.map(t => taskRow(t, { k: "-o", acts: lateBtns("t:" + t.id) }) + ppBar("t:" + t.id, t.due)).join("")
+        + wl.map(it => wbRow(it, { k: "-o", late: true, tag: true, acts: lateBtns("w:" + it.id) }) + ppBar("w:" + it.id, it.date)).join("")
         + (wbLate.length > LIM ? '<div class="empty small">還有 ' + (wbLate.length - LIM) + ' 項更早的工作台進度沒勾，<a href="#m-' + esc(wbMod) + '/study">到工作台把整條讀書線往後挪</a></div>' : "")
-        + postLate.map(p => postRow(p, wbMod, true)).join("")
+        + postLate.map(p => postRow(p, wbMod, true, lateBtns("p:" + p.id)) + ppBar("p:" + p.id, p.date)).join("")
         + "</div></section>";
     }
     const grp = (title, rows) => (rows ? '<div class="dgroup">' + title + "</div>" + rows : "");
-    const mv = it => (it.done ? "" : wbMoveBtns(it, t0));
+    const wbPP = it => wbRow(it, { link: tl[it.id], acts: it.done ? "" : ppBtn("w:" + it.id) }) + (it.done ? "" : ppBar("w:" + it.id, it.date));
     const trackOrder = it => { const i = ["碩班", "多益", "iPAS"].indexOf(it.track); return i < 0 ? 9 : i; };
     const body = grp("行程", P.exams.map(examRow).join("") + P.wb.filter(it => it.tag === "課").map(it => wbRow(it, { link: tl[it.id] })).join("") + P.routines.filter(r => r.time).map(r => routineRow(r, t0)).join(""))
-      + grp("要交・里程碑", P.wb.filter(it => it.tag !== "課" && it.tag !== "讀").map(it => wbRow(it, { link: tl[it.id], acts: mv(it) })).join("") + P.ms.map(msRow).join("")
-        + P.tasks.slice().sort((a, b) => (a.st === "done") - (b.st === "done") || (b.pri || 0) - (a.pri || 0)).map(t => taskRow(t, { noDue: true })).join("") + P.posts.map(p => postRow(p, wbMod)).join(""))
-      + grp("讀書", P.wb.filter(it => it.tag === "讀").sort((a, b) => trackOrder(a) - trackOrder(b)).map(it => wbRow(it, { link: tl[it.id], acts: mv(it) })).join("") + P.routines.filter(r => !r.time).map(r => routineRow(r, t0)).join(""))
+      + grp("要交・里程碑", P.wb.filter(it => it.tag !== "課" && it.tag !== "讀").map(wbPP).join("")
+        + P.ms.map(m => { const k = "m:" + m.pid + ":" + m.id; return msRow(m, { acts: m.done ? "" : ppBtn(k) }) + (m.done ? "" : ppBar(k, m.date)); }).join("")
+        + P.tasks.slice().sort((a, b) => (a.st === "done") - (b.st === "done") || (b.pri || 0) - (a.pri || 0)).map(t => taskRow(t, { noDue: true, acts: t.st === "done" ? "" : ppBtn("t:" + t.id) }) + (t.st === "done" ? "" : ppBar("t:" + t.id, t.due))).join("")
+        + P.posts.map(p => postRow(p, wbMod, false, p.status === "已發布" ? "" : ppBtn("p:" + p.id)) + ppBar("p:" + p.id, p.date)).join(""))
+      + grp("讀書", P.wb.filter(it => it.tag === "讀").sort((a, b) => trackOrder(a) - trackOrder(b)).map(wbPP).join("") + P.routines.filter(r => !r.time).map(r => routineRow(r, t0)).join(""))
       + grp("每天固定", P.habits.map(x => habitRow(x, t0)).join(""));
     h += '<section class="panel"><div class="ph"><h3>今天</h3><span class="sum">完成 ' + P.done + " / " + P.total + "</span></div>"
       + '<div class="rows">' + (body || '<div class="empty"><b>今天沒有排事情</b>在下面新增一件，或到各模組排日期。</div>') + "</div>" + quickAdd() + "</section>";
@@ -936,7 +1194,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
       h += '<section class="panel" style="--ac:' + acolByArea(vm.area) + '"><div class="ph"><h3>單字・今日複習</h3><span class="sum">' + (v.streak ? "連續 " + v.streak + " 天" : "") + '</span></div><div class="pb stack" style="gap:10px">'
         + (going ? '<div class="vbig"><b>' + v.done + '</b><span class="muted">/ ' + v.total + " 個</span>" + (v.complete ? '<span class="chip ok">今天完成</span>' : "") + '</div><span class="meter' + (v.complete ? " full" : "") + '"><i style="width:' + pct + '%"></i></span>'
           : '<p class="muted small" style="margin:0">不熟清單 ' + v.stars + " 個，今天還沒開始複習。</p>")
-        + (v.complete ? "" : '<div><a class="btn" href="#m-' + esc(vm.id) + '">' + (going ? "繼續複習" : "開始複習") + "</a></div>") + "</div></section>";
+        + (v.complete ? "" : '<div><a class="btn" href="#m-' + esc(vm.id) + '//">' + (going ? "繼續複習" : "開始複習") + "</a></div>") + "</div></section>";
     }
     const em = cfg().mods.find(x => x.type === "nsysuApp" && !x.hidden), q = em ? nsysuProgress() : null;
     if (em && q && q.ok + q.bad + q.idk) {
@@ -949,11 +1207,13 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     let h = "";
     cfg().areas.forEach(a => {
       let g = "";
-      modsOfArea(a.id).forEach(m => {
-        if (m.type === "projectBoard") {
+      const mods = modsOfArea(a.id), hasPlan = mods.some(m => m.type === "projectPlan");
+      mods.forEach(m => {
+        if (m.type === "projectPlan" || (m.type === "projectBoard" && !hasPlan)) {
+          arr("projects").filter(p => p.area === a.id && p.st !== "done").sort((x, y) => projCat(x).localeCompare(projCat(y), "zh-Hant") || String(x.name).localeCompare(String(y.name), "zh-Hant"))
+            .forEach(p => { g += '<option value="p:' + esc(p.id) + '"' + sel(ui.qaTo === "p:" + p.id) + ">" + esc(projCat(p)) + "・" + esc(p.name) + "</option>"; });
+        } else if (m.type === "projectBoard") {
           g += '<option value="m:' + esc(m.id) + '"' + sel(ui.qaTo === "m:" + m.id) + ">" + esc(m.name) + "（不分專案）</option>";
-          arr("projects").filter(p => p.area === a.id && p.st !== "done").sort((x, y) => String(x.name).localeCompare(String(y.name), "zh-Hant"))
-            .forEach(p => { g += '<option value="p:' + esc(p.id) + '"' + sel(ui.qaTo === "p:" + p.id) + ">專案・" + esc(p.name) + "</option>"; });
         } else if (m.type === "studyPlan") {
           arr("goals").filter(x => x.mod === m.id).forEach(x => { g += '<option value="g:' + esc(x.id) + '"' + sel(ui.qaTo === "g:" + x.id) + ">目標・" + esc(x.name) + "</option>"; });
         } else if (m.type === "tasks") g += '<option value="m:' + esc(m.id) + '"' + sel(ui.qaTo === "m:" + m.id) + ">" + esc(m.name) + "</option>";
@@ -965,7 +1225,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
   function quickAdd() {
     const opts = addTargets();
     if (!opts) return '<div class="qadd muted small">到「擴充」加一個任務清單或專案管理模組，就能在這裡快速新增。</div>';
-    return '<div class="qadd" data-form><input type="text" id="qa-t" placeholder="新增一件事…" data-enter="qadd" aria-label="任務名稱"><select id="qa-to" aria-label="放到哪裡">' + opts + '</select><input type="date" id="qa-d" value="' + today() + '" aria-label="期限"><button class="btn primary" data-act="qadd">加入</button></div>';
+    return '<div class="qadd" data-form><input type="text" id="qa-t" placeholder="新增一件事…" data-enter="qadd" aria-label="任務名稱"><select id="qa-to" aria-label="放到哪裡"><option value=""' + (ui.qaTo ? "" : " selected") + ' disabled>放到哪個專案或目標…</option>' + opts + '</select><input type="date" id="qa-d" value="' + today() + '" aria-label="期限"><button class="btn primary" data-act="qadd">加入</button></div>';
   }
   const vTarget = mid => Number(modDoc(mid).target) || 50;
   const vCount = (mid, d) => Number((dayLog(d).vc || {})[mid]) || 0;
@@ -1013,7 +1273,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
   /* ═════════ 模組頁共用：標題與相關網站 ═════════ */
   // 模組頁標題：上方分頁已經標出現在在哪一頁，就不再重複寫一次名稱；相關網站只在有設定時出現（在「擴充」管理）
   function modHead(m) {
-    const links = modLinks(m.id), isLinks = m.type === "links", solo = topModsOfArea(m.area).length < 2;
+    const links = modLinks(m.id), isLinks = m.type === "links", solo = topModsOfArea(m.area).length < 2 && m.type !== "projectPlan";
     const chips = isLinks ? "" : links.map(l => linkChip(l)).join("");
     const btn = isLinks ? '<button class="btn ghost sm" data-act="ledit" data-mod="' + esc(m.id) + '" aria-expanded="' + (ui.ledit === m.id) + '">管理連結</button>' : "";
     let h = solo || chips || btn ? '<div class="mhead">' + (solo ? "<h2>" + esc(m.name) + "</h2>" : "") + (chips || btn ? '<div class="mlinks">' + chips + btn + "</div>" : "") + "</div>" : "";
@@ -1056,25 +1316,62 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
   }
 
   /* ═════════ 專案計畫 ═════════ */
+  const pageHead = (title, sub, actions) => '<div class="pagehead"><div>' + (title ? '<h2 class="pick-h">' + esc(title) + "</h2>" : "") + (sub ? '<p class="muted small">' + esc(sub) + "</p>" : "") + "</div>" + (actions ? '<div class="btnrow">' + actions + "</div>" : "") + "</div>";
+  const projCat = p => String((p && p.cat) || "").trim() || "未分類";
+  const PST_ORDER = { active: 0, plan: 1, hold: 2, done: 3 };
+  const byProj = (a, b) => (PST_ORDER[a.st || "plan"] - PST_ORDER[b.st || "plan"]) || ((a.start || "9") < (b.start || "9") ? -1 : 1);
+  function crumbBar(cat, pname) {
+    let h = '<nav class="crumbs" aria-label="位置"><button class="lnk" data-act="pcrumb" data-k="">全部類別</button>';
+    if (cat) h += '<span aria-hidden="true">›</span>' + (pname ? '<button class="lnk" data-act="pcrumb" data-k="' + esc(cat) + '">' + esc(cat) + "</button>" : "<b>" + esc(cat) + "</b>");
+    if (pname) h += '<span aria-hidden="true">›</span><b>' + esc(pname) + "</b>";
+    return h + "</nav>";
+  }
+  function newProjForm(m, cat) {
+    if (!ui.pnew) return "";
+    const cats = [...new Set(arr("projects").filter(p => p.area === m.area && p.cat).map(projCat))];
+    return '<section class="panel" style="margin-bottom:16px"><div class="ph"><h3>新專案</h3><span class="sum">建立後在專案裡加細項</span></div><div class="addline" data-form style="border-top:0"><input type="text" id="np-name" placeholder="專案名稱" data-enter="pcreate" aria-label="專案名稱">'
+      + '<input type="text" id="np-cat" list="np-cats" value="' + esc(cat && cat !== "未分類" ? cat : "") + '" placeholder="類別，例如：商品開發" style="flex:0 1 170px" aria-label="類別"><datalist id="np-cats">' + cats.map(c => '<option value="' + esc(c) + '">').join("") + "</datalist>"
+      + '<label class="inline">開始 <input type="date" id="np-start" value="' + today() + '"></label><label class="inline">結束 <input type="date" id="np-end" value="' + addDays(today(), 30) + '"></label><button class="btn primary" data-act="pcreate" data-area="' + esc(m.area) + '">建立</button><button class="btn ghost" data-act="pnew">取消</button></div></section>';
+  }
   function vProjectPlan(m) {
     const projs = arr("projects").filter(p => p.area === m.area);
-    if (ui.proj && S.projects[ui.proj] && S.projects[ui.proj].area === m.area) return projectDetail(m, ui.proj);
-    const shown = projs.filter(p => ui.pstat === "all" || p.st === ui.pstat).sort((a, b) => ((a.start || "9") < (b.start || "9") ? -1 : 1));
-    const pv = pview();
-    let h = '<div class="toolbar"><div class="seg">' + [["all", "全部"], ["active", "進行中"], ["plan", "規劃中"], ["hold", "暫停"], ["done", "完成"]].map(([k, l]) => {
-      const n = k === "all" ? projs.length : projs.filter(p => p.st === k).length;
-      return n || ui.pstat === k ? '<button data-act="pstat" data-k="' + k + '"' + prs(ui.pstat === k) + ">" + l + ' <span class="mono">' + n + "</span></button>" : "";
-    }).join("")
-      + '</div><span class="grow"></span>' + (projs.length ? '<div class="seg" role="group" aria-label="顯示方式"><button data-act="pview" data-k="tl"' + prs(pv === "tl") + '>時程圖</button><button data-act="pview" data-k="cards"' + prs(pv === "cards") + ">卡片</button></div>" : "")
-      + '<button class="btn primary" data-act="pnew" aria-expanded="' + ui.pnew + '">＋ 新專案</button></div>';
-    if (ui.pnew) h += '<section class="panel" style="margin-bottom:16px"><div class="ph"><h3>新專案</h3><span class="sum">建立後再補目標、範圍和里程碑</span></div><div class="addline" data-form style="border-top:0"><input type="text" id="np-name" placeholder="專案名稱" data-enter="pcreate" aria-label="專案名稱"><label class="inline">開始 <input type="date" id="np-start" value="' + today() + '"></label><label class="inline">結束 <input type="date" id="np-end" value="' + addDays(today(), 30) + '"></label><button class="btn primary" data-act="pcreate" data-area="' + esc(m.area) + '">建立</button><button class="btn ghost" data-act="pnew">取消</button></div></section>';
-    if (!projs.length) return h + '<div class="panel empty"><b>還沒有專案</b>按「新專案」寫下名稱和起訖日期，之後再補目標、範圍和里程碑。</div>';
-    if (!shown.length) return h + '<p class="empty">這個狀態沒有專案。</p>';
-    const tl = pv === "tl" ? timeline(shown.map(p => ({ id: p.id, label: p.name, start: p.start, end: p.end, c: pcol(p), done: p.st === "done", ms: (p.ms || []).filter(x => isDate(x.date)), act: "popen" })), "專案時程") : "";
-    const tasks = arr("tasks");
-    return h + (tl ? tl + '<p class="muted small" style="margin:8px 2px 0">◆ 是里程碑，點專案名稱打開專案。</p>' : '<div class="pgrid">' + shown.map(p => pcard(p, tasks)).join("") + "</div>");
+    if (ui.proj && S.projects[ui.proj] && S.projects[ui.proj].area === m.area) { const p = S.projects[ui.proj]; return crumbBar(projCat(p), p.name) + projectDetail(m, ui.proj); }
+    const cats = [...new Set(projs.map(projCat))];
+    if (ui.pcat && cats.includes(ui.pcat)) return crumbBar(ui.pcat) + catView(m, ui.pcat, projs.filter(p => projCat(p) === ui.pcat));
+    const tasks = arr("tasks").map(effTask), t0 = today();
+    let h = pageHead("專案計畫", "依類別分成卡片，點進去看專案和細項", '<button class="btn primary" data-act="pnew" aria-expanded="' + ui.pnew + '">＋ 新專案</button>') + newProjForm(m, "");
+    if (!projs.length) return h + '<div class="panel empty"><b>還沒有專案</b>按「新專案」寫下名稱、類別和起訖日期。</div>';
+    const info = cats.map(c => {
+      const ps = projs.filter(p => projCat(p) === c), ids = new Set(ps.map(p => p.id)), ts = tasks.filter(t => ids.has(t.proj));
+      const next = [].concat(...ps.map(p => (p.ms || []).map(x => effMs(Object.assign({ pid: p.id, pname: p.name }, x))))).filter(x => !x.done && isDate(x.date)).sort(byDate)[0];
+      return { c, ps, ts, act: ps.filter(p => p.st === "active").length, next, late: ts.filter(t => t.st !== "done" && isDate(t.due) && t.due < t0).length };
+    }).sort((a, b) => (a.c === "未分類") - (b.c === "未分類") || b.act - a.act || a.c.localeCompare(b.c, "zh-Hant"));
+    return h + '<div class="pgrid">' + info.map(x => {
+      const dn = x.ts.filter(t => t.st === "done").length, pct = x.ts.length ? Math.round(dn / x.ts.length * 100) : 0;
+      const counts = [["active", "進行中"], ["plan", "規劃中"], ["hold", "暫停"], ["done", "完成"]].map(([k, l]) => { const n = x.ps.filter(p => (p.st || "plan") === k).length; return n ? l + " " + n : ""; }).filter(Boolean).join("・");
+      return '<button class="pcard catcard" data-act="pcat" data-k="' + esc(x.c) + '">'
+        + '<span class="pc-top"><b>' + esc(x.c) + '</b><span class="muted small">' + x.ps.length + " 個專案</span></span>"
+        + '<span class="pc-line"><span>' + esc(counts) + "</span>" + (x.late ? '<span class="chip bad">逾期 ' + x.late + "</span>" : "") + "</span>"
+        + '<span class="meter"><i style="width:' + pct + '%"></i></span><span class="pc-line"><span>' + dn + " / " + x.ts.length + " 個細項完成</span></span>"
+        + (x.next ? '<span class="pc-line"><span>◆ ' + esc(x.next.t) + "（" + esc(x.next.pname) + '）</span><span class="mono">' + mdy(x.next.date) + "</span></span>" : "")
+        + '<span class="catnames">' + x.ps.slice().sort(byProj).map(p => '<span class="chip ctx" style="--ac:' + pcol(p) + '">' + esc(p.name) + "</span>").join("") + "</span></button>";
+    }).join("") + "</div>";
   }
-  const pview = () => { if (ui.pviewMem) return ui.pviewMem; try { return localStorage.getItem("dt-pview") === "cards" ? "cards" : "tl"; } catch (e) { return "tl"; } };
+  function catView(m, cat, ps) {
+    const tasks = arr("tasks").map(effTask), open = ps.filter(p => p.st !== "done").sort(byProj), done = ps.filter(p => p.st === "done");
+    let h = pageHead(cat, ps.length + " 個專案", '<button class="btn primary" data-act="pnew" aria-expanded="' + ui.pnew + '">＋ 新專案</button>') + newProjForm(m, cat);
+    const igm = cat === IG_CAT && cfg().mods.find(x => x.type === "wbIG" && !x.hidden), W = igm ? wbData() : null;
+    let igCard = "";
+    if (igm) {
+      const t0 = today(), posts = W ? W.posts.filter(x => x.status !== "取消") : [], up = posts.filter(x => x.date >= t0 && x.status !== "已發布").sort((a, b) => (a.date < b.date ? -1 : 1));
+      igCard = '<a class="pcard" href="#m-' + esc(igm.id) + '" style="--pc:var(--c3);text-decoration:none"><span class="pc-top"><b>IG 發文日程表</b><span class="pill st-active">' + posts.length + " 篇</span></span>"
+        + '<span class="pc-line"><span>已發布 ' + posts.filter(x => x.status === "已發布").length + "・還沒發 " + up.length + "</span></span>"
+        + (up[0] ? '<span class="pc-line"><span>下一篇：' + esc(up[0].title || "") + '</span><span class="mono">' + mdy(up[0].date) + "</span></span>" : "") + "</a>";
+    }
+    h += open.length || igCard ? '<div class="pgrid">' + igCard + open.map(p => pcard(p, tasks)).join("") + "</div>" : '<p class="empty">這個類別沒有進行中的專案。</p>';
+    if (done.length) h += '<button class="btn ghost sm fold" data-act="pdonefold">' + (ui.pdone ? "收起" : "顯示") + "已完成的 " + done.length + " 個專案</button>" + (ui.pdone ? '<div class="pgrid" style="margin-top:10px">' + done.map(p => pcard(p, tasks)).join("") + "</div>" : "");
+    return h;
+  }
   function endLabel(end, done) {
     if (!isDate(end) || done) return "";
     const n = diff(today(), end);
@@ -1087,37 +1384,94 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
       + '<span class="pc-top"><span class="dot"></span><b>' + esc(p.name) + '</b><span class="pill st-' + esc(p.st || "plan") + '">' + (PROJ_ST[p.st] || "規劃中") + "</span></span>"
       + '<span class="pc-line mono"><span>' + (isDate(p.start) ? mdy(p.start) : "?") + " – " + (isDate(p.end) ? mdy(p.end) : "?") + "</span><span>" + endLabel(p.end, p.st === "done") + "</span></span>"
       + '<span class="meter"><i style="width:' + pct + '%"></i></span>'
-      + '<span class="pc-line"><span>' + dn + " / " + ts.length + " 個任務完成</span></span>"
+      + '<span class="pc-line"><span>' + dn + " / " + ts.length + " 個細項完成</span></span>"
       + (next ? '<span class="pc-line"><span>下個里程碑：' + esc(next.t) + '</span><span class="mono">' + mdy(next.date) + "</span></span>" : "")
       + "</button>";
   }
+
+  // 細項表格：分群（待辦事項、自己加的分群、已完成）× 欄位（任務、狀態、開始、到期日、優先順序、備註）
+  const ST_CLS = { todo: "s-todo", doing: "s-doing", wait: "s-wait", done: "s-done" };
+  const PRI = [[1, "高"], [0, "中"], [-1, "低"]];
+  const priCls = v => (v > 0 ? "p1" : v < 0 ? "pm1" : "p0");
+  const priOf = t => (Number(t.pri) > 0 ? 1 : Number(t.pri) < 0 ? -1 : 0);
+  function pmRow(t, groups, cols) {
+    const id = esc(t.id), done = t.st === "done", late = !done && isDate(t.due) && t.due < today(), note = String(t.note || ""), open = ui.tedit === t.id;
+    const inp = (k, type, v, extra) => '<input type="' + type + '" id="pm-' + k + "-" + id + '" value="' + esc(v == null ? "" : v) + '" data-act="tfield" data-id="' + id + '" data-k="' + k + '"' + (extra || "") + ">";
+    let h = '<tr class="' + (done ? "is-done" : "") + '"><td class="c-ck"><input type="checkbox" id="pm-ck-' + id + '" data-act="tdone" data-id="' + id + '"' + chk(done) + ' aria-label="完成：' + esc(t.t) + '"></td>'
+      + '<td class="c-t">' + inp("t", "text", t.t, ' aria-label="任務名稱"') + "</td>"
+      + '<td><select id="pm-st-' + id + '" class="stsel ' + ST_CLS[t.st || "todo"] + '" data-act="tfield" data-id="' + id + '" data-k="st" aria-label="狀態">' + ST_ORDER.map(s => '<option value="' + s + '"' + sel((t.st || "todo") === s) + ">" + TASK_ST[s] + "</option>").join("") + "</select></td>"
+      + "<td>" + inp("start", "date", t.start, ' aria-label="開始"') + "</td>"
+      + '<td class="' + (late ? "late" : "") + '">' + inp("due", "date", t.due, ' aria-label="到期日"') + "</td>"
+      + '<td><select id="pm-pri-' + id + '" class="prisel ' + priCls(priOf(t)) + '" data-act="tfield" data-id="' + id + '" data-k="pri" aria-label="優先順序">' + PRI.map(([v, l]) => '<option value="' + v + '"' + sel(priOf(t) === v) + ">" + l + "</option>").join("") + "</select></td>"
+      + '<td class="c-key"><button class="keybtn' + (t.key ? " on" : "") + '" data-act="tkey" data-id="' + id + '" aria-pressed="' + !!t.key + '" title="' + (t.key ? "取消重要日期" : "標記為重要日期：會出現在總覽的重要日期和月曆") + '">' + (t.key ? "★" : "☆") + "</button></td>"
+      + '<td class="c-note">' + (note.includes("\n") ? '<button class="lnk" data-act="tedit" data-id="' + id + '" title="' + esc(note) + '">' + esc(note.split(/\n/)[0]) + "…</button>" : inp("note", "text", note, ' aria-label="備註"')) + "</td>"
+      + (groups.length ? '<td><select id="pm-grp-' + id + '" data-act="tfield" data-id="' + id + '" data-k="grp" aria-label="分群"><option value="">待辦／已完成</option>' + groups.map(g => '<option value="' + esc(g.id) + '"' + sel(t.grp === g.id) + ">" + esc(g.name) + "</option>").join("") + "</select></td>" : "")
+      + '<td class="c-more"><button class="btn ghost sm" data-act="tedit" data-id="' + id + '" aria-expanded="' + open + '" aria-label="更多：' + esc(t.t) + '">' + (open ? "收起" : "⋯") + "</button></td></tr>";
+    if (open) h += '<tr class="pm-edit"><td colspan="' + cols + '">' + taskEditor(t, { compact: true }) + "</td></tr>";
+    return h;
+  }
+  function pmSummary(items, groups) {
+    if (!items.length) return "";
+    const bar = parts => '<span class="dist">' + parts.filter(x => x[1]).map(([cls, v, l]) => '<i class="' + cls + '" style="flex:' + v + '" title="' + l + " " + v + '"></i>').join("") + "</span>";
+    const st = ST_ORDER.map(k => [ST_CLS[k], items.filter(t => (t.st || "todo") === k).length, TASK_ST[k]]);
+    const pr = PRI.map(([v, l]) => [priCls(v), items.filter(t => priOf(t) === v).length, l]);
+    const starts = items.map(t => (isDate(t.start) ? t.start : t.due)).filter(isDate).sort(), dues = items.map(t => t.due).filter(isDate).sort();
+    const range = starts.length && dues.length ? mdy(starts[0]) + " – " + mdy(dues[dues.length - 1]) : "";
+    return '<tr class="pm-sum"><td></td><td class="c-t">' + items.length + " 項</td><td>" + bar(st) + '</td><td colspan="2" class="mono">' + range + "</td><td>" + bar(pr) + '</td><td class="mono">' + (items.filter(t => t.key).length ? "★ " + items.filter(t => t.key).length : "") + "</td><td></td>" + (groups.length ? "<td></td>" : "") + "<td></td></tr>";
+  }
+  function pmGroup(pid, g, groups) {
+    const key = pid + ":" + g.id, folded = g.id === "_done" ? !ui.pgopen[key] : !!ui.pgfold[key], cols = 9 + (groups.length ? 1 : 0);
+    const items = g.items.slice().sort(g.id === "_done" ? byDoneDesc : byDue);
+    let h = '<section class="pmg" style="--gc:' + g.c + '"><div class="pmg-h"><button class="pmg-t" data-act="pgfold" data-k="' + esc(key) + '" aria-expanded="' + !folded + '"><span aria-hidden="true">' + (folded ? "▸" : "▾") + "</span>" + (g.custom ? "" : "<b>" + esc(g.name) + "</b>") + "</button>"
+      + (g.custom ? '<input type="text" class="pmg-name" id="pg-' + esc(g.id) + '" value="' + esc(g.name) + '" data-act="grpname" data-p="' + esc(pid) + '" data-id="' + esc(g.id) + '" aria-label="分群名稱">' : "")
+      + '<span class="muted small">' + items.length + " 項</span><span class=\"grow\"></span>"
+      + (g.custom ? confirmBtn("grpdel:" + pid + ":" + g.id, "刪除分群", "刪除分群？裡面的細項會回到待辦／已完成") : "") + "</div>";
+    if (folded) return h + "</section>";
+    h += '<div class="tscroll"><table class="pm"><thead><tr><th class="c-ck"></th><th class="c-t">任務</th><th class="c-st">狀態</th><th class="c-d">開始</th><th class="c-d">到期日</th><th class="c-pri">優先順序</th><th class="c-key">重要日期</th><th class="c-note">備註</th>' + (groups.length ? '<th class="c-grp">分群</th>' : "") + '<th class="c-more"></th></tr></thead><tbody>'
+      + items.map(t => pmRow(t, groups, cols)).join("")
+      + (g.id === "_done" ? "" : '<tr class="pm-add" data-form><td></td><td class="c-t" colspan="' + (cols - 2) + '"><input type="text" id="pa-' + esc(key) + '" placeholder="＋ 新增任務" data-enter="ttadd" aria-label="新增任務到「' + esc(g.name) + '」"></td><td class="c-more"><button class="btn ghost sm" data-act="ttadd" data-p="' + esc(pid) + '" data-g="' + esc(g.custom ? g.id : "") + '" data-k="' + esc(key) + '">加入</button></td></tr>')
+      + "</tbody><tfoot>" + pmSummary(items, groups) + "</tfoot></table></div></section>";
+    return h;
+  }
   function projectDetail(m, id) {
     const p = S.projects[id], pc = pcol(p), eid = esc(id);
-    const ts = arr("tasks").filter(t => t.proj === id).sort(byDue);
-    const board = modOfType(m.area, "projectBoard");
-    const ms = (p.ms || []).slice().sort(byDate);
-    let h = '<div class="toolbar"><button class="btn" data-act="pclose">‹ 全部專案</button><input type="text" class="title-input" id="p-name" value="' + esc(p.name) + '" data-act="pfield" data-id="' + eid + '" data-k="name" aria-label="專案名稱"><span class="pill st-' + esc(p.st || "plan") + '">' + (PROJ_ST[p.st] || "規劃中") + "</span></div>";
+    const ts = arr("tasks").filter(t => t.proj === id).map(effTask);
+    const groups = Array.isArray(p.groups) ? p.groups : [], gids = new Set(groups.map(g => g.id)), inG = t => t.grp && gids.has(t.grp);
+    const sets = [{ id: "", name: "待辦事項", items: ts.filter(t => !inG(t) && t.st !== "done"), c: "var(--c1)" }]
+      .concat(groups.map(g => ({ id: g.id, name: g.name, custom: true, items: ts.filter(t => t.grp === g.id), c: "var(--c" + (g.c || 4) + ")" })))
+      .concat([{ id: "_done", name: "已完成", items: ts.filter(t => !inG(t) && t.st === "done"), c: "var(--ok)" }]);
+    const dn = ts.filter(t => t.st === "done").length, ms = (p.ms || []).slice().sort(byDate);
+    const late = ts.filter(t => t.st !== "done" && isDate(t.due) && isDate(p.end) && t.due > p.end).length;
+    const early = ts.filter(t => isDate(t.start) && isDate(p.start) && t.start < p.start).length;
+    const msOut = ms.filter(x => isDate(x.date) && ((isDate(p.end) && x.date > p.end) || (isDate(p.start) && x.date < p.start))).length;
+    const warns = [late ? late + " 個細項的到期日超過專案結束日 " + mdy(p.end) : "", early ? early + " 個細項比專案開始日 " + mdy(p.start) + " 還早" : "", msOut ? msOut + " 個里程碑不在專案期間內" : ""].filter(Boolean);
+    let h = (warns.length ? '<div class="warnbar" role="status">⚠ ' + warns.map(esc).join("；") + "。改細項日期，或到下面「基本資料」調整專案起訖。</div>" : "") + '<div class="toolbar"><input type="text" class="title-input" id="p-name" value="' + esc(p.name) + '" data-act="pfield" data-id="' + eid + '" data-k="name" aria-label="專案名稱"><span class="pill st-' + esc(p.st || "plan") + '">' + (PROJ_ST[p.st] || "規劃中") + '</span><span class="muted small">' + dn + " / " + ts.length + " 個細項完成" + (isDate(p.end) && p.st !== "done" ? "・" + endLabel(p.end, false) : "") + "</span></div>";
+    h += '<div class="pmwrap" style="--pc:' + pc + '">' + sets.map(g => pmGroup(id, g, groups)).join("") + '<div class="btnrow" style="margin:2px 0 24px"><button class="btn" data-act="grpadd" data-id="' + eid + '">＋ 新增分群</button></div></div>';
+    const trows = [{ id: id, label: p.name, start: p.start, end: p.end, c: pc, done: p.st === "done", ms: ms.filter(x => isDate(x.date)) }]
+      .concat(ts.filter(t => isDate(t.due)).sort(byDue).map(t => ({ id: t.id, label: (t.key ? "★ " : "") + t.t, start: isDate(t.start) && t.start <= t.due ? t.start : t.due, end: t.due, c: pc, done: t.st === "done", act: "tfocus" })));
+    const tl = timeline(trows, "專案與細項");
+    h += '<section class="panel" style="margin-bottom:22px;--pc:' + pc + '"><div class="ph"><h3>時程</h3><span class="sum">改表格的開始／到期日、里程碑或 ★，總覽的甘特圖、月曆、重要日期會一起更新</span></div>'
+      + (tl ? '<div class="pb" style="padding-bottom:6px">' + tl + '<p class="muted small" style="margin:6px 2px 0">◆ 里程碑・點細項名稱跳到表格那一列</p></div>' : '<div class="empty">細項填上到期日，就會排出時程。</div>')
+      + '<div class="addline" data-form><span class="muted small">整個專案往後挪</span><input type="number" id="ps-n-' + eid + '" min="1" max="120" value="7" style="width:80px" aria-label="往後挪幾天"><span class="muted small">天（還沒完成的細項、里程碑和結束日一起挪）</span><button class="btn sm" data-act="pshift" data-id="' + eid + '">挪動</button></div></section>';
     h += '<div class="pd" style="--pc:' + pc + ";--ac:" + pc + '"><div class="stack">';
     h += '<section class="panel"><div class="ph"><h3>目標</h3><span class="sum">做完這個專案，要得到什麼結果</span></div><div class="pb"><textarea id="p-goal" rows="3" data-act="pfield" data-id="' + eid + '" data-k="goal" placeholder="例如：第一批 12/10 前出貨">' + esc(p.goal || "") + "</textarea></div></section>";
-    h += checklist("範圍與交付物", "要交出去的東西，一項一行。", p.scope || [], "projects", id, "scope");
     h += '<section class="panel"><div class="ph"><h3>里程碑</h3><span class="sum">' + ms.filter(x => x.done).length + " / " + ms.length + '</span></div><div class="rows">'
-      + (ms.length ? ms.map(x => '<div class="check' + (x.done ? " is-done" : "") + '"><input type="checkbox" id="pm-' + esc(x.id) + '" data-act="msdone" data-p="' + eid + '" data-id="' + esc(x.id) + '"' + chk(x.done) + '><span class="chip mono">' + (isDate(x.date) ? mdy(x.date) : "未定") + '</span><label class="grow" for="pm-' + esc(x.id) + '">' + esc(x.t) + '</label><button class="btn ghost sm" data-act="msdel" data-p="' + eid + '" data-id="' + esc(x.id) + '" aria-label="移除里程碑">✕</button></div>').join("") : '<div class="empty">關鍵日期，例如開賣、送件、開展。</div>')
+      + (ms.length ? ms.map(x => '<div class="check' + (x.done ? " is-done" : "") + '"><input type="checkbox" id="pm-ms-' + esc(x.id) + '" data-act="msdone" data-p="' + eid + '" data-id="' + esc(x.id) + '"' + chk(x.done) + '><span class="chip mono">' + (isDate(x.date) ? mdy(x.date) : "未定") + '</span><label class="grow" for="pm-ms-' + esc(x.id) + '">' + esc(x.t) + '</label><button class="btn ghost sm" data-act="msdel" data-p="' + eid + '" data-id="' + esc(x.id) + '" aria-label="移除里程碑">✕</button></div>').join("") : '<div class="empty">關鍵日期，例如開賣、送件、開展。</div>')
       + '</div><div class="addline" data-form><input type="date" id="pm-new-d" aria-label="里程碑日期"><input type="text" id="pm-new-t" placeholder="新增里程碑" data-enter="msadd" aria-label="里程碑名稱"><button class="btn sm" data-act="msadd" data-p="' + eid + '">加入</button></div></section>';
-    h += '<section class="panel"><div class="ph"><h3>任務</h3><span class="sum">完成 ' + ts.filter(t => t.st === "done").length + " / " + ts.length + (board ? '・<a href="#m-' + esc(board) + '" data-act="toboard" data-id="' + eid + '">到看板管理</a>' : "") + "</span></div>"
-      + (ts.some(t => isDate(t.due)) ? '<div class="pb" style="padding-bottom:0">' + timeline(ts.filter(t => isDate(t.due)).map(t => ({ id: t.id, label: t.t, start: isDate(t.start) && t.start <= t.due ? t.start : t.due, end: t.due, c: pc, done: t.st === "done" })), "任務時程") + "</div>" : "")
-      + '<div class="rows">' + (ts.length ? ts.map(t => taskRow(t, { noCtx: true })).join("") : '<div class="empty">還沒有任務，在下面加第一個。</div>') + "</div>"
-      + '<div class="addline" data-form><input type="text" id="pt-t" placeholder="新增任務" data-enter="ptadd" aria-label="任務名稱"><label class="inline">開始 <input type="date" id="pt-s"></label><label class="inline">期限 <input type="date" id="pt-d"></label><button class="btn primary sm" data-act="ptadd" data-id="' + eid + '">加入</button></div></section>';
+    h += checklist("範圍與交付物", "要交出去的東西，一項一行。", p.scope || [], "projects", id, "scope");
     h += '</div><div class="stack">';
     const days = isDate(p.start) && isDate(p.end) ? diff(p.start, p.end) + 1 : null;
+    const cats = [...new Set(arr("projects").filter(x => x.cat).map(projCat))];
     h += '<section class="panel"><div class="ph"><h3>基本資料</h3></div><div class="pb fields">'
+      + '<span>類別</span><input type="text" id="p-cat" list="p-cats" value="' + esc(p.cat || "") + '" placeholder="例如：商品開發" data-act="pfield" data-id="' + eid + '" data-k="cat"><datalist id="p-cats">' + cats.map(c => '<option value="' + esc(c) + '">').join("") + "</datalist>"
       + '<span>狀態</span><select id="p-st" data-act="pfield" data-id="' + eid + '" data-k="st">' + Object.keys(PROJ_ST).map(k => '<option value="' + k + '"' + sel((p.st || "plan") === k) + ">" + PROJ_ST[k] + "</option>").join("") + "</select>"
       + '<span>開始</span><input type="date" id="p-start" value="' + esc(p.start || "") + '" data-act="pfield" data-id="' + eid + '" data-k="start">'
       + '<span>結束</span><input type="date" id="p-end" value="' + esc(p.end || "") + '" data-act="pfield" data-id="' + eid + '" data-k="end">'
-      + "<span>期間</span><span>" + (days ? '<span class="mono">' + days + " 天</span>　" + endLabel(p.end, p.st === "done") : "請填開始與結束日期") + "</span>"
+      + "<span>期間</span><span>" + (days ? '<span class="mono">' + days + " 天</span>" : "請填開始與結束日期") + "</span>"
       + '<span>顏色</span><div class="swatches">' + [1, 2, 3, 4, 5, 6].map(n => '<button style="--sc:var(--c' + n + ')" data-act="pcolor" data-id="' + eid + '" data-n="' + n + '"' + prs((p.c || 1) === n) + ' aria-label="顏色 ' + n + '"></button>').join("") + "</div>"
       + "</div></section>";
     h += '<section class="panel"><div class="ph"><h3>風險與備註</h3></div><div class="pb"><textarea id="p-risk" rows="5" data-act="pfield" data-id="' + eid + '" data-k="risk" placeholder="可能卡住的地方、需要誰幫忙、預算…">' + esc(p.risk || "") + "</textarea></div></section>";
-    h += '<section class="panel"><div class="pb">' + confirmBtn("pdel:" + id, "刪除這個專案", "確定刪除？裡面的任務會保留，但不再屬於專案") + "</div></section>";
+    h += '<section class="panel"><div class="pb">' + confirmBtn("pdel:" + id, "刪除這個專案", "確定刪除？裡面的細項會保留，但不再屬於專案") + "</div></section>";
     return h + "</div></div>";
   }
 
@@ -1165,13 +1519,26 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
   }
 
   /* ═════════ 學習規劃 ═════════ */
+  // 目標分成「課程」和「考試」：可以在目標裡指定；沒指定時，接了檢定／入學考／面試的算考試，其他算課程
+  function goalKind(g) {
+    if (g.kind === "course" || g.kind === "exam") return g.kind;
+    return arr("exams").some(e => e.goal === g.id && !/期中|期末/.test(e.kind || "")) ? "exam" : "course";
+  }
   function vStudyPlan(m) {
     const goals = arr("goals").filter(g => g.mod === m.id).sort((a, b) => ((a.target || "9") < (b.target || "9") ? -1 : 1));
     const tasks = arr("tasks"), mid = esc(m.id);
-    let h = '<div class="toolbar"><h3 class="sec">學習目標</h3><span class="grow"></span><button class="btn primary" data-act="gnew" aria-expanded="' + ui.gnew + '">＋ 新目標</button></div>';
-    if (ui.gnew) h += '<section class="panel" style="margin-bottom:14px"><div class="addline" data-form style="border-top:0"><input type="text" id="ng-name" placeholder="目標，例如：多益 750" data-enter="gcreate" aria-label="目標名稱"><input type="text" id="ng-cat" placeholder="分類，例如：檢定" style="flex:0 1 140px" aria-label="分類"><label class="inline">目標日 <input type="date" id="ng-target"></label><button class="btn primary" data-act="gcreate" data-mod="' + mid + '">建立</button><button class="btn ghost" data-act="gnew">取消</button></div></section>';
-    h += goals.length ? '<div class="goals">' + goals.map(g => goalCard(g, tasks)).join("") + "</div>" : '<div class="panel empty"><b>還沒有學習目標</b>例如「多益 750」、「空大 115 上」，建立後把它拆成有期限的步驟。</div>';
-    h += routinePanel(m);
+    let h = pageHead("", "課程和考試，拆成有期限的步驟；考試倒數、成績也在這裡", '<button class="btn primary" data-act="gnew" aria-expanded="' + ui.gnew + '">＋ 新目標</button>');
+    if (ui.gnew) h += '<section class="panel" style="margin-bottom:14px"><div class="addline" data-form style="border-top:0"><input type="text" id="ng-name" placeholder="目標，例如：多益 750、空大 115 下" data-enter="gcreate" aria-label="目標名稱"><select id="ng-kind" aria-label="課程或考試"><option value="course">課程</option><option value="exam">考試</option></select><input type="text" id="ng-cat" placeholder="分類，例如：檢定" style="flex:0 1 140px" aria-label="分類"><label class="inline">目標日 <input type="date" id="ng-target"></label><button class="btn primary" data-act="gcreate" data-mod="' + mid + '">建立</button><button class="btn ghost" data-act="gnew">取消</button></div></section>';
+    if (!goals.length) h += '<div class="panel empty"><b>還沒有學習目標</b>例如「空大 115 上」（課程）、「多益 750」（考試），建立後拆成有期限的步驟。</div>';
+    [["course", "課程"], ["exam", "考試"]].forEach(([k, label]) => {
+      const gs = goals.filter(g => goalKind(g) === k);
+      if (gs.length) h += '<h3 class="sec" style="margin:6px 0 12px">' + label + '</h3><div class="goals" style="margin-bottom:22px">' + gs.map(g => goalCard(g, tasks)).join("") + "</div>";
+    });
+    const loose = upcomingExams().filter(e => !(e.goal && S.goals[e.goal]));
+    if (loose.length) h += '<h3 class="sec" style="margin:6px 0 12px">還沒接到目標的考試</h3><section class="panel" id="loose-exams" style="margin-bottom:22px"><div class="rows">' + loose.map(e => '<div class="row"><span class="ms-dot" aria-hidden="true">考</span><span class="row-main"><span class="row-title">' + esc(e.name) + '</span><span class="row-meta"><span class="chip mono">' + mdw(e.date) + '</span></span></span><span class="row-acts"><button class="btn ghost sm" data-act="eopen" data-id="' + esc(e.id) + '" aria-expanded="' + (ui.exam === e.id) + '">' + (ui.exam === e.id ? "收起" : "編輯") + "</button></span></div>" + (ui.exam === e.id ? '<div class="row-edit">' + examEditor(e) + "</div>" : "")).join("") + "</div></section>";
+    const rt = (modDoc(m.id).routine || []).length;
+    h += '<button class="btn ghost sm fold" data-act="rtfold" aria-expanded="' + !!ui.rtOpen + '">' + (ui.rtOpen ? "收起" : "顯示") + "每週固定時段" + (rt ? "（" + rt + " 個）" : "") + "</button>";
+    if (ui.rtOpen) h += routinePanel(m);
     return h;
   }
   function goalCard(g, tasks) {
@@ -1179,14 +1546,25 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     const pct = steps.length ? Math.round(dn.length / steps.length * 100) : 0, ed = ui.gedit === g.id, gid = esc(g.id);
     const n = isDate(g.target) ? diff(today(), g.target) : null;
     const exs = arr("exams").filter(e => e.goal === g.id && isDate(e.date)).sort(byDate), sameDay = exs.some(e => e.date === g.target);
-    let h = '<section class="panel"><div class="goal-h"><h3>' + esc(g.name) + '</h3><div class="ring" style="--p:' + pct + '"><span>' + pct + "%</span></div>"
+    const lateSteps = isDate(g.target) ? open.filter(t => isDate(t.due) && t.due > g.target).length : 0;
+    let h = '<section class="panel" id="goal-' + gid + '"><div class="goal-h"><h3>' + esc(g.name) + '</h3><div class="ring" style="--p:' + pct + '"><span>' + pct + "%</span></div>"
       + '<div class="goal-meta">' + (g.cat ? '<span class="chip ctx">' + esc(g.cat) + "</span>" : "")
-      + exs.map(e => { const k = diff(today(), e.date); return '<a class="chip' + (k >= 0 && k <= 30 ? " warn" : "") + '" href="#m-' + esc(e.mod) + '" title="' + esc(e.name) + '">' + esc(exs.length > 1 ? e.name : !e.kind || e.kind === g.cat ? "考試" : e.kind) + " " + mdw(e.date) + "・" + (k > 0 ? "還有 " + k + " 天" : k === 0 ? "就是今天" : "已考完") + "</a>"; }).join("")
+      + exs.map(e => {
+        const k = diff(today(), e.date), lbl = exs.length > 1 ? e.name : !e.kind || e.kind === g.cat ? "考試" : e.kind;
+        return '<button class="chip chipbtn' + (k >= 0 && k <= 30 ? " warn" : "") + '" data-act="eopen" data-id="' + esc(e.id) + '" aria-expanded="' + (ui.exam === e.id) + '" title="' + esc(e.name) + '（點一下編輯）">' + esc(lbl) + " " + mdw(e.date) + "・" + (k > 0 ? "還有 " + k + " 天" : k === 0 ? "就是今天" : e.score ? "成績 " + esc(e.score) : "已考完") + "</button>";
+      }).join("")
       + (n !== null && !sameDay ? '<span class="chip' + (n >= 0 && n <= 30 ? " warn" : "") + '">目標日 ' + mdw(g.target) + "・" + (n > 0 ? "還有 " + n + " 天" : n === 0 ? "就是今天" : "已過 " + -n + " 天") + "</span>" : "")
       + (safeUrl(g.url) ? linkChip({ t: "資源", url: g.url }) : "")
+      + (lateSteps ? '<span class="chip bad" title="步驟期限晚於目標日 ' + mdy(g.target) + '">⚠ ' + lateSteps + " 步晚於目標日</span>" : "")
       + '<span class="grow"></span><button class="btn ghost sm" data-act="gedit" data-id="' + gid + '" aria-expanded="' + ed + '">' + (ed ? "收起" : "編輯目標") + "</button></div>"
       + (g.note && !ed ? '<p class="goal-note">' + esc(g.note) + "</p>" : "") + "</div>";
-    if (ed) h += '<div class="pb fields" style="border-bottom:1px solid var(--line)"><span>名稱</span><input type="text" id="g-n-' + gid + '" value="' + esc(g.name) + '" data-act="gfield" data-id="' + gid + '" data-k="name"><span>分類</span><input type="text" id="g-c-' + gid + '" value="' + esc(g.cat || "") + '" data-act="gfield" data-id="' + gid + '" data-k="cat"><span>目標日</span><input type="date" id="g-t-' + gid + '" value="' + esc(g.target || "") + '" data-act="gfield" data-id="' + gid + '" data-k="target"><span>資源網址</span><input type="url" id="g-u-' + gid + '" value="' + esc(g.url || "") + '" data-act="gfield" data-id="' + gid + '" data-k="url" placeholder="https://…"><span>備註</span><textarea id="g-note-' + gid + '" rows="2" data-act="gfield" data-id="' + gid + '" data-k="note">' + esc(g.note || "") + "</textarea><span></span><div>" + confirmBtn("gdel:" + g.id, "刪除目標", "確定刪除？步驟會一起刪掉") + "</div></div>";
+    const openEx = exs.find(e => e.id === ui.exam);
+    if (openEx) h += '<div style="border-bottom:1px solid var(--line)">' + examEditor(openEx) + "</div>";
+    if (ed) h += '<div class="pb fields" style="border-bottom:1px solid var(--line)"><span>名稱</span><input type="text" id="g-n-' + gid + '" value="' + esc(g.name) + '" data-act="gfield" data-id="' + gid + '" data-k="name">'
+      + '<span>類型</span><select id="g-k-' + gid + '" data-act="gfield" data-id="' + gid + '" data-k="kind"><option value="course"' + sel(goalKind(g) === "course") + '>課程</option><option value="exam"' + sel(goalKind(g) === "exam") + ">考試</option></select>"
+      + '<span>分類</span><input type="text" id="g-c-' + gid + '" value="' + esc(g.cat || "") + '" data-act="gfield" data-id="' + gid + '" data-k="cat"><span>目標日</span><input type="date" id="g-t-' + gid + '" value="' + esc(g.target || "") + '" data-act="gfield" data-id="' + gid + '" data-k="target"><span>資源網址</span><input type="url" id="g-u-' + gid + '" value="' + esc(g.url || "") + '" data-act="gfield" data-id="' + gid + '" data-k="url" placeholder="https://…"><span>備註</span><textarea id="g-note-' + gid + '" rows="2" data-act="gfield" data-id="' + gid + '" data-k="note">' + esc(g.note || "") + "</textarea>"
+      + '<span>加考試</span><div class="btnrow" data-form><input type="text" id="gx-n-' + gid + '" placeholder="考試名稱" data-enter="gexadd" style="flex:1 1 160px" aria-label="考試名稱"><input type="date" id="gx-d-' + gid + '" aria-label="考試日期"><select id="gx-k-' + gid + '" aria-label="考試種類">' + EXAM_KINDS.map(k => "<option>" + k + "</option>").join("") + '</select><button class="btn sm" data-act="gexadd" data-id="' + gid + '">加入</button></div>'
+      + "<span></span><div>" + confirmBtn("gdel:" + g.id, "刪除目標", "確定刪除？步驟會一起刪掉") + "</div></div>";
     const lim = ui.gmore[g.id] ? open.length : 6;
     h += '<div class="rows">' + open.slice(0, lim).map(t => taskRow(t, { noCtx: true })).join("") + "</div>";
     if (open.length > 6) h += '<button class="btn ghost sm fold" data-act="gmore" data-id="' + gid + '">' + (ui.gmore[g.id] ? "只看最近 6 項" : "再顯示 " + (open.length - 6) + " 個之後的步驟") + "</button>";
@@ -1198,7 +1576,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
   function routinePanel(m) {
     const rt = modDoc(m.id).routine || [], t0 = today(), mon = mondayOf(t0), mid = esc(m.id);
     const order = [1, 2, 3, 4, 5, 6, 0];
-    let h = '<div class="toolbar" style="margin-top:26px"><h3 class="sec">每週固定時段</h3><span class="muted small">會列在「今天」頁；工作台那天已經排了同一條讀書線（多益、碩班、iPAS）就只列工作台的進度</span><span class="grow"></span><button class="btn" data-act="rnew" aria-expanded="' + ui.rnew + '">＋ 新時段</button></div>';
+    let h = '<div class="toolbar" style="margin-top:14px"><h3 class="sec">每週固定時段</h3><span class="muted small">會列在「今天」頁；工作台那天已經排了同一條讀書線（多益、碩班、iPAS）就只列工作台的進度</span><span class="grow"></span><button class="btn" data-act="rnew" aria-expanded="' + ui.rnew + '">＋ 新時段</button></div>';
     if (ui.rnew) {
       h += '<section class="panel" style="margin-bottom:14px"><div class="pb stack" style="gap:10px" data-form><div class="btnrow"><input type="text" id="r-t" placeholder="要做什麼，例如：多益單字 50 個" style="flex:2 1 220px" aria-label="時段內容"><input type="text" id="r-time" placeholder="時間，例如 20:00" style="flex:0 1 130px" aria-label="時間"><label class="inline"><input type="number" id="r-min" min="5" max="600" step="5" style="width:80px" aria-label="分鐘"> 分鐘</label></div>'
         + '<div class="daypick">' + order.map(wd => '<label><input type="checkbox" id="rd-' + wd + '"' + chk(wd === dow(t0)) + ">週" + WD[wd] + "</label>").join("") + "</div>"
@@ -1206,9 +1584,9 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     }
     h += '<section class="panel"><div class="week">' + order.map((wd, i) => {
       const date = addDays(mon, i), items = rt.filter(r => (r.days || []).includes(wd)).sort((a, b) => String(a.time || "99").localeCompare(String(b.time || "99")));
-      const log = dayLog(date).r || {}, done = items.filter(r => log[r.id]).length;
+      const log = {}; items.forEach(r => { log[r.id] = routineDone(r, date); }); const done = items.filter(r => log[r.id]).length;
       return '<div class="wday' + (date === t0 ? " is-today" : "") + '"><h4><span>週' + WD[wd] + ' <span class="mono">' + md(date) + "</span>" + (date === t0 ? "・今天" : "") + "</span>" + (items.length ? '<span class="mono">' + done + "/" + items.length + "</span>" : "") + "</h4>"
-        + items.map(r => '<div class="blk' + (log[r.id] ? " done" : "") + '"><input type="checkbox" id="wb-' + esc(r.id) + "-" + date + '" data-act="rtdone" data-id="' + esc(r.id) + '" data-date="' + date + '"' + chk(log[r.id]) + '><label for="wb-' + esc(r.id) + "-" + date + '">' + esc(r.t) + '</label><button class="btn ghost sm" data-act="rdel" data-mod="' + mid + '" data-id="' + esc(r.id) + '" data-wd="' + wd + '" aria-label="週' + WD[wd] + "不排：" + esc(r.t) + '">✕</button>'
+        + items.map(r => '<div class="blk' + (log[r.id] ? " done" : "") + '"><input type="checkbox" id="wb-' + esc(r.id) + "-" + date + '" data-act="rtdone" data-id="' + esc(r.id) + '" data-date="' + date + '"' + chk(log[r.id]) + '><label for="wb-' + esc(r.id) + "-" + date + '">' + esc(routineTitle(r)) + (routineParts(r).length && routineTitle(r) !== r.t ? "（" + routineParts(r).length + " 堂）" : "") + '</label><button class="btn ghost sm" data-act="rdel" data-mod="' + mid + '" data-id="' + esc(r.id) + '" data-wd="' + wd + '" aria-label="週' + WD[wd] + "不排：" + esc(r.t) + '">✕</button>'
           + ([r.time, r.min ? r.min + " 分" : ""].filter(Boolean).length ? "<small>" + esc([r.time, r.min ? r.min + " 分" : ""].filter(Boolean).join("・")) + "</small>" : "") + "</div>").join("")
         + "</div>";
     }).join("") + "</div></section>";
@@ -1238,26 +1616,62 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     return out || '<p class="muted">（還沒有內容）</p>';
   }
   const snippet = s => String(s || "").replace(/[#>*`=_-]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 140);
+  // 選擇清單（單字庫、課程共用同一種樣子）
+  function pickRow(o) {
+    const btns = (o.btns || []).map(b => (b.href ? '<a class="btn sm' + (b.primary ? " primary" : "") + '" href="' + esc(b.href) + '">' + esc(b.label) + "</a>"
+      : '<button class="btn sm' + (b.primary ? " primary" : "") + '" data-act="' + esc(b.act) + '" data-k="' + esc(b.k) + '">' + esc(b.label) + "</button>")).join("");
+    return '<li class="pick"><div class="pick-main"><div class="pick-title">' + esc(o.title) + (o.tag ? ' <span class="chip">' + esc(o.tag) + "</span>" : "") + '</div><div class="muted small">' + esc(o.meta || "") + '</div></div><div class="pick-act">' + btns + "</div></li>";
+  }
+  const NO_COURSE = "-";
   function vNotes(m) {
     if (ui.note && S.notes[ui.note]) return noteEditor(m, ui.note);
     const all = arr("notes").filter(n => n.mod === m.id);
-    const courses = [...new Set(all.map(n => n.course).filter(Boolean))].sort();
-    const q = ui.nq.toLowerCase(), rv = all.filter(n => n.review).length;
-    const list = all.filter(n => (!ui.ncourse || n.course === ui.ncourse) && (!ui.nreview || n.review) && (!q || [n.title, n.body, n.course, (n.tags || []).join(" ")].join(" ").toLowerCase().includes(q)))
-      .sort((a, b) => (b.pin ? 1 : 0) - (a.pin ? 1 : 0) || ((b.up || "") > (a.up || "") ? 1 : (b.up || "") < (a.up || "") ? -1 : 0));
+    if (ui.ncourse) return noteCourse(m, ui.ncourse, all);
+    const kids = cfg().mods.filter(x => !x.hidden && parentOf(x) === m.id), kidNames = new Set(kids.map(x => x.name));
+    const courses = [...new Set(all.map(n => n.course).filter(Boolean))].sort((a, b) => a.localeCompare(b, "zh-Hant"));
+    const stat = c => { const ns = all.filter(n => (c === NO_COURSE ? !n.course : n.course === c)), rv = ns.filter(n => n.review).length; return ns.length + " 則筆記" + (rv ? "・需複習 " + rv : ""); };
+    const rows = kids.map(x => {
+      const mine = courses.includes(x.name);
+      return pickRow({ title: x.name, tag: "講義", meta: ((TYPES[x.type] || {}).desc || "") + (mine ? "　我的筆記：" + stat(x.name) : ""), btns: [{ href: "#m-" + x.id, label: "進入", primary: true }].concat(mine ? [{ act: "ncourse", k: x.name, label: "我的筆記" }] : []) });
+    }).concat(courses.filter(c => !kidNames.has(c)).map(c => pickRow({ title: c, meta: stat(c), btns: [{ act: "ncourse", k: c, label: "進入", primary: true }] })))
+      .concat(all.some(n => !n.course) ? [pickRow({ title: "未分類", meta: stat(NO_COURSE), btns: [{ act: "ncourse", k: NO_COURSE, label: "進入", primary: true }] })] : []);
+    let h = '<h2 class="pick-h">選擇課程</h2><p class="muted small" style="margin:4px 0 0">每門課的筆記分開放；標「講義」的是整理好的課程網站。</p>'
+      + (rows.length ? '<ul class="picks">' + rows.join("") + "</ul>" : '<p class="empty">還沒有課程。</p>');
+    // 「新增筆記」區先不放：新的課程筆記用 AI 整理好一整套，再請 Claude 加進來
+    return h;
+  }
+  // 選擇考古題：每一套一列（跟選擇單字庫、選擇課程同一種樣子）
+  function vExamBanks(m) {
     const kids = cfg().mods.filter(x => !x.hidden && parentOf(x) === m.id);
-    let h = kids.length ? '<h3 class="sec" style="margin:0 0 10px">課程講義</h3><div class="lgrid" style="margin-bottom:24px">' + kids.map(x => '<a class="lcard kid" href="#m-' + esc(x.id) + '" style="--ac:' + acolByArea(x.area) + '"><b>' + esc(x.name) + "</b><span>" + esc((TYPES[x.type] || {}).desc || "") + "</span></a>").join("") + '</div><h3 class="sec" style="margin:0 0 10px">我的筆記</h3>' : "";
-    h += '<div class="toolbar"><input type="search" id="n-q" value="' + esc(ui.nq) + '" placeholder="搜尋標題、內容、標籤" data-act="nq" aria-label="搜尋筆記" style="flex:1 1 220px"><button class="btn primary" data-act="nnew" data-mod="' + esc(m.id) + '">＋ 新筆記</button></div>';
-    if (all.length) h += '<div class="toolbar"><div class="seg"><button data-act="ncourse" data-k=""' + prs(!ui.ncourse) + ">全部 " + all.length + "</button>" + courses.map(c => '<button data-act="ncourse" data-k="' + esc(c) + '"' + prs(ui.ncourse === c) + ">" + esc(c) + "</button>").join("") + '<button data-act="nreview"' + prs(ui.nreview) + ">需複習 " + rv + "</button></div></div>";
-    if (!all.length) return h + '<div class="panel empty"><b>還沒有自己的筆記</b>按「新筆記」開始，可以依課程分類、標記需複習。</div>';
-    h += list.length ? '<div class="ngrid">' + list.map(n => '<button class="ncard" data-act="nopen" data-id="' + esc(n.id) + '"><span class="nc-top">' + (n.pin ? '<span class="chip mark">置頂</span>' : "") + (n.course ? '<span class="chip ctx">' + esc(n.course) + "</span>" : "") + (n.review ? '<span class="chip warn">需複習</span>' : "") + "</span>"
+    const stat = x => {
+      if (x.type !== "nsysuApp") return "";
+      const q = nsysuProgress(), n = q ? q.ok + q.bad + q.idk : 0;
+      return n ? "已作答 " + n + " 題（會 " + q.ok + "・錯 " + q.bad + "・不會 " + q.idk + "）" : "還沒有作答紀錄";
+    };
+    const rows = kids.map(x => pickRow({ title: x.name, meta: ((TYPES[x.type] || {}).desc || "") + (stat(x) ? "　" + stat(x) : ""), btns: [{ href: "#m-" + x.id, label: "進入", primary: true }] }));
+    return '<h2 class="pick-h">選擇考古題</h2><p class="muted small" style="margin:4px 0 0">每一套考古題分開記錄作答；之後可以再加多益、iPAS 等。</p>'
+      + (rows.length ? '<ul class="picks">' + rows.join("") + "</ul>" : '<p class="empty">還沒有考古題。</p>');
+  }
+  function noteCourse(m, c, all) {
+    const label = c === NO_COURSE ? "未分類" : c;
+    const ns = all.filter(n => (c === NO_COURSE ? !n.course : n.course === c)), rv = ns.filter(n => n.review).length, q = ui.nq.toLowerCase();
+    const list = ns.filter(n => (!ui.nreview || n.review) && (!q || [n.title, n.body, (n.tags || []).join(" ")].join(" ").toLowerCase().includes(q)))
+      .sort((a, b) => (b.pin ? 1 : 0) - (a.pin ? 1 : 0) || ((b.up || "") > (a.up || "") ? 1 : (b.up || "") < (a.up || "") ? -1 : 0));
+    const kid = cfg().mods.find(x => !x.hidden && parentOf(x) === m.id && x.name === c);
+    let h = '<nav class="crumbs" aria-label="位置"><button class="lnk" data-act="ncourse" data-k="">← 選擇課程</button></nav><h2 class="pick-h">' + esc(label) + "</h2>";
+    h += '<div class="toolbar" style="margin-top:12px"><input type="search" id="n-q" value="' + esc(ui.nq) + '" placeholder="搜尋標題、內容、標籤" data-act="nq" aria-label="搜尋筆記" style="flex:1 1 220px">'
+      + (rv ? '<div class="seg"><button data-act="nreview"' + prs(ui.nreview) + ">需複習 " + rv + "</button></div>" : "")
+      + (kid ? '<a class="btn" href="#m-' + esc(kid.id) + '">看講義</a>' : "")
+      + "</div>";
+    if (!ns.length) return h + '<div class="panel empty"><b>這門課還沒有筆記</b></div>';
+    h += list.length ? '<div class="ngrid">' + list.map(n => '<button class="ncard" data-act="nopen" data-id="' + esc(n.id) + '"><span class="nc-top">' + (n.pin ? '<span class="chip mark">置頂</span>' : "") + (n.review ? '<span class="chip warn">需複習</span>' : "") + "</span>"
       + '<span class="nc-title">' + esc(n.title || "未命名筆記") + '</span><span class="nc-body">' + esc(snippet(n.body)) + '</span><span class="nc-date">' + (isDate(n.up) ? mdy(n.up) + " 更新" : "") + "</span></button>").join("") + "</div>" : '<p class="empty">沒有符合的筆記。</p>';
     return h;
   }
   function noteEditor(m, id) {
     const n = S.notes[id], nid = esc(id);
     const courses = [...new Set(arr("notes").filter(x => x.mod === m.id).map(x => x.course).filter(Boolean))];
-    let h = '<div class="toolbar"><button class="btn" data-act="nclose">‹ 全部筆記</button><span class="grow"></span>'
+    let h = '<div class="toolbar"><button class="btn" data-act="nclose">‹ ' + esc(n.course || "未分類") + '</button><span class="grow"></span>'
       + '<label class="inline"><input type="checkbox" id="ne-pin" data-act="nfield" data-id="' + nid + '" data-k="pin"' + chk(n.pin) + "> 置頂</label>"
       + '<label class="inline"><input type="checkbox" id="ne-rev" data-act="nfield" data-id="' + nid + '" data-k="review"' + chk(n.review) + "> 需複習</label>"
       + confirmBtn("ndel:" + id, "刪除筆記", "確定刪除這篇筆記？") + "</div>";
@@ -1421,12 +1835,14 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     if ((mm = /^type-([A-Za-z]+)$/.exec(h))) { const m = cfg().mods.find(x => x.type === mm[1]); if (m) return { v: "mod", id: m.id }; }
     if ((mm = /^m-([A-Za-z0-9-]+)(?:\/(.+))?$/.exec(h))) return { v: "mod", id: mm[1], sub: mm[2] || "" };
     if ((mm = /^a-([A-Za-z0-9-]+)$/.exec(h))) return { v: "area", id: mm[1] };
-    return { v: "today" };
+    const tm = cfg().mods.find(x => x.type === "today" && !x.hidden);
+    return tm ? { v: "mod", id: tm.id } : { v: "today" };
   }
   function renderNav(r) {
     const c = cfg();
     const curArea = r.v === "mod" ? (modById(r.id) || {}).area : r.v === "area" ? r.id : null;
-    let h = '<a href="#today"' + cur(r.v === "today") + ">今天</a>";
+    const hasToday = c.mods.some(x => x.type === "today" && !x.hidden);
+    let h = hasToday ? "" : '<a href="#today"' + cur(r.v === "today") + ">今天</a>";
     c.areas.forEach(a => { const first = topModsOfArea(a.id)[0]; h += '<a href="#' + (first ? "m-" + esc(first.id) : "a-" + esc(a.id)) + '" style="--ac:' + acol(a) + '"' + cur(curArea === a.id) + '><span class="sw"></span>' + esc(a.name) + "</a>"; });
     h += '<span class="spacer"></span><a href="#manage"' + cur(r.v === "manage") + ">擴充</a>";
     tabsEl.innerHTML = h;
@@ -1441,6 +1857,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
       const m = modById(r.id);
       if (!m) return '<div class="empty"><b>找不到這個模組</b>它可能被刪除了。回到 <a href="#today">今天</a>。</div>';
       const T = TYPES[m.type];
+      if (m.type === "today") return vToday();
       return '<div style="--ac:' + acolByArea(m.area) + '">' + modHead(m) + (T ? T.view(m) : '<div class="empty"><b>這個模組類型（' + esc(m.type) + "）目前不支援</b>請 Claude 在 TYPES 裡補上它。</div>") + "</div>";
     }
     if (r.v === "area") { const a = areaOf(r.id); return a ? '<div class="empty"><b>「' + esc(a.name) + '」還沒有模組</b>到 <a href="#manage">擴充</a> 幫這個區域加一個模組。</div>' : vToday(); }
@@ -1474,28 +1891,74 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     });
     if (aid) { const el = document.getElementById(aid); if (el && main.contains(el)) { el.focus({ preventScroll: true }); if (range) try { el.setSelectionRange(range[0], range[1]); } catch (e) { /* 日期欄位不支援 */ } } }
     window.scrollTo(0, y);
+    if (ui.focus) {
+      const el = document.getElementById(ui.focus); ui.focus = null;
+      if (el && main.contains(el)) {
+        const box = el.closest("tr, .row, .check, section") || el;
+        box.scrollIntoView({ block: "center" }); box.classList.remove("flash"); void box.offsetWidth; box.classList.add("flash");
+        if (el.tagName === "INPUT" && el.type === "text") el.focus({ preventScroll: true });
+      }
+    }
   }
   function flush() { if (pending && !busy()) render(true); }
   // 內建網站：每個模組一個 iframe，開過就留著（切回來時保留原本的進度與捲動位置）
   const apphost = document.getElementById("apphost");
   const setNavH = () => document.documentElement.style.setProperty("--navh", document.querySelector(".navbar").offsetHeight + "px");
+  let lastHash = null;
   function showApp(m, sub) {
+    const T = m && TYPES[m.type], key = m ? T.frame || m.id : null;
     const frames = [...apphost.querySelectorAll("iframe")];
-    frames.forEach(f => { f.hidden = !m || f.dataset.mod !== m.id; });
+    frames.forEach(f => { f.hidden = f.dataset.frame !== key; });
+    const changed = location.hash !== lastHash; lastHash = location.hash;
     if (!m) { apphost.hidden = true; main.hidden = false; return false; }
-    let f = frames.find(x => x.dataset.mod === m.id);
+    const want = sub || T.hash || "";
+    let f = frames.find(x => x.dataset.frame === key);
     if (!f) {
       f = document.createElement("iframe");
-      f.className = "appframe"; f.dataset.mod = m.id; f.title = m.name; f.src = appSrc(m, sub);
+      f.className = "appframe"; f.dataset.frame = key; f.src = T.src + "?v=" + BUILD + (want ? "#" + want : "");
       apphost.appendChild(f);
-    } else if (sub) {
-      try { f.contentWindow.location.hash = sub; } catch (e) { f.src = appSrc(m, sub); }
+    } else if (want && changed) {
+      // 只在切換頁面時換畫面，資料更新重畫時不會把使用者在網站裡的位置拉回來
+      try { if (f.contentWindow.location.hash !== "#" + want) f.contentWindow.location.hash = want; } catch (e) { f.src = T.src + "?v=" + BUILD + "#" + want; }
     }
-    // 子頁只套用一次：網址改回模組本身，之後重畫不會把使用者在網站裡的位置拉回來，再點同一個連結也有效
-    if (sub) history.replaceState(null, "", "#m-" + m.id);
+    f.title = m.name;
+    if (sub) { history.replaceState(null, "", "#m-" + m.id); lastHash = location.hash; }
     apphost.hidden = false; main.hidden = true; setNavH();
     return true;
   }
+  // 從總覽（重要日期）跳到該專案／目標編輯，並把那一列捲到畫面中間、亮一下
+  function openTarget(k) {
+    const [kind, id, sub, sid] = k.split(":");
+    if (kind === "p" && S.projects[id]) {
+      const p = S.projects[id], pm = cfg().mods.find(x => x.type === "projectPlan" && !x.hidden);
+      if (!pm) return;
+      ui.proj = id; ui.pcat = projCat(p); ui.pnew = false; ui.tedit = null;
+      if (sub === "t" && S.tasks[sid]) {
+        const t = S.tasks[sid], g = (p.groups || []).some(x => x.id === t.grp) ? t.grp : t.st === "done" ? "_done" : "";
+        if (g === "_done") ui.pgopen[id + ":_done"] = true; else ui.pgfold[id + ":" + g] = false;
+        ui.focus = "pm-t-" + sid;
+      } else if (sub === "m") ui.focus = "pm-ms-" + sid;
+      if (location.hash === "#m-" + pm.id) render(true); else location.hash = "#m-" + pm.id;
+    } else if (kind === "g") {
+      const ex = sub === "e" ? S.exams[sid] : null, gid = (id && S.goals[id]) ? id : ex && S.goals[ex.goal] ? ex.goal : "";
+      const g = gid ? S.goals[gid] : null, gm = (g && modById(g.mod)) || cfg().mods.find(x => x.type === "studyPlan" && !x.hidden);
+      if (!gm) return;
+      if (ex) ui.exam = sid;
+      if (sub === "t" && S.tasks[sid]) { const all = arr("tasks").filter(t => t.goal === gid && t.st !== "done").sort(byDue); if (all.findIndex(t => t.id === sid) >= 6) ui.gmore[gid] = true; if (S.tasks[sid].st === "done") ui.gopen[gid] = true; ui.focus = "ck-" + sid; }
+      else ui.focus = ex && !gid ? "loose-exams" : "goal-" + gid;
+      if (location.hash === "#m-" + gm.id) render(true); else location.hash = "#m-" + gm.id;
+    }
+  }
+  // 再點一次目前所在的分頁：回到這一頁的最上層（專案回到全部類別；月曆從某一天回到月曆）
+  function resetCurrent(href) {
+    if (href !== location.hash && !(href === "#today" && !location.hash)) return false;
+    const r = route(), m = r.v === "mod" ? modById(r.id) : null;
+    if (m && m.type === "projectPlan") { ui.proj = null; ui.pcat = null; ui.pnew = false; }
+    if (m && m.type === "notes") { saveNoteBody(); ui.note = null; ui.ncourse = ""; ui.nq = ""; }
+    lastHash = null; render(true); window.scrollTo(0, 0);
+    return true;
+  }
+  [tabsEl, subEl].forEach(el => el.addEventListener("click", e => { const a = e.target.closest("a[href]"); if (a && resetCurrent(a.getAttribute("href"))) e.preventDefault(); }));
   window.addEventListener("resize", setNavH);
   let rq = null;
   function schedule() { if (rq) return; rq = setTimeout(() => { rq = null; render(false); }, 30); }
@@ -1514,7 +1977,9 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
   }
   function setTaskStatus(id, st) {
     const t = S.tasks[id]; if (!t || !TASK_ST[st] || (t.st || "todo") === st) return;
+    const was = t.st === "done";
     patch("tasks", id, { st, done: st === "done" ? today() : null });
+    if (was !== (st === "done")) syncLinkedDone("t:" + id, t.due, st === "done");
   }
   function toggleTask(id) { const t = S.tasks[id]; if (t) setTaskStatus(id, t.st === "done" ? "todo" : "done"); }
   const arrOf = (col, id, f) => clone(((S[col][id] || {})[f]) || []);
@@ -1541,13 +2006,17 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     else if (kind === "pdel") { arr("tasks").filter(t => t.proj === id).forEach(t => patch("tasks", t.id, { proj: null }, true)); del("projects", id); ui.proj = null; }
     else if (kind === "gdel") { arr("tasks").filter(t => t.goal === id).forEach(t => del("tasks", t.id)); arr("exams").filter(e => e.goal === id).forEach(e => patch("exams", e.id, { goal: "" }, true)); del("goals", id); ui.gedit = null; }
     else if (kind === "ndel") { del("notes", id); ui.note = null; }
+    else if (kind === "grpdel") {
+      const j = id.indexOf(":"), pid = id.slice(0, j), gid = id.slice(j + 1), p = S.projects[pid];
+      if (p) { arr("tasks").filter(t => t.proj === pid && t.grp === gid).forEach(t => patch("tasks", t.id, { grp: null }, true)); patch("projects", pid, { groups: (p.groups || []).filter(g => g.id !== gid) }); }
+    }
     else if (kind === "edel") { del("exams", id); ui.exam = null; }
     else if (kind === "moddel") { const c = clone(cfg()); c.mods = c.mods.filter(m => m.id !== id); setCfg(c); }
     else if (kind === "areadel") { const c = clone(cfg()); c.areas = c.areas.filter(a => a.id !== id); setCfg(c); }
   }
   function moveIn(list, idx, d) { const j = idx + d; if (idx < 0 || j < 0 || j >= list.length) return list; const x = list[idx]; list[idx] = list[j]; list[j] = x; return list; }
   async function doExport() {
-    const data = { app: "鍾雅婷每日任務", exported: new Date().toISOString(), cfg: cfg() };
+    const data = { app: "每日任務平台", exported: new Date().toISOString(), cfg: cfg() };
     COLS.forEach(c => { data[c] = S[c]; });
     if (wbDb) {
       try { const qs = await wbDb.collection("plan").get(); data.workbench = { plan: {} }; qs.docs.forEach(d => { data.workbench.plan[d.id] = d.data(); }); }
@@ -1599,14 +2068,23 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     },
     ldel: el => { const links = arrOf("mods", el.dataset.mod, "links"); links.splice(Number(el.dataset.i), 1); patch("mods", el.dataset.mod, { links }); },
     qadd: () => {
-      const to = val("qa-to"); ui.qaTo = to;
+      const to = val("qa-to"); if (!to) { toast("先選要放到哪個專案或目標"); const sel0 = document.getElementById("qa-to"); if (sel0) sel0.focus(); return false; } ui.qaTo = to;
       if (newTask(val("qa-t"), to, val("qa-d"))) { const f = document.getElementById("qa-t"); if (f) { f.value = ""; f.focus(); } } else return false;
     },
     tmove: el => { patch("tasks", el.dataset.id, { due: el.dataset.to }); toast("已改到 " + mdw(el.dataset.to)); },
-    wbmove: el => {
-      const it = wbItem(el.dataset.id), to = el.dataset.to; if (!it || !isDate(to) || to === it.date) return false;
-      wbWrite(it.bucket, { items: { [it.id]: { date: to, moved: (it.moved || 0) + 1, orig: it.orig || it.date } } });
-      toast("工作台事項移到 " + mdw(to));
+    wbmove: el => { const it = wbItem(el.dataset.id), to = el.dataset.to; if (!it || !isDate(to) || to === it.date) return false; moveWb(it, to); toast("工作台事項移到 " + mdw(to)); },
+    pp: el => { ui.pp = ui.pp === el.dataset.k ? null : el.dataset.k; },
+    ppgo: el => {
+      const key = el.dataset.k, to = el.dataset.to || val("pp-d");
+      if (!isDate(to)) { toast("請選日期"); return false; }
+      const [k, a, b] = key.split(":");
+      if (k === "t" && S.tasks[a]) { const t = S.tasks[a], q = { due: to }; if (isDate(t.start) && t.start > to) q.start = to; patch("tasks", a, q); syncLinkedDate("t:" + a, to); }
+      else if (k === "w") { const it = wbItem(a); if (!it) return false; moveWb(it, to); }
+      else if (k === "m" && S.projects[a]) { patch("projects", a, { ms: (S.projects[a].ms || []).map(x => (x.id === b ? Object.assign({}, x, { date: to }) : x)) }); syncLinkedDate("m:" + a + ":" + b, to); }
+      else if (k === "p") { const W = wbData(), po = W && W.posts.find(x => x.id === a); if (!po) return false; wbWrite("posts", { posts: { [a]: { date: to, moved: (po.moved || 0) + 1, orig: po.orig || po.date } } }); }
+      else return false;
+      ui.pp = null;
+      toast(to === today() ? "移到今天" : "延到 " + mdw(to));
     },
     tedit: el => { ui.tedit = ui.tedit === el.dataset.id ? null : el.dataset.id; ui.confirm = null; },
     tst: el => setTaskStatus(el.dataset.id, el.dataset.st),
@@ -1630,11 +2108,59 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     pcreate: el => {
       const name = val("np-name"); if (!name) { toast("先寫專案名稱"); return false; }
       let s = val("np-start"), e = val("np-end"); if (isDate(s) && isDate(e) && e < s) { const x = s; s = e; e = x; }
-      const id = uid("p"), n = arr("projects").filter(p => p.area === el.dataset.area).length;
-      if (put("projects", id, { name, area: el.dataset.area, st: "plan", start: isDate(s) ? s : today(), end: isDate(e) ? e : addDays(today(), 30), goal: "", scope: [], ms: [], risk: "", c: (n % 6) + 1, at: today() })) { ui.proj = id; ui.pnew = false; window.scrollTo(0, 0); }
+      const id = uid("p"), n = arr("projects").filter(p => p.area === el.dataset.area).length, cat = val("np-cat");
+      if (put("projects", id, { name, cat, area: el.dataset.area, st: "plan", start: isDate(s) ? s : today(), end: isDate(e) ? e : addDays(today(), 30), goal: "", scope: [], ms: [], risk: "", c: (n % 6) + 1, at: today() })) { ui.proj = id; ui.pcat = projCat({ cat }); ui.pnew = false; window.scrollTo(0, 0); }
     },
-    popen: el => { const p = S.projects[el.dataset.id]; if (!p) return false; ui.proj = el.dataset.id; ui.tedit = null; goModOfType(p.area, "projectPlan"); window.scrollTo(0, 0); },
+    popen: el => { const p = S.projects[el.dataset.id]; if (!p) return false; ui.proj = el.dataset.id; ui.pcat = projCat(p); ui.tedit = null; ui.pnew = false; goModOfType(p.area, "projectPlan"); window.scrollTo(0, 0); },
     pclose: () => { ui.proj = null; ui.confirm = null; },
+    pcat: el => { ui.pcat = el.dataset.k; ui.proj = null; ui.pnew = false; window.scrollTo(0, 0); },
+    pcrumb: el => { ui.pcat = el.dataset.k || null; ui.proj = null; ui.pnew = false; ui.tedit = null; window.scrollTo(0, 0); },
+    pdonefold: () => { ui.pdone = !ui.pdone; },
+    pgfold: el => { const k = el.dataset.k; if (k.endsWith(":_done")) ui.pgopen[k] = !ui.pgopen[k]; else ui.pgfold[k] = !ui.pgfold[k]; },
+    grpadd: el => {
+      const p = S.projects[el.dataset.id]; if (!p) return false;
+      const groups = clone(p.groups || []), n = groups.length;
+      groups.push({ id: uid("g"), name: "新分群 " + (n + 1), c: [4, 3, 5, 2, 6, 1][n % 6] });
+      patch("projects", el.dataset.id, { groups });
+    },
+    ttadd: el => {
+      const input = document.getElementById("pa-" + el.dataset.k), t = input ? input.value.trim() : "";
+      if (!newTask(t, "p:" + el.dataset.p, "", el.dataset.g ? { grp: el.dataset.g } : null)) return false;
+      setTimeout(() => { const f = document.getElementById("pa-" + el.dataset.k); if (f) f.focus(); }, 60);
+    },
+    rtfold: () => { ui.rtOpen = !ui.rtOpen; },
+    tkey: el => { const t = S.tasks[el.dataset.id]; if (t) patch("tasks", el.dataset.id, { key: !t.key }); },
+    tfocus: el => {
+      const f = document.getElementById("pm-due-" + el.dataset.id) || document.getElementById("pm-t-" + el.dataset.id);
+      if (f) { f.scrollIntoView({ block: "center" }); f.focus(); }
+      return false;
+    },
+    pshift: el => {
+      const pid = el.dataset.id, p = S.projects[pid], n = Math.round(Number(val("ps-n-" + pid)));
+      if (!p || !(n >= 1 && n <= 120)) { toast("天數請填 1 到 120"); return false; }
+      arr("tasks").filter(t => t.proj === pid && t.st !== "done").forEach(t => {
+        const q = {}; if (isDate(t.start)) q.start = addDays(t.start, n); if (isDate(t.due)) q.due = addDays(t.due, n);
+        if (Object.keys(q).length) { patch("tasks", t.id, q, true); if (q.due) syncLinkedDate("t:" + t.id, q.due); }
+      });
+      const pp = { ms: (p.ms || []).map(x => (!x.done && isDate(x.date) ? Object.assign({}, x, { date: addDays(x.date, n) }) : x)) };
+      pp.ms.forEach(x => { if (!x.done && isDate(x.date)) syncLinkedDate("m:" + pid + ":" + x.id, x.date); });
+      if (isDate(p.end)) pp.end = addDays(p.end, n);
+      if (isDate(p.start) && p.start > today()) pp.start = addDays(p.start, n);
+      patch("projects", pid, pp);
+      toast("「" + p.name + "」往後挪 " + n + " 天");
+    },
+    rtpart: el => {
+      const d = el.dataset.date || today(), r = findRoutine(el.dataset.id); if (!r) return false;
+      const cur = !!routineSel(r, d)[el.dataset.k], p = { rp: { [r.id]: { [el.dataset.k]: !cur } } };
+      if (cur && Object.keys(routineSel(r, d)).filter(k => routineSel(r, d)[k] && k !== el.dataset.k).length === 0) p.r = { [r.id]: false };
+      setDay(d, p);
+    },
+    gexadd: el => {
+      const gid = el.dataset.id, name = val("gx-n-" + gid), d = val("gx-d-" + gid), g = S.goals[gid];
+      if (!g || !name || !isDate(d)) { toast("請填考試名稱和日期"); return false; }
+      const em = cfg().mods.find(x => x.type === "exams");
+      put("exams", uid("e"), { mod: em ? em.id : "exams", name, date: d, end: "", kind: val("gx-k-" + gid), place: "", url: "", goal: gid, score: "", note: "" });
+    },
     pcolor: el => patch("projects", el.dataset.id, { c: Number(el.dataset.n) }),
     toboard: el => { const p = S.projects[el.dataset.id]; if (!p) return false; const b = modOfType(p.area, "projectBoard"); if (b) { ui.bproj[b] = el.dataset.id; location.hash = "#m-" + b; } },
     cladd: el => {
@@ -1657,7 +2183,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     gnew: () => { ui.gnew = !ui.gnew; },
     gcreate: el => {
       const name = val("ng-name"); if (!name) { toast("先寫目標名稱"); return false; }
-      if (put("goals", uid("g"), { mod: el.dataset.mod, name, cat: val("ng-cat"), target: isDate(val("ng-target")) ? val("ng-target") : "", url: "", note: "", at: today() })) ui.gnew = false;
+      if (put("goals", uid("g"), { mod: el.dataset.mod, name, kind: val("ng-kind") === "exam" ? "exam" : "course", cat: val("ng-cat"), target: isDate(val("ng-target")) ? val("ng-target") : "", url: "", note: "", at: today() })) ui.gnew = false;
     },
     gedit: el => { ui.gedit = ui.gedit === el.dataset.id ? null : el.dataset.id; ui.confirm = null; },
     gfold: el => { ui.gopen[el.dataset.id] = !ui.gopen[el.dataset.id]; },
@@ -1681,14 +2207,16 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
       patch("mods", el.dataset.mod, { routine: rt });
     },
     nnew: el => {
-      const id = uid("n");
-      if (put("notes", id, { mod: el.dataset.mod, title: "", course: ui.ncourse || "", tags: [], url: "", body: "", pin: false, review: false, at: today(), up: today() })) {
+      const id = uid("n"), inCourse = el.dataset.course !== undefined;
+      const course = inCourse ? el.dataset.course : val("nn-c"), title = inCourse ? "" : val("nn-t");
+      if (put("notes", id, { mod: el.dataset.mod, title, course, tags: [], url: "", body: "", pin: false, review: false, at: today(), up: today() })) {
+        ui.ncourse = course || NO_COURSE;
         ui.note = id; setTimeout(() => { const f = document.getElementById("ne-title"); if (f) f.focus(); }, 0);
       }
     },
     nopen: el => { ui.note = el.dataset.id; window.scrollTo(0, 0); },
     nclose: () => { saveNoteBody(); ui.note = null; ui.confirm = null; },
-    ncourse: el => { ui.ncourse = el.dataset.k; },
+    ncourse: el => { ui.ncourse = el.dataset.k; ui.nq = ""; ui.nreview = false; window.scrollTo(0, 0); },
     nreview: () => { ui.nreview = !ui.nreview; },
     enew: () => { ui.enew = !ui.enew; },
     ecreate: el => {
@@ -1759,8 +2287,9 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
   function editTask(el) {
     const id = el.dataset.id, k = el.dataset.k, t = S.tasks[id]; if (!t) return;
     if (k === "t") { const v = el.value.trim(); if (v && v !== t.t) patch("tasks", id, { t: v }); }
-    else if (k === "due" || k === "start") patch("tasks", id, { [k]: isDate(el.value) ? el.value : "" });
-    else if (k === "pri") patch("tasks", id, { pri: el.checked ? 1 : 0 });
+    else if (k === "due" || k === "start") { patch("tasks", id, { [k]: isDate(el.value) ? el.value : "" }); if (k === "due") syncLinkedDate("t:" + id, el.value); }
+    else if (k === "pri") patch("tasks", id, { pri: el.type === "checkbox" ? (el.checked ? 1 : 0) : Number(el.value) || 0 });
+    else if (k === "grp") patch("tasks", id, { grp: el.value || null });
     else if (k === "note") patch("tasks", id, { note: el.value });
     else if (k === "hours") { const n = el.value === "" ? null : Number(el.value); if (n === null || (n >= 0 && n < 10000)) patch("tasks", id, { hours: n }); }
     else if (k === "owner") patch("tasks", id, { owner: el.value.trim() });
@@ -1781,15 +2310,20 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     tdone: el => {
       const t = S.tasks[el.dataset.id]; if (!t) return;
       if (el.checked) setTaskStatus(el.dataset.id, "done"); else if (t.st === "done") setTaskStatus(el.dataset.id, "todo");
-      if (isDate(t.due)) syncTwins("t:" + el.dataset.id, t.due, el.checked);
+      else syncLinkedDone("t:" + el.dataset.id, t.due, false);
     },
     msdone: el => {
       const ms = arrOf("projects", el.dataset.p, "ms"), x = ms.find(m => m.id === el.dataset.id); if (!x) return;
       x.done = el.checked; patch("projects", el.dataset.p, { ms });
-      if (isDate(x.date)) syncTwins("m:" + el.dataset.p + ":" + x.id, x.date, el.checked);
+      syncLinkedDone("m:" + el.dataset.p + ":" + x.id, x.date, el.checked);
     },
     habit: el => { const d = el.dataset.date || today(); wbWrite("h-" + d.slice(0, 7), { d: { [d]: { ["h" + el.dataset.i]: el.checked } } }); },
-    rtdone: el => setDay(el.dataset.date || today(), { r: { [el.dataset.id]: el.checked } }),
+    rtdone: el => {
+      const d = el.dataset.date || today(), r = findRoutine(el.dataset.id), ps = r ? routineParts(r) : [];
+      const p = { r: { [el.dataset.id]: el.checked } };
+      if (ps.length) { const all = {}; ps.forEach(x => { all[x] = el.checked; }); p.rp = { [el.dataset.id]: all }; }
+      setDay(d, p);
+    },
     lfield: el => {
       const links = arrOf("mods", el.dataset.mod, "links"), l = links[Number(el.dataset.i)]; if (!l) return;
       if (el.dataset.k === "url") { const u = safeUrl(el.value); if (!u) { toast("網址要以 https:// 開頭，這次沒有改"); render(true); return; } l.url = u; } else l.t = el.value.trim();
@@ -1820,6 +2354,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
       if (k === "url" && v && !safeUrl(v)) { toast("網址要以 https:// 開頭"); return; }
       if (k === "goal" && v && !S.goals[v]) return;
       patch("exams", id, { [k]: v });
+      if (k === "date") syncLinkedDate("e:" + id, v);
     },
     gfield: el => {
       const { id, k } = el.dataset, v = k === "note" ? el.value : el.value.trim();
@@ -1835,6 +2370,11 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     mname: el => { const v = el.value.trim(); const c = clone(cfg()), m = c.mods.find(x => x.id === el.dataset.id); if (m && v && v !== m.name) { m.name = v; setCfg(c); } },
     marea: el => { const c = clone(cfg()), m = c.mods.find(x => x.id === el.dataset.id); if (m && areaOf(el.value)) { m.area = el.value; setCfg(c); } },
     mhide: el => { const c = clone(cfg()), m = c.mods.find(x => x.id === el.dataset.id); if (m) { m.hidden = el.checked; setCfg(c); } },
+    grpname: el => { const p = S.projects[el.dataset.p], v = el.value.trim(); if (!p || !v) return; patch("projects", el.dataset.p, { groups: (p.groups || []).map(g => (g.id === el.dataset.id ? Object.assign({}, g, { name: v }) : g)) }); },
+    postdone: el => {
+      const W = wbData(), p = W && W.posts.find(x => x.id === el.dataset.id); if (!p) return;
+      wbWrite("posts", { posts: { [p.id]: el.checked ? { status: "已發布", prevStatus: p.status || "未開始" } : { status: p.prevStatus && p.prevStatus !== "已發布" ? p.prevStatus : "未開始" } } });
+    },
     mnest: el => { const c = clone(cfg()), m = c.mods.find(x => x.id === el.dataset.id); if (m) { m.parent = el.checked ? nestTarget(m) || "" : ""; setCfg(c); } },
   };
 
@@ -1867,7 +2407,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
       if (btn) { e.preventDefault(); btn.click(); }
       return;
     }
-    if (e.key === "Escape" && (ui.confirm || ui.tedit)) { ui.confirm = null; ui.tedit = null; render(true); return; }
+    if (e.key === "Escape" && (ui.confirm || ui.tedit || ui.pp)) { ui.confirm = null; ui.tedit = null; ui.pp = null; render(true); return; }
     const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName);
     if (ui.review && !typing && route().v === "mod" && route().id === ui.review.mod) {
       if ((e.key === " " || e.key === "Enter") && !ui.review.flip) { e.preventDefault(); ui.review.flip = true; render(true); }
@@ -1902,8 +2442,8 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
   document.addEventListener("dragend", () => { dragId = null; document.querySelectorAll(".dragging, .col.over").forEach(x => x.classList.remove("dragging", "over")); flush(); });
   window.addEventListener("hashchange", () => {
     const r = route(), m = r.v === "mod" ? modById(r.id) : null;
-    if (!m || m.type !== "projectPlan") ui.proj = null;
-    if (!m || m.type !== "notes") { saveNoteBody(); ui.note = null; }
+    if (!m || m.type !== "projectPlan") { ui.proj = null; ui.pcat = null; ui.pnew = false; }
+    if (!m || m.type !== "notes") { saveNoteBody(); ui.note = null; ui.ncourse = ""; }
     if (!m || !ui.review || ui.review.mod !== m.id) ui.review = null;
     ui.confirm = null; ui.ledit = null; ui.tedit = null; ui.exportText = null;
     window.scrollTo(0, 0); render(true);
@@ -1934,15 +2474,18 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     if (!wbDb || wbUnsub) return;
     wbUnsub = wbDb.collection("plan").onSnapshot(qs => {
       const m = {}; qs.docs.forEach(x => { m[x.id] = x.data(); });
-      S.wbDocs = m; schedule();
+      S.wbDocs = m; fillProjCats(); makeIgProjects(); linkTwins(); schedule();
     }, () => schedule());
   }
   window.addEventListener("message", e => {
     if (e.origin !== location.origin || !e.data || !e.data.dt) return;
     if (e.data.dt === "nav" && e.data.type === "today") { location.hash = "#today"; return; }
+    if (e.data.dt === "open") { openTarget(String(e.data.target || "")); return; }
     if (e.data.dt === "nav") {
-      const m = cfg().mods.find(x => x.type === e.data.type && !x.hidden) || cfg().mods.find(x => x.type === e.data.type);
-      if (m) location.hash = "#m-" + m.id; else toast("平台裡沒有這個模組，可以到「擴充」加回來");
+      // 舊模組已經併到新頁面：工作台 → 月曆、考試 → 學習目標、看板 → 專案計畫
+      const ALIAS = { workbenchApp: "wbCal", exams: "studyPlan", projectBoard: "projectPlan" }, find = t => cfg().mods.find(x => x.type === t && !x.hidden);
+      const m = find(e.data.type) || find(ALIAS[e.data.type]) || cfg().mods.find(x => x.type === e.data.type);
+      if (m) location.hash = "#m-" + m.id + (e.data.sub ? "/" + String(e.data.sub).replace(/^#/, "") : ""); else toast("平台裡沒有這個模組，可以到「擴充」加回來");
     } else if (e.data.dt === "changed") schedule();
   });
   window.addEventListener("storage", () => schedule());
@@ -1959,13 +2502,13 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
       db.collection(c).onSnapshot(snap => {
         const m = {};
         snap.docs.forEach(x => { m[x.id] = x.data(); known.add(c + "/" + x.id); });
-        S[c] = m; noteSnap(c, snap.metadata); mergeExamPrep(); schedule();
+        S[c] = m; noteSnap(c, snap.metadata); afterLive(); schedule();
       }, subErr);
     });
     db.doc("cfg/main").onSnapshot(snap => {
       S.cfg = snap.exists ? snap.data() : null;
       if (snap.exists) known.add("cfg/main");
-      noteSnap("cfg", snap.metadata); mergeExamPrep(); schedule();
+      noteSnap("cfg", snap.metadata); afterLive(); schedule();
     }, subErr);
     try { wbDb = window.DT ? await DT.dbFor("workbench") : null; } catch (e) { wbDb = null; }
     wbSubscribe(); schedule();

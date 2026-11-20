@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><script>document.documentElement.dataset.dtApp="workbench";if(window.parent!==window)document.documentElement.classList.add("in-dt")</script><style id="dt-theme">html.in-dt:root{--bg:#f3f5f9;--surface:#ffffff;--ink:#1c2333;--muted:#5b6678;--line:#d8dee8;--soft:#e9edf3;--accent:#2b3f7a;--accent-ink:#ffffff}@media (prefers-color-scheme: dark){html.in-dt:root:not([data-theme="light"]){--bg:#12151c;--surface:#1a1f29;--ink:#e3e7ef;--muted:#98a2b4;--line:#2e3544;--soft:#232a37;--accent:#9fb4f0;--accent-ink:#10162a;color-scheme:dark}}html.in-dt:root[data-theme="dark"]{--bg:#12151c;--surface:#1a1f29;--ink:#e3e7ef;--muted:#98a2b4;--line:#2e3544;--soft:#232a37;--accent:#9fb4f0;--accent-ink:#10162a;color-scheme:dark}</style><script>window.DT_APP="workbench"</script><script src="../../fb.js"></script><link rel="stylesheet" href="../../apps/embed.css">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><script>document.documentElement.dataset.dtApp="workbench";if(window.parent!==window)document.documentElement.classList.add("in-dt")</script><style id="dt-theme">html.in-dt:root{--bg:#f3f5f9;--surface:#ffffff;--ink:#1c2333;--muted:#5b6678;--line:#d8dee8;--soft:#e9edf3;--accent:#2b3f7a;--accent-ink:#ffffff}@media (prefers-color-scheme: dark){html.in-dt:root:not([data-theme="light"]){--bg:#12151c;--surface:#1a1f29;--ink:#e3e7ef;--muted:#98a2b4;--line:#2e3544;--soft:#232a37;--accent:#9fb4f0;--accent-ink:#10162a;color-scheme:dark}}html.in-dt:root[data-theme="dark"]{--bg:#12151c;--surface:#1a1f29;--ink:#e3e7ef;--muted:#98a2b4;--line:#2e3544;--soft:#232a37;--accent:#9fb4f0;--accent-ink:#10162a;color-scheme:dark}</style><script>window.DT_APP="workbench"</script><script src="../../fb.js"></script><link rel="stylesheet" href="../../apps/embed.css?v=84fc0e08">
 </head><body>
 <title>赫滋與羊工作台</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -170,6 +170,9 @@ table.t td.n { text-align: right; font-family: var(--font-mono) }
 .lists { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start }
 .ms { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto; gap: 8px; padding: 7px 14px; border-top: 1px solid var(--line); font-size: .88rem; align-items: center }
 .ms.past { opacity: .5 }
+button.ms { width: 100%; background: none; border: 0; border-top: 1px solid var(--line); text-align: left; font: inherit; color: inherit; cursor: pointer }
+button.ms:hover, button.ms:focus-visible { background: var(--soft) }
+button.ms:hover > span:nth-child(2) { text-decoration: underline; text-underline-offset: 3px }
 .ms .mono { font-size: .82rem }
 .q { padding: 10px 14px; border-top: 1px solid var(--line); display: grid; gap: 4px }
 .q small { color: var(--muted) }
@@ -194,7 +197,14 @@ table.t td.n { text-align: right; font-family: var(--font-mono) }
 }
 @media (prefers-reduced-motion: no-preference) { .it, .cell { transition: background-color .15s } }
 /* 放在每日任務平台裡：平台的「今天」已經整合工作台的今天，標題和同步狀態也在平台上方，這裡不重複 */
-html.in-dt header.top, html.in-dt nav.tabs a[data-v="today"] { display: none }
+html.in-dt header.top, html.in-dt nav.tabs { display: none }
+html.in-dt .wrap { max-width: 1200px }
+html.in-dt .view { padding-top: 20px }
+/* 專案顏色（跟平台同一組） */
+:root { --p1: #2f6fb0; --p2: #7d4cb8; --p3: #2a8259; --p4: #b9651c; --p5: #be3a5b; --p6: #4a5b72 }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --p1: #7fb0e6; --p2: #b996ec; --p3: #74c99c; --p4: #e6a15f; --p5: #ef8ba3; --p6: #a3b1c6 } }
+:root[data-theme="dark"] { --p1: #7fb0e6; --p2: #b996ec; --p3: #74c99c; --p4: #e6a15f; --p5: #ef8ba3; --p6: #a3b1c6 }
+table.g tr.grp td.nm { box-shadow: inset 4px 0 0 var(--gc, transparent) }
 </style>
 
 <div class="wrap">
@@ -298,10 +308,29 @@ html.in-dt header.top, html.in-dt nav.tabs a[data-v="today"] { display: none }
   // ---------------- actions
   const itemById = id => derive().items.find(x => x.id === id);
   function setItem(it, patch) { write(it.bucket, { items: { [it.id]: patch } }); }
-  function toggleItem(id) { const it = itemById(id); if (it) setItem(it, { done: !it.done, doneAt: !it.done ? today() : null }); }
+  function toggleItem(id) { const it = itemById(id); if (!it) return; setItem(it, { done: !it.done, doneAt: !it.done ? today() : null }); linkToBoard(it, { done: !it.done }); }
+  // 對應到平台的那一筆：勾完成或改日期時一起改
+  function linkToBoard(it, ch) {
+    if (!it.link || !bdb) return;
+    const [k, a, b] = String(it.link).split(":");
+    if (k === "t" && B.tasks[a]) {
+      const t = B.tasks[a], p = {};
+      if ("done" in ch && (t.st === "done") !== ch.done) { p.st = ch.done ? "done" : "todo"; p.done = ch.done ? today() : null; }
+      if (ch.date && t.due !== ch.date) { p.due = ch.date; if (isD(t.start) && t.start > ch.date) p.start = ch.date; }
+      if (Object.keys(p).length) bPatch(a, p, true);
+    } else if (k === "m" && B.projects[a]) {
+      const ms = (B.projects[a].ms || []).map(x => (x.id === b ? Object.assign({}, x, "done" in ch ? { done: ch.done } : {}, ch.date ? { date: ch.date } : {}) : x));
+      B.projects[a] = Object.assign({}, B.projects[a], { ms });
+      bdb.collection("projects").doc(a).update({ ms }).catch(() => toast("平台的里程碑沒有存到"));
+    } else if (k === "e" && B.exams[a] && ch.date && B.exams[a].date !== ch.date) {
+      B.exams[a] = Object.assign({}, B.exams[a], { date: ch.date });
+      bdb.collection("exams").doc(a).update({ date: ch.date }).catch(() => toast("平台的考試日期沒有存到"));
+    }
+  }
   function moveItem(id, to) {
     const it = itemById(id); if (!it || !to || to === it.date) return;
     setItem(it, { date: to, moved: (it.moved || 0) + 1, orig: it.orig || it.date });
+    linkToBoard(it, { date: to });
     ui.open.delete(id);
     toast("已移到 " + mdw(to));
   }
@@ -385,6 +414,7 @@ html.in-dt header.top, html.in-dt nav.tabs a[data-v="today"] { display: none }
       + '<button class="btn" data-act="day" data-to="' + addDays(day, -1) + '" aria-label="前一天">‹</button>'
       + '<button class="btn" data-act="day" data-to="' + addDays(day, 1) + '" aria-label="後一天">›</button></div>'
       + "<h2>" + (isToday ? "今天　" : "") + esc(mdw(day)) + "</h2>"
+      + (document.documentElement.classList.contains("in-dt") ? '<button class="btn" data-act="month" data-to="' + day.slice(0, 7) + '">回月曆</button>' : "")
       + (isToday ? "" : '<button class="btn" data-act="day" data-to="' + t + '">回到今天</button>')
       + '<input type="date" id="jump" value="' + day + '" aria-label="跳到日期">'
       + '<div class="badges">'
@@ -412,6 +442,15 @@ html.in-dt header.top, html.in-dt nav.tabs a[data-v="today"] { display: none }
       rows.forEach(it => { h += itemRow(it, { noTag: true }); });
       h += "</section>";
     });
+    const bo = boardOn(day);
+    if (bo.length) {
+      h += '<section class="panel"><h3>' + tagChip("★") + ' 專案里程碑與考試<span class="sum">' + bo.filter(x => x.done).length + " / " + bo.length + "</span></h3>";
+      bo.forEach(x => {
+        h += '<div class="it' + (x.done ? " done" : "") + '">' + (x.kind === "task" ? '<input type="checkbox" id="bd-' + esc(x.id) + '" data-act="btoggle" data-id="' + esc(x.id) + '"' + (x.done ? " checked" : "") + ' aria-label="完成：' + esc(x.text) + '">' : tagChip("★"))
+          + '<div class="tt"><label' + (x.kind === "task" ? ' for="bd-' + esc(x.id) + '"' : "") + "><b>" + esc(x.text) + "</b></label>" + (x.sub ? '<div class="meta"><span class="chip">' + esc(x.sub) + "</span></div>" : "") + "</div></div>";
+      });
+      h += "</section>";
+    }
     if (posts.length) {
       h += '<section class="panel"><h3>' + tagChip("IG") + ' IG 發文<span class="sum"><a href="#ig">全部發文</a></span></h3>';
       posts.forEach(p => { h += postMini(p, false); });
@@ -474,6 +513,7 @@ html.in-dt header.top, html.in-dt nav.tabs a[data-v="today"] { display: none }
       const lines = [];
       its.filter(x => x.tag !== "讀").forEach(x => lines.push({ tag: x.tag, text: x.title, done: x.done }));
       ps.forEach(p => lines.push({ tag: "IG", text: p.title, done: p.status === "已發布" }));
+      boardOn(d).forEach(x => lines.push(x));
       its.filter(x => x.tag === "讀").forEach(x => lines.push({ tag: "讀", text: x.track + " " + x.title, done: x.done }));
       const late = d < t && its.some(x => !x.done && (x.tag === "交" || x.tag === "讀"));
       const cls = ["cell", d.slice(0, 7) !== mon ? "out" : "", meta.pp ? "ppd" : (meta.rest || dow(d) === 0 ? "rest" : ""), d === t ? "today" : ""].join(" ");
@@ -500,13 +540,21 @@ html.in-dt header.top, html.in-dt nav.tabs a[data-v="today"] { display: none }
       if (!qs.metadata || !qs.metadata.fromCache) B.seen.add(c);   // 只認雲端確認過的資料，離線快取不算
       B.ready = B.seen.size >= 4;
       rev++; linkBoard();
-      if (curView === "gantt" && !gEditing()) render();
+      if (!gEditing()) render();
     }, () => {}));
     bdb.doc("cfg/main").onSnapshot(s => { B.cfg = s.exists ? s.data() : null; }, () => {});
   }
-  function bPatch(id, p) {
-    B.tasks[id] = Object.assign({}, B.tasks[id], p); rev++; render();
+  function bPatch(id, p, fromItem) {
+    const before = B.tasks[id] || {};
+    B.tasks[id] = Object.assign({}, before, p); rev++; render();
     if (bdb) bdb.collection("tasks").doc(id).update(p).catch(() => toast("看板沒有存到，稍後再試一次"));
+    if (fromItem) return;
+    derive().items.filter(it => it.link === "t:" + id).forEach(it => {
+      const q = {};
+      if ("st" in p && (p.st === "done") !== !!it.done) { q.done = p.st === "done"; q.doneAt = q.done ? today() : null; }
+      if (p.due && p.due !== it.date) { q.date = p.due; q.moved = (it.moved || 0) + 1; q.orig = it.orig || it.date; }
+      if (Object.keys(q).length) setItem(it, q);
+    });
   }
   // 名稱比對（跟平台今天頁同一套規則）
   function normT(s) {
@@ -579,6 +627,16 @@ html.in-dt header.top, html.in-dt nav.tabs a[data-v="today"] { display: none }
     toast("甘特圖改讀看板：對上 " + (nLink - nNew) + " 件" + (nNew ? "，補進看板 " + nNew + " 件" : ""));
   }
 
+  function boardOn(d) {
+    if (!B.ready) return [];
+    const wb = (derive().byDate[d] || []).map(it => it.title), dup = t => wb.some(x => simT(x, t) >= 0.45), out = [];
+    const proj = id => (B.projects[id] || {}).name || "", goal = id => (B.goals[id] || {}).name || "";
+    bArr("exams").filter(e => e.date === d).forEach(e => { if (!dup(e.name)) out.push({ tag: "★", text: "考試・" + e.name, done: false, sub: goal(e.goal), kind: "exam", id: e.id }); });
+    bArr("projects").forEach(p => (p.ms || []).forEach(m => { if (m.date === d && !dup(m.t)) out.push({ tag: "★", text: m.t, done: !!m.done, sub: p.name, kind: "ms" }); }));
+    bArr("tasks").filter(t => t.key && t.due === d).forEach(t => { if (!dup(t.t)) out.push({ tag: "★", text: t.t, done: t.st === "done", sub: proj(t.proj) || goal(t.goal), kind: "task", id: t.id }); });
+    // 其他（沒標 ★ 的）看板任務期限不放進月曆：工作台的「交」已經排了大部分截止，名稱常不一樣，放進來容易重複（任務在今天頁和甘特圖看）
+    return out;
+  }
   const catColor = cat => /學業|讀書/.test(cat) ? "var(--t-study)" : /商品/.test(cat) ? "var(--t-star)" : /IG|社群/.test(cat) ? "var(--t-ig)" : /課程|行程/.test(cat) ? "var(--t-class)" : "var(--t-due)";
   function ganttRows() {
     const c = derive(), rows = [];
@@ -586,9 +644,9 @@ html.in-dt header.top, html.in-dt nav.tabs a[data-v="today"] { display: none }
     if (!B.ready) { c.tasks.forEach(t => rows.push(wbRow(t, t.cat, t.cat))); return rows; }
     const byStart = (a, b) => (a.start < b.start ? -1 : a.start > b.start ? 1 : a.end < b.end ? -1 : 1);
     const tasks = bArr("tasks").filter(t => isD(t.due)).map(t => Object.assign(t, { start: isD(t.start) && t.start <= t.due ? t.start : t.due }));
-    const bRow = (t, kind, grp, color) => ({ src: "board", id: t.id, kind, grp, label: t.t, start: t.start, end: t.due, st: BST[t.st] || "待辦", done: t.st === "done", doing: t.st === "doing", hours: t.hours, owner: t.owner, color, raw: t });
+    const bRow = (t, kind, grp, color) => ({ src: "board", id: t.id, kind, grp, label: (t.key ? "★ " : "") + t.t, start: t.start, end: t.due, st: BST[t.st] || "待辦", done: t.st === "done", doing: t.st === "doing", hours: t.hours, owner: t.owner, color, raw: t });
     bArr("projects").sort((a, b) => ((a.start || "9") < (b.start || "9") ? -1 : 1))
-      .forEach(p => tasks.filter(t => t.proj === p.id).sort(byStart).forEach(t => rows.push(bRow(t, "專案", p.name, "var(--t-due)"))));
+      .forEach(p => tasks.filter(t => t.proj === p.id).sort(byStart).forEach(t => rows.push(bRow(t, "專案", p.name, "var(--p" + (Number(p.c) >= 1 && Number(p.c) <= 6 ? Number(p.c) : 1) + ")"))));
     bArr("goals").sort((a, b) => ((a.target || "9") < (b.target || "9") ? -1 : 1))
       .forEach(g => tasks.filter(t => t.goal === g.id && !t.proj).sort(byStart).forEach(t => rows.push(bRow(t, "學習", g.name, "var(--t-study)"))));
     bArr("exams").filter(e => isD(e.date)).sort((a, b) => (a.date < b.date ? -1 : 1)).forEach(e => {
@@ -616,7 +674,7 @@ html.in-dt header.top, html.in-dt nav.tabs a[data-v="today"] { display: none }
       + weeks.map(w => '<th class="wk' + (w === nowW ? " now" : "") + '" title="' + w + '">' + (parse(w).getDate() <= 7 ? (parse(w).getMonth() + 1) + "月" : "") + "</th>").join("") + "</tr></thead><tbody>";
     let lastGrp = null;
     shown.forEach(r => {
-      if (r.grp !== lastGrp) { lastGrp = r.grp; h += '<tr class="grp"><td class="nm">' + esc(r.grp) + '</td><td colspan="' + weeks.length + '"></td></tr>'; }
+      if (r.grp !== lastGrp) { lastGrp = r.grp; h += '<tr class="grp" style="--gc:' + r.color + '"><td class="nm">' + esc(r.grp) + '</td><td colspan="' + weeks.length + '"></td></tr>'; }
       const key = r.src + ":" + r.id, color = r.doing ? (r.raw && r.raw.status === "延後" ? BAR.late : BAR.doing) : r.color;
       const meta = [md(r.start) + (r.start !== r.end ? "–" + md(r.end) : ""), r.st, r.owner || "", r.hours ? r.hours + " 小時" : ""].filter(Boolean).join("・");
       h += '<tr><td class="nm"><span class="w" data-act="' + (r.src === "exam" ? "gexam" : "gedit") + '" data-key="' + esc(key) + '" title="' + esc((r.sub ? r.sub + "｜" : "") + r.label) + '">' + esc(r.label) + "</span><small>" + esc(meta) + "</small></td>";
@@ -718,25 +776,36 @@ html.in-dt header.top, html.in-dt nav.tabs a[data-v="today"] { display: none }
 
   function viewLists() {
     const c = derive(), t = today(), ref = S.docs.ref || {};
-    const ms = c.items.filter(it => it.important);
+    const goTask = t => (t.proj ? "p:" + t.proj + ":t:" + t.id : t.goal ? "g:" + t.goal + ":t:" + t.id : "");
+    const goLink = link => {
+      const [k, a, b] = String(link || "").split(":");
+      if (k === "t" && B.tasks[a]) return goTask(Object.assign({ id: a }, B.tasks[a]));
+      if (k === "m" && B.projects[a]) return "p:" + a + ":m:" + b;
+      if (k === "e" && B.exams[a]) return "g:" + (B.exams[a].goal || "") + ":e:" + a;
+      return "";
+    };
+    const ms = c.items.filter(it => it.important).map(x => Object.assign({}, x, { src: "", go: goLink(x.link) || "day:" + x.date }));
+    if (B.ready) {
+      const add = x => { if (!ms.some(y => y.date === x.date && simT(y.title, x.title) >= 0.45)) ms.push(x); };
+      bArr("exams").filter(e => isD(e.date)).forEach(e => add({ date: e.date, tag: "★", title: "考試・" + e.name, done: false, src: (B.goals[e.goal] || {}).name || "", go: "g:" + (e.goal || "") + ":e:" + e.id }));
+      bArr("projects").forEach(p => (p.ms || []).filter(m => isD(m.date)).forEach(m => add({ date: m.date, tag: "★", title: m.t, done: !!m.done, src: p.name, go: "p:" + p.id + ":m:" + m.id })));
+      bArr("tasks").filter(t => t.key && isD(t.due)).forEach(t => add({ date: t.due, tag: "★", title: t.t, done: t.st === "done", src: (B.projects[t.proj] || {}).name || (B.goals[t.goal] || {}).name || "", go: goTask(t) || "day:" + t.due }));
+      bArr("goals").filter(g => isD(g.target)).forEach(g => add({ date: g.target, tag: "★", title: "目標日・" + g.name, done: false, src: "", go: "g:" + g.id }));
+      ms.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+    }
     const up = ms.filter(x => x.date >= t), past = ms.filter(x => x.date < t);
-    let h = '<div class="lists"><div><section class="panel"><h3>重要日期<span class="sum">標記為重要的事項會列在這裡</span></h3>';
-    up.forEach(x => { const n = diffDays(t, x.date); h += '<div class="ms"><span class="mono">' + esc(mdw(x.date)) + "</span><span>" + tagChip(x.tag) + " " + esc(x.title) + (x.done ? "（已完成）" : "") + '</span><span class="chip' + (n <= 7 ? " warn" : "") + '">' + (n === 0 ? "今天" : "還有 " + n + " 天") + "</span></div>"; });
+    let h = '<div class="lists"><div><section class="panel"><h3>重要日期<span class="sum">里程碑、考試、目標日和標記為重要的事項</span></h3>';
+    const where = go => (go.startsWith("p:") ? "打開專案編輯" : go.startsWith("g:") ? "打開學習目標編輯" : "打開月曆的這一天");
+    up.forEach(x => { const n = diffDays(t, x.date); h += '<button class="ms msgo" data-act="dopen" data-k="' + esc(x.go) + '" title="' + where(x.go) + '"><span class="mono">' + esc(mdw(x.date)) + "</span><span>" + tagChip(x.tag) + " " + esc(x.title) + (x.done ? "（已完成）" : "") + (x.src ? '<small class="status">・' + esc(x.src) + "</small>" : "") + '</span><span class="chip' + (n <= 7 ? " warn" : "") + '">' + (n === 0 ? "今天" : "還有 " + n + " 天") + "</span></button>"; });
     if (past.length) {
       h += '<div class="ms"><span></span><span class="status">已經過去的 ' + past.length + " 項</span><span></span></div>";
-      past.slice(-8).forEach(x => { h += '<div class="ms past"><span class="mono">' + esc(mdw(x.date)) + "</span><span>" + tagChip(x.tag) + " " + esc(x.title) + "</span><span></span></div>"; });
+      past.slice(-8).forEach(x => { h += '<button class="ms msgo past" data-act="dopen" data-k="' + esc(x.go) + '" title="' + where(x.go) + '"><span class="mono">' + esc(mdw(x.date)) + "</span><span>" + tagChip(x.tag) + " " + esc(x.title) + "</span><span></span></button>"; });
     }
     h += "</section>";
     h += '<section class="panel"><h3>每天固定與寫稿原則</h3><div class="refsec"><dl>'
       + (ref.habits || []).map(x => "<dt>" + esc(x.name) + "</dt><dd>" + esc(x.desc) + "</dd>").join("")
       + (ref.principles || []).map(x => "<dt>" + esc(x.k) + "</dt><dd>" + esc(x.v) + "</dd>").join("") + "</dl></div></section></div><div>";
-    const qs = Object.entries((S.docs.questions || {}).questions || {}).sort((a, b) => (a[1].n || 0) - (b[1].n || 0));
-    h += '<section class="panel"><h3>待確認<span class="sum">' + qs.filter(([, q]) => q.answer).length + " / " + qs.length + " 已有答案</span></h3>";
-    qs.forEach(([id, q]) => {
-      h += '<div class="q"><label for="qa-' + esc(id) + '"><b>' + esc(q.n) + ". " + esc(q.q) + "</b></label><small>影響：" + esc(q.affects || "—") + "</small>"
-        + '<textarea id="qa-' + esc(id) + '" data-act="qans" data-id="' + esc(id) + '" rows="2" placeholder="你的答案">' + esc(q.answer || "") + "</textarea></div>";
-    });
-    h += "</section>";
+    // 「待確認」已經都處理完，不再顯示（答案仍保留在工作台資料裡）
     h += '<section class="panel"><h3>2026/11～2027/12 路線圖</h3><div class="igsum" style="margin:0"><table class="t"><thead><tr><th>時間</th><th>主系列</th><th>產品檔期</th><th>重點</th></tr></thead><tbody>'
       + (ref.roadmap || []).map(r => "<tr><td>" + esc(r.time) + '</td><td style="white-space:normal">' + esc(r.main) + '</td><td style="white-space:normal">' + esc(r.product) + '</td><td style="white-space:normal">' + esc(r.focus) + "</td></tr>").join("")
       + "</tbody></table></div></section></div></div>";
@@ -782,6 +851,7 @@ html.in-dt header.top, html.in-dt nav.tabs a[data-v="today"] { display: none }
     const b = e.target.closest("[data-act]"); if (!b) return;
     const a = b.dataset.act, id = b.dataset.id;
     if (a === "toggle") { toggleItem(id); return; }
+    if (a === "btoggle") { const t = B.tasks[id]; if (t) bPatch(id, t.st === "done" ? { st: "todo", done: null } : { st: "done", done: today() }); return; }
     if (a === "habit") { toggleHabit(ui.day || today(), Number(b.dataset.i)); return; }
     if (b.tagName === "SELECT" || b.tagName === "INPUT" || b.tagName === "TEXTAREA") return;
     if (a === "det") { ui.det.has(id) ? ui.det.delete(id) : ui.det.add(id); render(); }
@@ -797,6 +867,11 @@ html.in-dt header.top, html.in-dt nav.tabs a[data-v="today"] { display: none }
     else if (a === "gcat") { ui.gcat = b.dataset.k; ui.gedit = null; render(); }
     else if (a === "gedit") { const k = b.dataset.key; ui.gedit = ui.gedit === k ? null : k; render(); }
     else if (a === "gexam") { if (window.DTNav) window.DTNav("exams"); }
+    else if (a === "dopen") {
+      const k = b.dataset.k || "";
+      if (k.startsWith("day:")) location.hash = "day-" + k.slice(4);
+      else if (window.parent !== window) parent.postMessage({ dt: "open", target: k }, location.origin);
+    }
     else if (a === "gboard") { if (window.DTNav) window.DTNav(b.dataset.k); }
     else if (a === "gclose") { ui.gedit = null; render(); }
     else if (a === "gsave") {
@@ -866,5 +941,5 @@ html.in-dt header.top, html.in-dt nav.tabs a[data-v="today"] { display: none }
 })();
 </script>
 
-<script src="../../apps/embed.js"></script>
+<script src="../../apps/embed.js?v=84fc0e08"></script>
 </body></html>
