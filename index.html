@@ -634,6 +634,8 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
       + '<div class="r2"><label class="inline">開始 <input type="date" id="te-s-' + id + '" value="' + esc(t.start || "") + '" data-act="tfield" data-id="' + id + '" data-k="start"></label>'
       + '<label class="inline">期限 <input type="date" id="te-d-' + id + '" value="' + esc(t.due || "") + '" data-act="tfield" data-id="' + id + '" data-k="due"></label></div>'
       + '<div class="r2"><select id="te-st-' + id + '" data-act="tfield" data-id="' + id + '" data-k="st" aria-label="狀態">' + ST_ORDER.map(s => '<option value="' + s + '"' + sel((t.st || "todo") === s) + ">" + TASK_ST[s] + "</option>").join("") + "</select>" + projSel + "</div>"
+      + '<div class="r2"><label class="inline">工時 <input type="number" id="te-h-' + id + '" min="0" step="0.5" value="' + esc(t.hours == null ? "" : t.hours) + '" data-act="tfield" data-id="' + id + '" data-k="hours" style="width:80px" aria-label="工時（小時）"> 小時</label>'
+      + '<label class="inline">負責 <input type="text" id="te-o-' + id + '" value="' + esc(t.owner || "") + '" placeholder="雅婷" data-act="tfield" data-id="' + id + '" data-k="owner" style="width:140px" aria-label="負責人"></label></div>'
       + '<label class="inline"><input type="checkbox" id="te-pri-' + id + '" data-act="tfield" data-id="' + id + '" data-k="pri"' + chk(t.pri) + "> 標為重要</label>"
       + '<textarea id="te-n-' + id + '" rows="2" data-act="tfield" data-id="' + id + '" data-k="note" placeholder="備註">' + esc(t.note || "") + "</textarea>"
       + '<div class="btnrow">' + confirmBtn("tdel:" + t.id, "刪除任務", "確定刪除這個任務？") + '<span class="grow"></span><button class="btn sm" data-act="tedit" data-id="' + id + '">收起</button></div></div>';
@@ -1096,7 +1098,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     const p = t.proj && t.proj !== f && S.projects[t.proj], open = ui.tedit === t.id, i = ST_ORDER.indexOf(t.st || "todo"), id = esc(t.id);
     let h = '<article class="card" draggable="' + (open ? "false" : "true") + '" data-drag="' + id + '">'
       + '<button class="card-t" data-act="tedit" data-id="' + id + '" aria-expanded="' + open + '">' + (t.pri ? '<span class="pri" title="重要"></span>' : "") + "<span>" + esc(t.t) + "</span></button>"
-      + '<div class="card-b">' + (p ? '<span class="chip ctx" style="--ac:' + pcol(p) + '">' + esc(p.name) + "</span>" : "") + dueChip(t.due, t.st === "done")
+      + '<div class="card-b">' + (p ? '<span class="chip ctx" style="--ac:' + pcol(p) + '">' + esc(p.name) + "</span>" : "") + dueChip(t.due, t.st === "done") + (t.owner && t.owner !== "雅婷" ? '<span class="chip">' + esc(t.owner) + "</span>" : "")
       + '<span class="mv">' + (i > 0 ? '<button class="btn ghost sm" data-act="tst" data-id="' + id + '" data-st="' + ST_ORDER[i - 1] + '" aria-label="移到' + TASK_ST[ST_ORDER[i - 1]] + '">‹</button>' : "")
       + (i < 3 ? '<button class="btn ghost sm" data-act="tst" data-id="' + id + '" data-st="' + ST_ORDER[i + 1] + '" aria-label="移到' + TASK_ST[ST_ORDER[i + 1]] + '">›</button>' : "") + "</span></div>";
     if (open) h += taskEditor(t);
@@ -1693,6 +1695,8 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     else if (k === "due" || k === "start") patch("tasks", id, { [k]: isDate(el.value) ? el.value : "" });
     else if (k === "pri") patch("tasks", id, { pri: el.checked ? 1 : 0 });
     else if (k === "note") patch("tasks", id, { note: el.value });
+    else if (k === "hours") { const n = el.value === "" ? null : Number(el.value); if (n === null || (n >= 0 && n < 10000)) patch("tasks", id, { hours: n }); }
+    else if (k === "owner") patch("tasks", id, { owner: el.value.trim() });
     else if (k === "st") setTaskStatus(id, el.value);
     else if (k === "proj") {
       if (el.value) patch("tasks", id, { proj: el.value });

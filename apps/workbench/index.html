@@ -278,6 +278,7 @@ html.in-dt header.top, html.in-dt nav.tabs a[data-v="today"] { display: none }
     return cache;
   }
   function changed() { rev++; render(); }
+  const splitKey = k => { const i = String(k || "").indexOf(":"); return [k.slice(0, i), k.slice(i + 1)]; };
 
   function write(docId, patch) {
     S.docs[docId] = merge(S.docs[docId] || {}, clone(patch));
@@ -484,52 +485,173 @@ html.in-dt header.top, html.in-dt nav.tabs a[data-v="today"] { display: none }
     return h + "</div>";
   }
 
+  // ---------------- 看板資料：甘特圖以平台的「專案管理」看板和「學習規劃」為主，工作台只留不屬於專案的排程
+  const B = { tasks: {}, projects: {}, goals: {}, exams: {}, cfg: null, seen: new Set(), ready: false };
+  let bdb = null, linking = false;
+  const BST = { todo: "待辦", doing: "進行中", wait: "等待中", done: "完成" };
+  const isD = s => /^\d{4}-\d{2}-\d{2}$/.test(s || "");
+  const bArr = c => Object.keys(B[c]).map(id => Object.assign({ id }, B[c][id]));
+  const gEditing = () => { const a = document.activeElement; return !!(a && a.closest && a.closest(".gform")); };
+  async function boardBoot() {
+    try { bdb = window.DT && window.DT.dbFor ? await window.DT.dbFor("daily") : null; } catch (e) { bdb = null; }
+    if (!bdb) return;
+    ["tasks", "projects", "goals", "exams"].forEach(c => bdb.collection(c).onSnapshot(qs => {
+      const m = {}; qs.docs.forEach(d => { m[d.id] = d.data(); }); B[c] = m;
+      if (!qs.metadata || !qs.metadata.fromCache) B.seen.add(c);   // 只認雲端確認過的資料，離線快取不算
+      B.ready = B.seen.size >= 4;
+      rev++; linkBoard();
+      if (curView === "gantt" && !gEditing()) render();
+    }, () => {}));
+    bdb.doc("cfg/main").onSnapshot(s => { B.cfg = s.exists ? s.data() : null; }, () => {});
+  }
+  function bPatch(id, p) {
+    B.tasks[id] = Object.assign({}, B.tasks[id], p); rev++; render();
+    if (bdb) bdb.collection("tasks").doc(id).update(p).catch(() => toast("看板沒有存到，稍後再試一次"));
+  }
+  // 名稱比對（跟平台今天頁同一套規則）
+  function normT(s) {
+    s = String(s || "").toLowerCase();
+    const t = s.replace(/[（(][^）)]*[）)]/g, "");
+    return (t.trim() ? t : s).replace(/[^0-9a-z㐀-鿿]/g, "");
+  }
+  function simT(a, b) {
+    const x = normT(a), y = normT(b);
+    if (x.length < 2 || y.length < 2) return 0;
+    if (x.includes(y) || y.includes(x)) return 1;
+    const bg = s => { const o = {}; for (let i = 0; i < s.length - 1; i++) { const k = s.slice(i, i + 2); o[k] = (o[k] || 0) + 1; } return o; };
+    const A = bg(x), Bg = bg(y); let n = 0;
+    Object.keys(A).forEach(k => { if (Bg[k]) n += Math.min(A[k], Bg[k]); });
+    return (2 * n) / (x.length - 1 + y.length - 1);
+  }
+  // 一次性：把工作台的工作接到看板上的同一筆（工時、負責人搬過去），看板沒有的專案工作補進看板，考試接到「考試」
+  function linkBoard() {
+    if (linking || !S.loaded || !S.server || !B.ready || !bdb || !col) return;
+    const doc = S.docs.tasks || {};
+    if (doc.boardLink || !Object.keys(doc.tasks || {}).length) return;
+    const all = bArr("tasks"); if (!all.length) return;
+    linking = true;
+    const projByName = {}; bArr("projects").forEach(p => { projByName[normT(p.name)] = p; });
+    const boardMod = area => (((B.cfg && B.cfg.mods) || []).find(m => m.type === "projectBoard" && m.area === area && !m.hidden) || {}).id || "proj-board";
+    const used = new Set(), wbPatch = {}, bWrites = [];
+    derive().tasks.forEach(t => { if (t.board) used.add(t.board); });
+    derive().tasks.forEach(t => {
+      if (t.board || t.exam) return;
+      const p = projByName[normT(t.item)];
+      const cands = p ? all.filter(x => x.proj === p.id) : t.cat === "學業" ? all.filter(x => x.goal) : [];
+      let best = null, bs = 0;
+      cands.forEach(x => {
+        if (used.has(x.id)) return;
+        let s = simT(t.work, x.t);
+        if (!p) s = Math.max(s, simT(String(t.item || "").split("｜").pop() + t.work, x.t));
+        const same = x.due === t.end;
+        if ((s >= 0.45 && same) || s >= 0.7) { const sc = s + (same ? 0.5 : 0); if (sc > bs) { bs = sc; best = x; } }
+      });
+      if (best) {
+        used.add(best.id); wbPatch[t.id] = { board: best.id };
+        const bp = {};
+        if (best.hours == null && t.hours != null && t.hours !== "") bp.hours = Number(t.hours);
+        if (!isD(best.start) && isD(t.start) && t.start < best.due && t.end === best.due) bp.start = t.start;   // 工時才能照原本的期間攤開
+        if (!best.owner && t.owner && t.owner !== "雅婷") bp.owner = t.owner;
+        if (t.status === "完成" && best.st !== "done") { bp.st = "done"; bp.done = today(); }
+        else if (t.status === "進行中" && (best.st || "todo") === "todo") bp.st = "doing";
+        if (Object.keys(bp).length) bWrites.push([best.id, bp, false]);
+        return;
+      }
+      const ex = t.cat === "學業" ? bArr("exams").find(e => e.date === t.start) : null;
+      if (ex) { wbPatch[t.id] = { exam: ex.id }; return; }
+      if (p && isD(t.end)) {
+        const id = "t-wb-" + t.id, st = t.status === "完成" ? "done" : t.status === "進行中" ? "doing" : "todo";
+        const d = { t: t.work, st, start: isD(t.start) ? t.start : t.end, due: t.end, pri: 0, proj: p.id, mod: boardMod(p.area), at: today(), from: "workbench" };
+        if (t.hours != null && t.hours !== "") d.hours = Number(t.hours);
+        if (t.owner && t.owner !== "雅婷") d.owner = t.owner;
+        if (st === "done") d.done = today();
+        bWrites.push([id, d, true]); wbPatch[t.id] = { board: id };
+      }
+    });
+    if (bWrites.filter(w => w[2]).length > 20) { linking = false; toast("甘特圖對看板時要新增的工作太多，先暫停，沒有動資料"); return; }
+    bWrites.forEach(([id, d, isNew]) => {
+      const ref = bdb.collection("tasks").doc(id);
+      (isNew ? ref.set(d) : ref.update(d)).catch(() => {});
+      B.tasks[id] = Object.assign({}, B.tasks[id], d);
+    });
+    write("tasks", { boardLink: 1, tasks: wbPatch });
+    const nLink = Object.values(wbPatch).filter(x => x.board).length, nNew = bWrites.filter(w => w[2]).length;
+    toast("甘特圖改讀看板：對上 " + (nLink - nNew) + " 件" + (nNew ? "，補進看板 " + nNew + " 件" : ""));
+  }
+
+  const catColor = cat => /學業|讀書/.test(cat) ? "var(--t-study)" : /商品/.test(cat) ? "var(--t-star)" : /IG|社群/.test(cat) ? "var(--t-ig)" : /課程|行程/.test(cat) ? "var(--t-class)" : "var(--t-due)";
+  function ganttRows() {
+    const c = derive(), rows = [];
+    const wbRow = (t, kind, grp) => ({ src: "wb", id: t.id, kind, grp, label: t.work, sub: t.item, start: t.start, end: t.end, st: t.status || "未開始", done: t.status === "完成", doing: t.status === "進行中" || t.status === "延後", hours: t.hours, owner: t.owner, color: catColor(t.cat), raw: t });
+    if (!B.ready) { c.tasks.forEach(t => rows.push(wbRow(t, t.cat, t.cat))); return rows; }
+    const byStart = (a, b) => (a.start < b.start ? -1 : a.start > b.start ? 1 : a.end < b.end ? -1 : 1);
+    const tasks = bArr("tasks").filter(t => isD(t.due)).map(t => Object.assign(t, { start: isD(t.start) && t.start <= t.due ? t.start : t.due }));
+    const bRow = (t, kind, grp, color) => ({ src: "board", id: t.id, kind, grp, label: t.t, start: t.start, end: t.due, st: BST[t.st] || "待辦", done: t.st === "done", doing: t.st === "doing", hours: t.hours, owner: t.owner, color, raw: t });
+    bArr("projects").sort((a, b) => ((a.start || "9") < (b.start || "9") ? -1 : 1))
+      .forEach(p => tasks.filter(t => t.proj === p.id).sort(byStart).forEach(t => rows.push(bRow(t, "專案", p.name, "var(--t-due)"))));
+    bArr("goals").sort((a, b) => ((a.target || "9") < (b.target || "9") ? -1 : 1))
+      .forEach(g => tasks.filter(t => t.goal === g.id && !t.proj).sort(byStart).forEach(t => rows.push(bRow(t, "學習", g.name, "var(--t-study)"))));
+    bArr("exams").filter(e => isD(e.date)).sort((a, b) => (a.date < b.date ? -1 : 1)).forEach(e => {
+      const end = isD(e.end) && e.end >= e.date ? e.end : e.date;
+      rows.push({ src: "exam", id: e.id, kind: "學習", grp: "考試", label: e.name, start: e.date, end, st: e.kind || "考試", done: end < today(), color: "var(--t-star)", raw: e });
+    });
+    c.tasks.filter(t => !t.board && !t.exam).forEach(t => rows.push(wbRow(t, t.cat === "學業" ? "學習" : t.cat, t.cat === "學業" ? "其他學習行程" : t.cat)));
+    return rows;
+  }
+
   function viewGantt() {
-    const c = derive();
-    const cats = ["全部"].concat([...new Set(c.tasks.map(t => t.cat))]);
-    const tasks = c.tasks.filter(t => ui.gcat === "全部" || t.cat === ui.gcat);
-    const all = c.tasks;
-    if (!all.length) return '<p class="empty">還沒有甘特圖資料。</p>';
-    let minD = all.reduce((a, t) => t.start < a ? t.start : a, all[0].start), maxD = all.reduce((a, t) => t.end > a ? t.end : a, all[0].end);
+    const c = derive(), rows = ganttRows();
+    if (!rows.length) return '<p class="empty">還沒有甘特圖資料。</p>';
+    const kinds = ["全部"].concat([...new Set(rows.map(r => r.kind))]);
+    if (!kinds.includes(ui.gcat)) ui.gcat = "全部";
+    const shown = rows.filter(r => ui.gcat === "全部" || r.kind === ui.gcat);
+    let minD = rows.reduce((a, r) => (r.start < a ? r.start : a), rows[0].start), maxD = rows.reduce((a, r) => (r.end > a ? r.end : a), rows[0].end);
     const w0 = mondayOf(minD), weeks = [];
     for (let w = w0; w <= maxD; w = addDays(w, 7)) weeks.push(w);
     const nowW = mondayOf(today());
-    const BAR = { "未開始": "var(--soft)", "進行中": "var(--t-ig)", "完成": "var(--muted)", "延後": "var(--warn)", "取消": "var(--line)" };
-    const catColor = cat => /學業|讀書/.test(cat) ? "var(--t-study)" : /商品/.test(cat) ? "var(--t-star)" : /IG|社群/.test(cat) ? "var(--t-ig)" : /課程|行程/.test(cat) ? "var(--t-class)" : "var(--t-due)";
-    let h = '<div class="gctl">' + cats.map(k => '<button class="chipbtn" data-act="gcat" data-k="' + esc(k) + '" aria-pressed="' + (ui.gcat === k) + '">' + esc(k) + "</button>").join("")
-      + '<span class="status">點工作名稱可以改日期、狀態或整段延後</span></div>';
-    h += '<div class="gwrap"><table class="g"><thead><tr><th class="nm">工作（' + tasks.length + "）</th>"
+    const BAR = { doing: "var(--t-ig)", late: "var(--warn)" };
+    let h = '<div class="gctl">' + kinds.map(k => '<button class="chipbtn" data-act="gcat" data-k="' + esc(k) + '" aria-pressed="' + (ui.gcat === k) + '">' + esc(k) + "</button>").join("")
+      + '<span class="status">' + (B.ready ? "專案和學習的工作來自看板與學習規劃，在這裡改日期、狀態會同步過去" : "點工作名稱可以改日期、狀態或整段延後") + "</span></div>";
+    h += '<div class="gwrap"><table class="g"><thead><tr><th class="nm">工作（' + shown.length + "）</th>"
       + weeks.map(w => '<th class="wk' + (w === nowW ? " now" : "") + '" title="' + w + '">' + (parse(w).getDate() <= 7 ? (parse(w).getMonth() + 1) + "月" : "") + "</th>").join("") + "</tr></thead><tbody>";
-    let lastCat = null;
-    tasks.forEach(t => {
-      if (t.cat !== lastCat) { lastCat = t.cat; h += '<tr class="grp"><td class="nm">' + esc(t.cat) + '</td><td colspan="' + weeks.length + '"></td></tr>'; }
-      const done = t.status === "完成";
-      const color = t.status === "進行中" || t.status === "延後" ? BAR[t.status] : catColor(t.cat);
-      h += "<tr><td class=\"nm\"><span class=\"w\" data-act=\"gedit\" data-id=\"" + esc(t.id) + "\" title=\"" + esc(t.item + "｜" + t.work) + "\">" + esc(t.work) + "</span><small>" + esc(t.item) + "・" + esc(md(t.start)) + (t.start !== t.end ? "–" + esc(md(t.end)) : "") + "・" + esc(t.status || "未開始") + (t.owner ? "・" + esc(t.owner) : "") + "</small></td>";
+    let lastGrp = null;
+    shown.forEach(r => {
+      if (r.grp !== lastGrp) { lastGrp = r.grp; h += '<tr class="grp"><td class="nm">' + esc(r.grp) + '</td><td colspan="' + weeks.length + '"></td></tr>'; }
+      const key = r.src + ":" + r.id, color = r.doing ? (r.raw && r.raw.status === "延後" ? BAR.late : BAR.doing) : r.color;
+      const meta = [md(r.start) + (r.start !== r.end ? "–" + md(r.end) : ""), r.st, r.owner || "", r.hours ? r.hours + " 小時" : ""].filter(Boolean).join("・");
+      h += '<tr><td class="nm"><span class="w" data-act="' + (r.src === "exam" ? "gexam" : "gedit") + '" data-key="' + esc(key) + '" title="' + esc((r.sub ? r.sub + "｜" : "") + r.label) + '">' + esc(r.label) + "</span><small>" + esc(meta) + "</small></td>";
       weeks.forEach(w => {
-        const we = addDays(w, 6), on = t.start <= we && t.end >= w;
-        h += '<td class="wk' + (w === nowW ? " now" : "") + (on ? " bar" + (done ? " done" : "") : "") + '"' + (on ? ' style="--bar:' + color + '"' : "") + ">" + (on && t.start === t.end ? "◆" : "") + "</td>";
+        const we = addDays(w, 6), on = r.start <= we && r.end >= w;
+        h += '<td class="wk' + (w === nowW ? " now" : "") + (on ? " bar" + (r.done ? " done" : "") : "") + '"' + (on ? ' style="--bar:' + color + '"' : "") + ">" + (on && r.start === r.end ? "◆" : "") + "</td>";
       });
       h += "</tr>";
-      if (ui.gedit === t.id) {
+      if (ui.gedit === key) {
+        const board = r.src === "board", t = r.raw;
         h += '<tr class="edit"><td colspan="' + (weeks.length + 1) + '"><div class="gform">'
-          + "<b>" + esc(t.work) + "</b>"
-          + '<label>開始 <input type="date" id="g-start" value="' + esc(t.start) + '"></label>'
-          + '<label>結束 <input type="date" id="g-end" value="' + esc(t.end) + '"></label>'
-          + '<label>狀態 <select id="g-status">' + TASK_ST.map(s => "<option" + (s === (t.status || "未開始") ? " selected" : "") + ">" + s + "</option>").join("") + "</select></label>"
+          + "<b>" + esc(r.label) + "</b>"
+          + '<label>開始 <input type="date" id="g-start" value="' + esc(r.start) + '"></label>'
+          + '<label>' + (board ? "期限" : "結束") + ' <input type="date" id="g-end" value="' + esc(r.end) + '"></label>'
+          + '<label>狀態 <select id="g-status">' + (board ? Object.keys(BST).map(s => '<option value="' + s + '"' + (s === (t.st || "todo") ? " selected" : "") + ">" + BST[s] + "</option>").join("")
+            : TASK_ST.map(s => "<option" + (s === (t.status || "未開始") ? " selected" : "") + ">" + s + "</option>").join("")) + "</select></label>"
           + '<label>工時 <input type="number" id="g-hours" min="0" step="0.5" value="' + esc(t.hours == null ? "" : t.hours) + '" style="width:80px"></label>'
-          + '<button class="btn primary" data-act="gsave" data-id="' + esc(t.id) + '">儲存</button>'
-          + '<span>整段延後</span>' + [1, 3, 7, 14].map(n => '<button class="btn" data-act="gshift" data-id="' + esc(t.id) + '" data-n="' + n + '">' + n + " 天</button>").join("")
+          + (board ? '<label>負責 <input type="text" id="g-owner" value="' + esc(t.owner || "") + '" placeholder="雅婷" style="width:120px"></label>' : "")
+          + '<button class="btn primary" data-act="gsave" data-key="' + esc(key) + '">儲存</button>'
+          + '<span>整段延後</span>' + [1, 3, 7, 14].map(n => '<button class="btn" data-act="gshift" data-key="' + esc(key) + '" data-n="' + n + '">' + n + " 天</button>").join("")
+          + (board ? '<button class="btn ghost" data-act="gboard" data-k="' + (r.kind === "專案" ? "projectBoard" : "studyPlan") + '">到' + (r.kind === "專案" ? "看板" : "學習規劃") + "</button>" : "")
           + '<button class="btn ghost" data-act="gclose">關閉</button></div></td></tr>';
       }
     });
-    // weekly load: every task's hours spread evenly across its days
+    // 每週負載：看板工作的工時＋工作台自己的工時（接到考試的工作台工作也算），平均攤到每一天
     const load = weeks.map(() => 0);
-    all.forEach(t => {
-      const hrs = Number(t.hours) || 0; if (!hrs) return;
-      const n = diffDays(t.start, t.end) + 1, per = hrs / n;
-      weeks.forEach((w, i) => { const a = t.start > w ? t.start : w, b = t.end < addDays(w, 6) ? t.end : addDays(w, 6); const ov = diffDays(a, b) + 1; if (ov > 0) load[i] += per * ov; });
-    });
+    const spread = (hrs, s, e) => {
+      hrs = Number(hrs) || 0; if (!hrs || !s || !e) return;
+      const n = diffDays(s, e) + 1, per = hrs / n;
+      weeks.forEach((w, i) => { const a = s > w ? s : w, b = e < addDays(w, 6) ? e : addDays(w, 6); const ov = diffDays(a, b) + 1; if (ov > 0) load[i] += per * ov; });
+    };
+    if (B.ready) {
+      bArr("tasks").filter(t => isD(t.due)).forEach(t => spread(t.hours, isD(t.start) && t.start <= t.due ? t.start : t.due, t.due));
+      c.tasks.filter(t => !t.board).forEach(t => spread(t.hours, t.start, t.end));
+    } else c.tasks.forEach(t => spread(t.hours, t.start, t.end));
     h += '<tr class="load"><td class="nm"><b>每週負載（小時）</b><small>綠 &lt;20・黃 20–29・紅 ≥30</small></td>'
       + load.map((v, i) => { const r = Math.round(v); return '<td class="wk' + (weeks[i] === nowW ? " now" : "") + '" style="background:var(' + (r < 20 ? "--load-g" : r < 30 ? "--load-y" : "--load-r") + ')">' + r + "</td>"; }).join("") + "</tr>";
     return h + "</tbody></table></div>";
@@ -670,16 +792,27 @@ html.in-dt header.top, html.in-dt nav.tabs a[data-v="today"] { display: none }
     else if (a === "month") location.hash = "cal-" + b.dataset.to;
     else if (a === "add") { const day = ui.day || today(); addItem(day, document.getElementById("addtag").value, document.getElementById("addtitle").value); }
     else if (a === "gcat") { ui.gcat = b.dataset.k; ui.gedit = null; render(); }
-    else if (a === "gedit") { ui.gedit = ui.gedit === id ? null : id; render(); }
+    else if (a === "gedit") { const k = b.dataset.key; ui.gedit = ui.gedit === k ? null : k; render(); }
+    else if (a === "gexam") { if (window.DTNav) window.DTNav("exams"); }
+    else if (a === "gboard") { if (window.DTNav) window.DTNav(b.dataset.k); }
     else if (a === "gclose") { ui.gedit = null; render(); }
     else if (a === "gsave") {
       const s = document.getElementById("g-start").value, en = document.getElementById("g-end").value;
       if (!s || !en || en < s) { toast("結束日要在開始日之後"); return; }
-      const hv = document.getElementById("g-hours").value;
-      setTask(id, { start: s, end: en, status: document.getElementById("g-status").value, hours: hv === "" ? null : Number(hv) });
+      const hv = document.getElementById("g-hours").value, hours = hv === "" ? null : Number(hv);
+      const [src, tid] = splitKey(b.dataset.key), stv = document.getElementById("g-status").value;
+      if (src === "board") {
+        const t = B.tasks[tid] || {}, p = { start: s, due: en, hours, owner: document.getElementById("g-owner").value.trim() };
+        if (stv !== (t.st || "todo")) { p.st = stv; p.done = stv === "done" ? today() : null; }
+        bPatch(tid, p);
+      } else setTask(tid, { start: s, end: en, status: stv, hours });
       toast("已儲存");
     }
-    else if (a === "gshift") { const t = derive().tasks.find(x => x.id === id); const n = Number(b.dataset.n); if (t) { setTask(id, { start: addDays(t.start, n), end: addDays(t.end, n), moved: (t.moved || 0) + 1 }); toast("整段延後 " + n + " 天"); } }
+    else if (a === "gshift") {
+      const [src, tid] = splitKey(b.dataset.key), n = Number(b.dataset.n);
+      if (src === "board") { const t = B.tasks[tid]; if (t && isD(t.due)) { const st = isD(t.start) && t.start <= t.due ? t.start : t.due; bPatch(tid, { start: addDays(st, n), due: addDays(t.due, n) }); toast("整段延後 " + n + " 天"); } }
+      else { const t = derive().tasks.find(x => x.id === tid); if (t) { setTask(tid, { start: addDays(t.start, n), end: addDays(t.end, n), moved: (t.moved || 0) + 1 }); toast("整段延後 " + n + " 天"); } }
+    }
     else if (a === "igall") { ui.igShowAll = !ui.igShowAll; render(); }
     else if (a === "shifttrack") { const k = b.dataset.k; shiftTrack(k, document.getElementById("sf-" + k).value || today(), document.getElementById("sn-" + k).value); }
   });
@@ -706,6 +839,7 @@ html.in-dt header.top, html.in-dt nav.tabs a[data-v="today"] { display: none }
     db = await window.claude.use("db");
     if (!db) { status.textContent = "還沒登入"; $main.innerHTML = '<p class="empty">在平台右上角用 Google 登入後，就能看到工作台的資料。</p>'; return; }
     col = db.collection("plan");
+    boardBoot();
     const timer = setTimeout(() => { if (!S.loaded) status.textContent = "資料庫暫時連不上，稍後會自動重試"; }, 10000);
     col.onSnapshot(snap => {
       let touched = false;
@@ -717,12 +851,13 @@ html.in-dt header.top, html.in-dt nav.tabs a[data-v="today"] { display: none }
         if (JSON.stringify(body) === JSON.stringify(S.docs[d.id])) return;
         S.docs[d.id] = clone(body); touched = true;
       });
-      if (!snap.metadata.fromCache) { clearTimeout(timer); status.textContent = "已同步・" + derive().items.length + " 個事項"; }
+      if (!snap.metadata.fromCache) { S.server = true; clearTimeout(timer); status.textContent = "已同步・" + derive().items.length + " 個事項"; }
       if (!S.loaded && (snap.size || !snap.metadata.fromCache)) {
         S.loaded = true; touched = true;
         if (!snap.size) { $main.innerHTML = '<p class="empty">工作台還沒有資料。到平台的「擴充」頁按「匯入資料」，把工作台的資料匯進來。</p>'; return; }
       }
       if (touched) { rev++; const a = document.activeElement; if (!a || (a.tagName !== "TEXTAREA" && a.type !== "text" && a.type !== "number")) render(); else status.textContent = "有新資料，離開輸入框後更新"; }
+      linkBoard();
     }, err => { clearTimeout(timer); status.textContent = "資料庫連線中斷：" + (err && err.code || ""); });
   })();
 })();
