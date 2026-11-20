@@ -606,8 +606,12 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     const m = modById(t.mod); if (m) return { label: m.name, ac: acolByArea(m.area) };
     return { label: "未分類", ac: "var(--c6)" };
   }
+  // 已經內建的網站（單字、考古題、筆記）連結改成在平台裡打開，不跳出去
+  const SITE_TYPES = [[/donna12301230\.github\.io\/vocab-trainer/i, "vocabApp"], [/donna12301230\.github\.io\/nsysu-mis-exams/i, "nsysuApp"], [/donna12301230\.github\.io\/os-notes/i, "osNotesApp"], [/donna12301230\.github\.io\/genai-lecture-notes/i, "genaiApp"]];
   function linkChip(l, ac) {
     const u = safeUrl(l.url); if (!u) return "";
+    const st = SITE_TYPES.find(x => x[0].test(u)), im = st && cfg().mods.find(x => x.type === st[1] && !x.hidden);
+    if (im) return '<a class="lk" href="#m-' + esc(im.id) + '"' + (ac ? ' style="--ac:' + ac + '"' : "") + ">" + esc(l.t || im.name) + "</a>";
     return '<a class="lk" href="' + esc(u) + '" target="_blank" rel="noopener"' + (ac ? ' style="--ac:' + ac + '"' : "") + ">" + esc(l.t || host(u)) + "</a>";
   }
   function confirmBtn(key, label, q) {
@@ -664,6 +668,57 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
   }
   const upcomingExams = () => { const t0 = today(); return arr("exams").filter(e => isDate(e.date) && (isDate(e.end) ? e.end : e.date) >= t0).sort(byDate); };
 
+  /* ═════════ 考試準備清單併進學習目標（一次性） ═════════ */
+  // 考試接到一個學習目標（e.goal）；準備清單裡目標已經有的步驟不重複，沒有的變成目標的步驟（文字裡有日期就當期限）。
+  // 原本的清單留在 e.prepMerged 當備份。新建的考試直接選學習目標，不再有準備清單。
+  const prepSeen = new Set();
+  function dateIn(txt, examDate) {
+    const all = [...String(txt).matchAll(/(\d{1,2})\/(\d{1,2})/g)], m = all[all.length - 1];
+    if (!m || !isDate(examDate)) return "";
+    const pad = n => String(n).padStart(2, "0"), y = +examDate.slice(0, 4);
+    let d = y + "-" + pad(m[1]) + "-" + pad(m[2]);
+    if (!isDate(d)) return "";
+    if (d > examDate) d = (y - 1) + d.slice(4);
+    return d;
+  }
+  function guessGoal(e) {
+    const goals = arr("goals");
+    const same = goals.find(g => isDate(e.date) && g.target === e.date);
+    if (same) return same.id;
+    let best = null, bs = 0.45;
+    goals.forEach(g => { const sc = simScore(g.name, e.name); if (sc >= bs) { bs = sc; best = g; } });
+    return best ? best.id : "";
+  }
+  function mergeExamPrep() {
+    if (!live || !canWrite || !db) return;
+    arr("exams").filter(e => !prepSeen.has(e.id) && e.prepMerged === undefined && (e.goal === undefined || (e.prep || []).length)).forEach(e => {
+      prepSeen.add(e.id);
+      const gid = e.goal && S.goals[e.goal] ? e.goal : guessGoal(e), g = gid ? S.goals[gid] : null;
+      const prep = Array.isArray(e.prep) ? e.prep : [];
+      if (g) {
+        const steps = arr("tasks").filter(t => t.goal === gid), cover = {};
+        prep.forEach((p, i) => {
+          const txt = String(p.t || "").trim(); if (!txt) return;
+          const hits = steps.filter(t => simScore(t.t, txt) >= 0.6);
+          const onlyContain = hits.length > 1 && hits.every(t => { const a = normT(t.t), b = normT(txt); return a.includes(b) || b.includes(a); });
+          if (hits.length && !onlyContain) {   // 目標裡已經有這一步
+            const hit = hits.sort((a, b) => simScore(b.t, txt) - simScore(a.t, txt))[0];
+            (cover[hit.id] = cover[hit.id] || []).push(!!p.done);
+            return;
+          }
+          const id = "t-prep-" + e.id + "-" + (p.id || i);
+          if (S.tasks[id]) return;
+          const name = /期中|期末/.test(e.kind || "") ? e.kind + "準備：" + txt : txt;   // 期中、期末考的清單通常只寫科目名稱
+          const d = { t: name, st: p.done ? "done" : "todo", due: dateIn(txt, e.date) || addDays(e.date, -1), pri: 0, goal: gid, mod: g.mod || "", at: today(), from: "exam" };
+          if (p.done) d.done = today();
+          put("tasks", id, d);
+        });
+        Object.keys(cover).forEach(tid => { if (cover[tid].every(Boolean) && S.tasks[tid] && S.tasks[tid].st !== "done") setTaskStatus(tid, "done"); });
+      }
+      patch("exams", e.id, { goal: gid, prep: [], prepMerged: prep });
+    });
+  }
+
   /* ═════════ 工作台資料（今天頁直接讀，不再另外列一份） ═════════ */
   let wbMemo = null;
   const wbModId = () => (cfg().mods.find(x => x.type === "workbenchApp" && !x.hidden) || {}).id || "";
@@ -701,15 +756,16 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     const t = s.replace(/[（(][^）)]*[）)]/g, "");
     return (t.trim() ? t : s).replace(/[^0-9a-z㐀-鿿]/g, "");
   }
-  function similarT(a, b) {
+  function simScore(a, b) {
     const x = normT(a), y = normT(b);
-    if (x.length < 2 || y.length < 2) return false;
-    if (x.includes(y) || y.includes(x)) return true;
+    if (x.length < 2 || y.length < 2) return 0;
+    if (x.includes(y) || y.includes(x)) return 1;
     const bg = s => { const o = {}; for (let i = 0; i < s.length - 1; i++) { const k = s.slice(i, i + 2); o[k] = (o[k] || 0) + 1; } return o; };
     const A = bg(x), B = bg(y); let n = 0;
     Object.keys(A).forEach(k => { if (B[k]) n += Math.min(A[k], B[k]); });
-    return (2 * n) / (x.length - 1 + y.length - 1) >= 0.45;
+    return (2 * n) / (x.length - 1 + y.length - 1);
   }
+  const similarT = (a, b) => simScore(a, b) >= 0.45;
   let twinMemo = { k: null, m: {} };
   function twinsOn(d) {
     const W = wbData(); if (!W) return new Map();
@@ -1122,9 +1178,11 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     const steps = tasks.filter(t => t.goal === g.id).sort(byDue), dn = steps.filter(t => t.st === "done"), open = steps.filter(t => t.st !== "done");
     const pct = steps.length ? Math.round(dn.length / steps.length * 100) : 0, ed = ui.gedit === g.id, gid = esc(g.id);
     const n = isDate(g.target) ? diff(today(), g.target) : null;
+    const exs = arr("exams").filter(e => e.goal === g.id && isDate(e.date)).sort(byDate), sameDay = exs.some(e => e.date === g.target);
     let h = '<section class="panel"><div class="goal-h"><h3>' + esc(g.name) + '</h3><div class="ring" style="--p:' + pct + '"><span>' + pct + "%</span></div>"
       + '<div class="goal-meta">' + (g.cat ? '<span class="chip ctx">' + esc(g.cat) + "</span>" : "")
-      + (n !== null ? '<span class="chip' + (n >= 0 && n <= 30 ? " warn" : "") + '">目標日 ' + mdw(g.target) + "・" + (n > 0 ? "還有 " + n + " 天" : n === 0 ? "就是今天" : "已過 " + -n + " 天") + "</span>" : "")
+      + exs.map(e => { const k = diff(today(), e.date); return '<a class="chip' + (k >= 0 && k <= 30 ? " warn" : "") + '" href="#m-' + esc(e.mod) + '" title="' + esc(e.name) + '">' + esc(exs.length > 1 ? e.name : !e.kind || e.kind === g.cat ? "考試" : e.kind) + " " + mdw(e.date) + "・" + (k > 0 ? "還有 " + k + " 天" : k === 0 ? "就是今天" : "已考完") + "</a>"; }).join("")
+      + (n !== null && !sameDay ? '<span class="chip' + (n >= 0 && n <= 30 ? " warn" : "") + '">目標日 ' + mdw(g.target) + "・" + (n > 0 ? "還有 " + n + " 天" : n === 0 ? "就是今天" : "已過 " + -n + " 天") + "</span>" : "")
       + (safeUrl(g.url) ? linkChip({ t: "資源", url: g.url }) : "")
       + '<span class="grow"></span><button class="btn ghost sm" data-act="gedit" data-id="' + gid + '" aria-expanded="' + ed + '">' + (ed ? "收起" : "編輯目標") + "</button></div>"
       + (g.note && !ed ? '<p class="goal-note">' + esc(g.note) + "</p>" : "") + "</div>";
@@ -1221,7 +1279,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     const up = all.filter(e => isDate(e.date) && (isDate(e.end) ? e.end : e.date) >= t0).sort(byDate);
     const past = all.filter(e => !up.includes(e)).sort((a, b) => ((b.date || "") > (a.date || "") ? 1 : -1));
     let h = '<div class="toolbar"><h3 class="sec">接下來的考試</h3><span class="grow"></span><button class="btn primary" data-act="enew" aria-expanded="' + ui.enew + '">＋ 新增考試</button></div>';
-    if (ui.enew) h += '<section class="panel" style="margin-bottom:14px"><div class="addline" data-form style="border-top:0"><input type="text" id="ex-name" placeholder="考試名稱" data-enter="ecreate" aria-label="考試名稱"><input type="date" id="ex-date" aria-label="考試日期"><select id="ex-kind" aria-label="種類">' + EXAM_KINDS.map(k => "<option>" + k + "</option>").join("") + '</select><button class="btn primary" data-act="ecreate" data-mod="' + esc(m.id) + '">加入</button><button class="btn ghost" data-act="enew">取消</button></div></section>';
+    if (ui.enew) h += '<section class="panel" style="margin-bottom:14px"><div class="addline" data-form style="border-top:0"><input type="text" id="ex-name" placeholder="考試名稱" data-enter="ecreate" aria-label="考試名稱"><input type="date" id="ex-date" aria-label="考試日期"><select id="ex-kind" aria-label="種類">' + EXAM_KINDS.map(k => "<option>" + k + "</option>").join("") + '</select><select id="ex-goal" aria-label="學習目標">' + goalOpts("") + '</select><button class="btn primary" data-act="ecreate" data-mod="' + esc(m.id) + '">加入</button><button class="btn ghost" data-act="enew">取消</button></div></section>';
     h += up.length ? '<div class="exams">' + up.map(examCard).join("") + "</div>" : '<div class="panel empty"><b>沒有排定的考試</b>按「新增考試」寫下名稱和日期，就會出現倒數。</div>';
     if (past.length) {
       h += '<h3 class="sec" style="margin:26px 0 12px">已經考完</h3><section class="panel"><div class="tscroll"><table class="t"><thead><tr><th>日期</th><th>考試</th><th>成績</th><th>備註</th><th></th></tr></thead><tbody>'
@@ -1232,24 +1290,29 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
   }
   function examCard(e) {
     const t0 = today(), n = diff(t0, e.date), during = isDate(e.end) && e.date <= t0 && t0 <= e.end, open = ui.exam === e.id;
-    const prep = e.prep || [], pd = prep.filter(x => x.done).length, pct = prep.length ? Math.round(pd / prep.length * 100) : 0;
+    const g = e.goal && S.goals[e.goal], gm = g && modById(g.mod);
+    const steps = g ? arr("tasks").filter(t => t.goal === e.goal) : [], pd = steps.filter(t => t.st === "done").length, pct = steps.length ? Math.round(pd / steps.length * 100) : 0;
+    const next = steps.filter(t => t.st !== "done" && isDate(t.due)).sort(byDue)[0];
     return '<section class="panel exam' + (n <= 14 ? " soon" : "") + '"><div class="exam-cd">' + (during ? "<b>考</b><small>考試期間</small>" : n === 0 ? "<b>0</b><small>就是今天</small>" : "<b>" + n + "</b><small>天後</small>") + "</div>"
       + '<div class="exam-body"><h3>' + esc(e.name) + (e.kind ? '<span class="chip">' + esc(e.kind) + "</span>" : "") + "</h3>"
       + '<div class="row-meta"><span class="chip mono">' + ymd(e.date) + "（" + WD[dow(e.date)] + "）" + (isDate(e.end) && e.end !== e.date ? " – " + (e.end.slice(0, 4) !== e.date.slice(0, 4) ? ymd(e.end) : md(e.end)) : "") + "</span>" + (e.place ? '<span class="chip">' + esc(e.place) + "</span>" : "") + (e.score ? '<span class="chip ok">成績 ' + esc(e.score) + "</span>" : "") + (safeUrl(e.url) ? linkChip({ t: "練習", url: e.url }) : "") + "</div>"
       + (e.note ? '<p class="muted small">' + esc(e.note) + "</p>" : "")
-      + (prep.length ? '<div class="pc-line"><span>準備進度 ' + pd + " / " + prep.length + '</span></div><span class="meter' + (pct === 100 ? " full" : "") + '"><i style="width:' + pct + '%"></i></span>' : "")
-      + '<div><button class="btn sm" data-act="eopen" data-id="' + esc(e.id) + '" aria-expanded="' + open + '">' + (open ? "收起" : "準備清單與編輯") + "</button></div></div>"
+      + (g ? '<div class="pc-line"><span>準備：學習目標「' + esc(g.name) + "」完成 " + pd + " / " + steps.length + " 步</span></div>" + (steps.length ? '<span class="meter' + (pct === 100 ? " full" : "") + '"><i style="width:' + pct + '%"></i></span>' : "")
+        + (next ? '<p class="muted small" style="margin:6px 0 0">下一步：' + esc(next.t) + "・" + mdw(next.due) + "</p>" : "")
+        : '<p class="muted small" style="margin:6px 0 0">還沒接到學習目標。按「編輯」選一個，準備步驟就寫在那個目標裡。</p>')
+      + '<div class="btnrow">' + (gm ? '<a class="btn sm" href="#m-' + esc(gm.id) + '">看準備步驟</a>' : "") + '<button class="btn ghost sm" data-act="eopen" data-id="' + esc(e.id) + '" aria-expanded="' + open + '">' + (open ? "收起" : "編輯") + "</button></div></div>"
       + (open ? '<div class="exam-edit">' + examEditor(e) + "</div>" : "") + "</section>";
   }
   function examEditor(e) {
     const id = esc(e.id), f = (k, label, type, v, ph) => "<span>" + label + '</span><input type="' + type + '" id="e-' + k + "-" + id + '" value="' + esc(v || "") + '" data-act="efield" data-id="' + id + '" data-k="' + k + '"' + (ph ? ' placeholder="' + esc(ph) + '"' : "") + ">";
-    return '<div class="pd" style="padding:12px"><div class="stack">' + checklist("準備清單", "例如：第 1–5 章、考古題兩回、模考。", e.prep || [], "exams", e.id, "prep") + "</div>"
-      + '<div class="stack"><div class="fields">' + f("name", "名稱", "text", e.name) + f("date", "日期", "date", e.date) + f("end", "結束日", "date", e.end)
+    return '<div class="stack" style="padding:12px"><div class="fields">' + f("name", "名稱", "text", e.name) + f("date", "日期", "date", e.date) + f("end", "結束日", "date", e.end)
+      + '<span>學習目標</span><select id="e-goal-' + id + '" data-act="efield" data-id="' + id + '" data-k="goal">' + goalOpts(e.goal) + "</select>"
       + '<span>種類</span><select id="e-kind-' + id + '" data-act="efield" data-id="' + id + '" data-k="kind">' + EXAM_KINDS.map(k => "<option" + sel(e.kind === k) + ">" + k + "</option>").join("") + "</select>"
       + f("place", "地點", "text", e.place, "考場或線上") + f("url", "練習網址", "url", e.url, "https://…") + f("score", "成績", "text", e.score, "考完再填")
       + '<span>備註</span><textarea id="e-note-' + id + '" rows="2" data-act="efield" data-id="' + id + '" data-k="note">' + esc(e.note || "") + "</textarea></div>"
-      + "<div>" + confirmBtn("edel:" + e.id, "刪除這場考試", "確定刪除？") + "</div></div></div>";
+      + "<div>" + confirmBtn("edel:" + e.id, "刪除這場考試", "確定刪除？") + "</div></div>";
   }
+  const goalOpts = cur => '<option value="">不接學習目標</option>' + arr("goals").sort((a, b) => String(a.name).localeCompare(String(b.name), "zh-Hant")).map(g => '<option value="' + esc(g.id) + '"' + sel(cur === g.id) + ">" + esc(g.name) + "</option>").join("");
 
   /* ═════════ 單字 ═════════ */
   function vVocab(m) {
@@ -1476,7 +1539,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     ui.confirm = null;
     if (kind === "tdel") { del("tasks", id); ui.tedit = null; }
     else if (kind === "pdel") { arr("tasks").filter(t => t.proj === id).forEach(t => patch("tasks", t.id, { proj: null }, true)); del("projects", id); ui.proj = null; }
-    else if (kind === "gdel") { arr("tasks").filter(t => t.goal === id).forEach(t => del("tasks", t.id)); del("goals", id); ui.gedit = null; }
+    else if (kind === "gdel") { arr("tasks").filter(t => t.goal === id).forEach(t => del("tasks", t.id)); arr("exams").filter(e => e.goal === id).forEach(e => patch("exams", e.id, { goal: "" }, true)); del("goals", id); ui.gedit = null; }
     else if (kind === "ndel") { del("notes", id); ui.note = null; }
     else if (kind === "edel") { del("exams", id); ui.exam = null; }
     else if (kind === "moddel") { const c = clone(cfg()); c.mods = c.mods.filter(m => m.id !== id); setCfg(c); }
@@ -1631,7 +1694,8 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
     ecreate: el => {
       const name = val("ex-name"), d = val("ex-date");
       if (!name || !isDate(d)) { toast("請填考試名稱和日期"); return false; }
-      if (put("exams", uid("e"), { mod: el.dataset.mod, name, date: d, end: "", kind: val("ex-kind"), place: "", url: "", prep: [], score: "", note: "" })) ui.enew = false;
+      const goal = S.goals[val("ex-goal")] ? val("ex-goal") : "";
+      if (put("exams", uid("e"), { mod: el.dataset.mod, name, date: d, end: "", kind: val("ex-kind"), place: "", url: "", goal, score: "", note: "" })) ui.enew = false;
     },
     eopen: el => { ui.exam = ui.exam === el.dataset.id ? null : el.dataset.id; ui.confirm = null; },
     vadd: el => { const d = today(), mid = el.dataset.mod; setDay(d, { vc: { [mid]: Math.max(0, vCount(mid, d) + Number(el.dataset.n)) } }); },
@@ -1754,6 +1818,7 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
       if (k === "name" && !v) { render(true); return; }
       if (k === "date" && !isDate(v)) return;
       if (k === "url" && v && !safeUrl(v)) { toast("網址要以 https:// 開頭"); return; }
+      if (k === "goal" && v && !S.goals[v]) return;
       patch("exams", id, { [k]: v });
     },
     gfield: el => {
@@ -1893,13 +1958,13 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
       db.collection(c).onSnapshot(snap => {
         const m = {};
         snap.docs.forEach(x => { m[x.id] = x.data(); known.add(c + "/" + x.id); });
-        S[c] = m; noteSnap(c, snap.metadata); schedule();
+        S[c] = m; noteSnap(c, snap.metadata); mergeExamPrep(); schedule();
       }, subErr);
     });
     db.doc("cfg/main").onSnapshot(snap => {
       S.cfg = snap.exists ? snap.data() : null;
       if (snap.exists) known.add("cfg/main");
-      noteSnap("cfg", snap.metadata); schedule();
+      noteSnap("cfg", snap.metadata); mergeExamPrep(); schedule();
     }, subErr);
     try { wbDb = window.DT ? await DT.dbFor("workbench") : null; } catch (e) { wbDb = null; }
     wbSubscribe(); schedule();
