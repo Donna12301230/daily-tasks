@@ -369,6 +369,8 @@ table.t thead th { color: var(--muted); font-weight: 500; border-top: 0 }
 .pmg .tscroll { border: 1px solid var(--line); border-left: 4px solid var(--gc); border-radius: 10px; background: var(--surface) }
 table.pm { width: 100%; min-width: 760px; border-collapse: collapse; font-size: .86rem; table-layout: fixed }
 table.pm th.c-st { width: 88px } table.pm th.c-d { width: 124px } table.pm th.c-pri { width: 78px } table.pm th.c-note { width: 18% } table.pm th.c-grp { width: 112px } table.pm th.c-more { width: 52px }
+/* 任務欄沒有固定寬度，拿其他欄剩下的空間；表格太窄時會被擠成 0。最小寬度讓任務欄至少留 220px（其他欄固定寬 578px、有分群再加 112px，備註占 18%），不夠寬就左右捲動 */
+@media (min-width: 681px) { table.pm { min-width: 980px } table.pm.has-grp { min-width: 1110px } }
 table.pm th { font-weight: 500; color: var(--muted); text-align: center; padding: 7px 6px; border-bottom: 1px solid var(--line); white-space: nowrap }
 table.pm td { padding: 0; border-bottom: 1px solid var(--line); border-left: 1px solid var(--line); height: 38px; vertical-align: middle }
 table.pm td:first-child { border-left: 0 }
@@ -1449,7 +1451,7 @@ table.pm td.c-key { text-align: center }
       + '<span class="muted small">' + items.length + " 項</span><span class=\"grow\"></span>"
       + (g.custom ? confirmBtn("grpdel:" + pid + ":" + g.id, "刪除分群", "刪除分群？裡面的細項會回到待辦／已完成") : "") + "</div>";
     if (folded) return h + "</section>";
-    h += '<div class="tscroll"><table class="pm"><thead><tr><th class="c-ck"></th><th class="c-t">任務</th><th class="c-st">狀態</th><th class="c-d">開始</th><th class="c-d">到期日</th><th class="c-pri">優先順序</th><th class="c-key">重要日期</th><th class="c-note">備註</th>' + (groups.length ? '<th class="c-grp">分群</th>' : "") + '<th class="c-more"></th></tr></thead><tbody>'
+    h += '<div class="tscroll"><table class="pm' + (groups.length ? " has-grp" : "") + '"><thead><tr><th class="c-ck"></th><th class="c-t">任務</th><th class="c-st">狀態</th><th class="c-d">開始</th><th class="c-d">到期日</th><th class="c-pri">優先順序</th><th class="c-key">重要日期</th><th class="c-note">備註</th>' + (groups.length ? '<th class="c-grp">分群</th>' : "") + '<th class="c-more"></th></tr></thead><tbody>'
       + items.map(t => pmRow(t, groups, cols)).join("")
       + (g.id === "_done" ? "" : '<tr class="pm-add" data-form><td></td><td class="c-t" colspan="' + (cols - 2) + '"><input type="text" id="pa-' + esc(key) + '" placeholder="＋ 新增任務" data-enter="ttadd" aria-label="新增任務到「' + esc(g.name) + '」"></td><td class="c-more"><button class="btn ghost sm" data-act="ttadd" data-p="' + esc(pid) + '" data-g="' + esc(g.custom ? g.id : "") + '" data-k="' + esc(key) + '">加入</button></td></tr>')
       + "</tbody><tfoot>" + pmSummary(items, groups) + "</tfoot></table></div></section>";
