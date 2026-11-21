@@ -85,6 +85,8 @@ nav.tabs a:focus-visible, button:focus-visible, textarea:focus-visible, select:f
 .qbody { grid-column: 1 / -1; display: grid; gap: 6px; margin-top: 2px; min-width: 0 }
 .crop { position: relative; overflow: hidden; width: 100%; max-width: 900px; border: 1px solid var(--line); border-radius: 6px; background: #fff }
 .crop img { position: absolute; left: 0; width: 100%; max-width: none; display: block }
+.cropwrap { max-width: 900px; overflow-x: auto; border-radius: 6px }
+.zoombtn { display: none }
 .minibtns { display: flex; flex-wrap: wrap; gap: 4px 14px }
 .minibtns button { background: none; border: 0; color: var(--accent); font: .8rem var(--font-body); cursor: pointer; padding: 0 }
 .qtx { margin: 0; padding: 10px 12px; background: var(--bg); border-radius: 6px; white-space: pre-wrap; overflow-wrap: anywhere; font: .86rem/1.6 var(--font-body) }
@@ -153,9 +155,16 @@ nav.tabs a:focus-visible, button:focus-visible, textarea:focus-visible, select:f
   .rail { position: static; max-height: none }
   .chips { grid-template-columns: repeat(6, 1fr) }
   .chapview { grid-template-columns: minmax(0, 1fr) }
-  .q, .row { grid-template-columns: 78px minmax(0, 1fr) }
+  .q, .row { grid-template-columns: 64px minmax(0, 1fr) }
   .q .st, .row > :last-child { grid-column: 2 }
   .stats { display: none }
+  /* 手機：按鈕加大比較好點；原卷截圖點一下放大 */
+  .st button { padding: 5px 10px }
+  .minibtns button, .ans .toggle { padding: 6px 0 }
+  .zoombtn { display: inline }
+  .cropwrap { cursor: zoom-in }
+  .cropwrap.zoom { cursor: zoom-out }
+  .cropwrap.zoom .crop { width: 220%; max-width: none }
 }
 @media (prefers-reduced-motion: no-preference) { .page.flash { transition: box-shadow .4s } }
 </style>
@@ -343,7 +352,13 @@ html.in-dt nav.tabs a.dt-hide { display: none }
     ans.appendChild(ta);
     const pg = p.pages[q.p - 1];
     const qb = el("div", { class: "qbody" });
-    qb.appendChild(cropEl(pg, q.crop || [0, 1], q.id + " 原卷"));
+    const cw = cropEl(pg, q.crop || [0, 1], q.id + " 原卷");
+    qb.appendChild(cw);
+    // 手機上截圖縮得很小：按「放大原卷」或直接點截圖放大（可以左右捲動），再按一次縮回
+    const bz = el("button", { type: "button", class: "zoombtn", text: "放大原卷" });
+    const zoom = () => { const on = cw.classList.toggle("zoom"); bz.textContent = on ? "縮小原卷" : "放大原卷"; };
+    bz.addEventListener("click", zoom);
+    cw.addEventListener("click", () => { if (window.matchMedia("(max-width: 760px)").matches) zoom(); });
     if (!q.crop) qb.appendChild(el("span", { class: "qwarn", text: "這題沒能單獨切出來，上面是整頁原卷，請找第 " + q.id.replace(/^\d+[\s-]*/, "") + " 題。" }));
     const note = (DATA.notes || {})[p.s + ":" + q.id];
     const tx = el("pre", { class: "qtx", text: (q.tx || pg.txt || "") + "\n\n（電腦辨識的文字，可能有錯字，以原卷為準）" });
@@ -359,7 +374,7 @@ html.in-dt nav.tabs a.dt-hide { display: none }
       bn.addEventListener("click", () => { ana.hidden = !ana.hidden; bn.textContent = ana.hidden ? "看解析" : "收起解析"; });
       mb.append(bn);
     }
-    mb.append(bt, tog);
+    mb.append(bt, bz, tog);
     qb.append(mb);
     if (ana) qb.append(ana);
     qb.append(tx, ta);
@@ -408,7 +423,7 @@ html.in-dt nav.tabs a.dt-hide { display: none }
     const img = el("img", { src: pg.img, alt: alt, loading: "lazy" });
     img.style.top = (-(y0 / (y1 - y0)) * 100).toFixed(3) + "%";
     box.appendChild(img);
-    return box;
+    return el("div", { class: "cropwrap" }, [box]);   // 外層可以左右捲動，放大時用
   }
   function renderYear(focus, keepScroll) {
     const p = PAPERS[curPaper];

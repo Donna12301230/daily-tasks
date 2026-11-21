@@ -109,7 +109,22 @@ textarea { width: 100%; resize: vertical; min-height: 44px }
 .ln span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0 }
 .ln.done span { text-decoration: line-through; color: var(--muted) }
 .more { font-size: .72rem; color: var(--muted) }
+.more .short { display: none }
 .cell .lns { display: grid; gap: 2px; min-width: 0 }
+/* 手機版月曆下方的逐天清單（電腦版格子裡已經有文字，不顯示） */
+.agenda { display: none; margin-top: 16px; gap: 10px }
+.agday { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; scroll-margin-top: 12px }
+.agday.past { opacity: .7 }
+.agday.today { border-color: var(--accent) }
+.agday.flash { box-shadow: 0 0 0 3px var(--accent) }
+.agh { width: 100%; display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--soft); border: 0; border-bottom: 1px solid var(--line); text-align: left; font: 600 .95rem var(--font-body); color: var(--ink) }
+.agh .go { margin-left: auto; font: 500 .8rem var(--font-body); color: var(--accent); white-space: nowrap }
+.agln { display: flex; gap: 8px; align-items: flex-start; padding: 8px 12px; border-top: 1px solid var(--line); font-size: .92rem; line-height: 1.45 }
+.agh + .agln { border-top: 0 }
+.agln .tag { margin-top: 1px }
+.agln > span { min-width: 0; overflow-wrap: anywhere }
+.agln small { display: block; color: var(--muted); font-size: .78rem }
+.agln.done > span { text-decoration: line-through; color: var(--muted) }
 
 /* gantt */
 .gctl { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px }
@@ -191,8 +206,17 @@ button.ms:hover > span:nth-child(2) { text-decoration: underline; text-underline
   .ln span { display: none }
   .ln { display: inline-flex }
   .cell .lns { display: flex; flex-wrap: wrap; gap: 3px }
+  .cell .dn i { font-size: 0; width: 7px; height: 7px; border-radius: 50%; background: var(--bad); align-self: center; flex: none }
+  .more { font-size: .68rem; line-height: 1 }
+  .more .full { display: none }
+  .more .short { display: inline }
+  .agenda { display: grid }
   .legend { margin-left: 0 }
   table.g .nm { min-width: 190px; max-width: 190px }
+  /* 名稱欄窄：第二行的日期・狀態・負責人截斷，不要壓到右邊的時間條 */
+  table.g .nm small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+  .ms { grid-template-columns: 74px minmax(0, 1fr) auto; gap: 6px; padding: 8px 12px }
+  .ms .mono { font-size: .76rem }
   .post { grid-template-columns: minmax(0, 1fr) }
 }
 @media (prefers-reduced-motion: no-preference) { .it, .cell { transition: background-color .15s } }
@@ -505,6 +529,7 @@ table.g tr.grp td.nm { box-shadow: inset 4px 0 0 var(--gc, transparent) }
       + (mon === t.slice(0, 7) ? "" : '<button class="btn" data-act="month" data-to="' + t.slice(0, 7) + '">本月</button>')
       + '<div class="legend">' + ["★", "交", "課", "IG", "讀"].map(k => '<span>' + tagChip(k) + esc(TAGNAME[k]) + "</span>").join("") + "</div></div>";
     h += '<div class="cal">' + "一二三四五六日".split("").map(w => '<div class="wd">' + w + "</div>").join("");
+    let ag = "";   // 手機版：月曆格子太小放不下文字，在下方逐天列出這個月的事項
     for (let i = 0; i < 42; i++) {
       const d = addDays(start, i);
       if (i >= 35 && d.slice(0, 7) !== mon) break;
@@ -517,12 +542,18 @@ table.g tr.grp td.nm { box-shadow: inset 4px 0 0 var(--gc, transparent) }
       its.filter(x => x.tag === "讀").forEach(x => lines.push({ tag: "讀", text: x.track + " " + x.title, done: x.done }));
       const late = d < t && its.some(x => !x.done && (x.tag === "交" || x.tag === "讀"));
       const cls = ["cell", d.slice(0, 7) !== mon ? "out" : "", meta.pp ? "ppd" : (meta.rest || dow(d) === 0 ? "rest" : ""), d === t ? "today" : ""].join(" ");
-      h += '<button class="' + cls + '" data-act="openday" data-to="' + d + '" aria-label="' + esc(mdw(d)) + "，" + lines.length + ' 項">'
-        + '<span class="dn"><span>' + parse(d).getDate() + "</span>" + (late ? "<i>未完成</i>" : "") + '</span><span class="lns">'
+      h += '<button class="' + cls + '" data-act="openday" data-to="' + d + '" aria-label="' + esc(mdw(d)) + "，" + lines.length + " 項" + (late ? "，有未完成" : "") + '">'
+        + '<span class="dn"><span>' + parse(d).getDate() + "</span>" + (late ? '<i title="有未完成">未完成</i>' : "") + '</span><span class="lns">'
         + lines.slice(0, 6).map(l => '<span class="ln' + (l.done ? " done" : "") + '" style="--c: var(' + TAGVAR[l.tag] + ')"><span>' + esc(l.text) + "</span></span>").join("")
-        + (lines.length > 6 ? '<span class="more">還有 ' + (lines.length - 6) + " 項</span>" : "") + "</span></button>";
+        + (lines.length > 6 ? '<span class="more"><span class="full">還有 ' + (lines.length - 6) + ' 項</span><span class="short">+' + (lines.length - 6) + "</span></span>" : "") + "</span></button>";
+      if (lines.length && d.slice(0, 7) === mon) {
+        ag += '<section class="agday' + (d < t ? " past" : "") + (d === t ? " today" : "") + '" id="ag-' + d + '">'
+          + '<button class="agh" data-act="openday" data-to="' + d + '"><span>' + esc(mdw(d)) + "</span>" + (d === t ? '<span class="chip">今天</span>' : "") + (late ? '<span class="chip bad">有未完成</span>' : "") + '<span class="go">打開這天 ›</span></button>'
+          + lines.map(l => '<div class="agln' + (l.done ? " done" : "") + '">' + tagChip(l.tag) + "<span>" + esc(l.text) + (l.sub ? "<small>" + esc(l.sub) + "</small>" : "") + "</span></div>").join("")
+          + "</section>";
+      }
     }
-    return h + "</div>";
+    return h + "</div>" + '<div class="agenda">' + (ag || '<p class="empty">這個月沒有排事項。</p>') + "</div>";
   }
 
   // ---------------- 看板資料：甘特圖以平台的「專案管理」看板和「學習規劃」為主，工作台只留不屬於專案的排程
@@ -861,7 +892,12 @@ table.g tr.grp td.nm { box-shadow: inset 4px 0 0 var(--gc, transparent) }
     else if (a === "shiftfrom") { const it = itemById(id); if (it) { ui.open.delete(id); shiftTrack(it.track, it.date, document.getElementById("sh-" + id).value); } }
     else if (a === "del") delItem(id);
     else if (a === "day") location.hash = "day-" + b.dataset.to;
-    else if (a === "openday") location.hash = "day-" + b.dataset.to;
+    else if (a === "openday") {
+      // 手機版點月曆格子：捲到下方清單的那一天；那天沒有事項（清單裡沒有）才打開當天頁面
+      const ag = b.classList.contains("cell") && window.matchMedia("(max-width: 640px)").matches && document.getElementById("ag-" + b.dataset.to);
+      if (ag) { ag.scrollIntoView({ block: "start" }); ag.classList.add("flash"); setTimeout(() => ag.classList.remove("flash"), 1400); }
+      else location.hash = "day-" + b.dataset.to;
+    }
     else if (a === "month") location.hash = "cal-" + b.dataset.to;
     else if (a === "add") { const day = ui.day || today(); addItem(day, document.getElementById("addtag").value, document.getElementById("addtitle").value); }
     else if (a === "gcat") { ui.gcat = b.dataset.k; ui.gedit = null; render(); }

@@ -374,6 +374,8 @@ table.pm td { padding: 0; border-bottom: 1px solid var(--line); border-left: 1px
 table.pm td:first-child { border-left: 0 }
 table.pm th.c-t, table.pm td.c-t { text-align: left; min-width: 220px; position: sticky; left: 34px; background: var(--surface); z-index: 1 }
 table.pm .c-ck { width: 34px; text-align: center; position: sticky; left: 0; background: var(--surface); z-index: 1 }
+/* 合併框線的表格裡，固定欄的框線不會跟著固定：左右捲動時用陰影補上縫隙和分隔線，後面捲過去的內容才不會透出來 */
+table.pm th.c-t, table.pm td.c-t { box-shadow: -1px 0 0 var(--surface), inset 1px 0 0 var(--line), inset -1px 0 0 var(--line) }
 table.pm .c-more { text-align: center }
 table.pm .num { width: 92px }
 table.pm td.c-t input { text-overflow: ellipsis }
@@ -462,8 +464,21 @@ table.pm td.c-key { text-align: center }
   .countdowns { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 6px }
   .cd { grid-template-columns: minmax(0, 1fr); max-width: none; padding: 6px 8px; gap: 2px }
   .cd b { grid-row: auto; font-size: 1.2rem }
-  .cd span { font-size: .74rem }
+  .cd span { font-size: .74rem; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.35 }
   .cd small { display: none }
+  /* 手機：按鈕與勾選框加大，比較好點 */
+  .btn { min-height: 34px }
+  .btn.sm { min-height: 32px; padding: 3px 10px }
+  input[type="checkbox"] { width: 22px; height: 22px }
+  .row > input[type="checkbox"] { margin-top: 1px }
+  /* 手機：每一列的動作按鈕放不下時換到下一行，標題保留大部分寬度 */
+  .row { flex-wrap: wrap }
+  .row-main { flex: 1 1 55% }
+  .row-acts { margin-left: auto }
+  .row-note { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical }
+  /* 手機：專案細項表格的任務欄給固定寬度（固定欄寬的表格會依欄寬總和撐開），名稱才看得到；勾選與任務欄固定在左邊，其他欄左右捲動 */
+  table.pm th.c-t { width: 170px }
+  table.pm th.c-note { width: 160px }
 }
 </style>
 <script>window.DT_APP = "daily";</script>
@@ -543,7 +558,7 @@ table.pm td.c-key { text-align: center }
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
   // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
-  const BUILD = "20261121g";
+  const BUILD = "20261121l";
   const TYPES = {
     today: { label: "今天", desc: "一份清單看完今天：任務、里程碑、考試、工作台的課程與讀書、固定時段。", view: vToday },
     // 總覽的月曆、甘特圖、重要日期共用同一個工作台頁面（frame），只是打開不同的畫面（hash）
