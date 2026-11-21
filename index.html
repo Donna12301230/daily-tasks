@@ -543,7 +543,7 @@ table.pm td.c-key { text-align: center }
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
   // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
-  const BUILD = "20261121f";
+  const BUILD = "20261121g";
   const TYPES = {
     today: { label: "今天", desc: "一份清單看完今天：任務、里程碑、考試、工作台的課程與讀書、固定時段。", view: vToday },
     // 總覽的月曆、甘特圖、重要日期共用同一個工作台頁面（frame），只是打開不同的畫面（hash）
@@ -1181,8 +1181,15 @@ table.pm td.c-key { text-align: center }
   }
   function nsysuProgress() {
     const s = readLS("nsysu-pq-v1"); if (!s) return null;
-    const c = { ok: 0, bad: 0, idk: 0 };
-    Object.keys(s).forEach(pid => Object.values((s[pid] && s[pid].q) || {}).forEach(q => { if (q && c[q.s] != null) c[q.s]++; }));
+    // 考古題的標記：O（ok）、X（bad，舊版的「不會」idk 也算 X）、已讀過（read）三選一，另外可以標「重要」（m）
+    const c = { ok: 0, bad: 0, read: 0, imp: 0 };
+    Object.keys(s).forEach(pid => Object.values((s[pid] && s[pid].q) || {}).forEach(q => {
+      if (!q) return;
+      const k = q.s === "idk" ? "bad" : q.s;
+      if (k === "ok" || k === "bad" || k === "read") c[k]++;
+      if (q.m) c.imp++;
+    }));
+    c.done = c.ok + c.bad + c.read;
     return c;
   }
   // 單字、考古題：只在有東西要做（或有紀錄可看）時出現；沒紀錄就不佔位置
@@ -1197,9 +1204,9 @@ table.pm td.c-key { text-align: center }
         + (v.complete ? "" : '<div><a class="btn" href="#m-' + esc(vm.id) + '//">' + (going ? "繼續複習" : "開始複習") + "</a></div>") + "</div></section>";
     }
     const em = cfg().mods.find(x => x.type === "nsysuApp" && !x.hidden), q = em ? nsysuProgress() : null;
-    if (em && q && q.ok + q.bad + q.idk) {
+    if (em && q && (q.done || q.imp)) {
       h += '<section class="panel" style="--ac:' + acolByArea(em.area) + '"><div class="ph"><h3>考古題</h3><span class="sum"><a href="#m-' + esc(em.id) + '">練習</a></span></div><div class="pb">'
-        + '<div class="btnrow"><span class="chip ok">會 ' + q.ok + '</span><span class="chip bad">錯 ' + q.bad + '</span><span class="chip warn">不會 ' + q.idk + "</span></div></div></section>";
+        + '<div class="btnrow"><span class="chip ok">O ' + q.ok + '</span><span class="chip bad">X ' + q.bad + '</span><span class="chip">已讀過 ' + q.read + '</span><span class="chip warn">重要 ' + q.imp + "</span></div></div></section>";
     }
     return h;
   }
@@ -1645,8 +1652,9 @@ table.pm td.c-key { text-align: center }
     const kids = cfg().mods.filter(x => !x.hidden && parentOf(x) === m.id);
     const stat = x => {
       if (x.type !== "nsysuApp") return "";
-      const q = nsysuProgress(), n = q ? q.ok + q.bad + q.idk : 0;
-      return n ? "已作答 " + n + " 題（會 " + q.ok + "・錯 " + q.bad + "・不會 " + q.idk + "）" : "還沒有作答紀錄";
+      const q = nsysuProgress();
+      if (!q || !(q.done || q.imp)) return "還沒有作答紀錄";
+      return "已做 " + q.done + " 題（O " + q.ok + "・X " + q.bad + "・已讀過 " + q.read + "）" + (q.imp ? "・重要 " + q.imp + " 題" : "");
     };
     const rows = kids.map(x => pickRow({ title: x.name, meta: ((TYPES[x.type] || {}).desc || "") + (stat(x) ? "　" + stat(x) : ""), btns: [{ href: "#m-" + x.id, label: "進入", primary: true }] }));
     return '<h2 class="pick-h">選擇考古題</h2><p class="muted small" style="margin:4px 0 0">每一套考古題分開記錄作答；之後可以再加多益、iPAS 等。</p>'

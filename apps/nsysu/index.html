@@ -41,7 +41,7 @@ nav.tabs a[aria-current="page"] { background: var(--accent); color: var(--paper)
 nav.tabs a:focus-visible, button:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
 .stats { margin-left: auto; display: flex; gap: 10px; align-items: center; font-size: .82rem; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums }
 .stats b { font-weight: 600 }
-.k-ok { color: var(--ok) } .k-bad { color: var(--bad) } .k-idk { color: var(--idk) }
+.k-ok { color: var(--ok) } .k-bad { color: var(--bad) } .k-read { color: var(--accent) } .k-imp { color: var(--idk) }
 
 /* year view */
 .yearview { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 20px; padding-top: 16px }
@@ -75,7 +75,10 @@ nav.tabs a:focus-visible, button:focus-visible, textarea:focus-visible, select:f
 .st button { border: 1px solid var(--line); background: var(--paper); color: var(--muted); border-radius: 6px; font: 500 .8rem var(--font-body); padding: 3px 9px; cursor: pointer }
 .st button[data-v="ok"][aria-pressed="true"] { background: var(--ok-soft); color: var(--ok); border-color: var(--ok) }
 .st button[data-v="bad"][aria-pressed="true"] { background: var(--bad-soft); color: var(--bad); border-color: var(--bad) }
-.st button[data-v="idk"][aria-pressed="true"] { background: var(--idk-soft); color: var(--idk); border-color: var(--idk) }
+.st button[data-v="read"][aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); border-color: var(--accent) }
+.st button[data-v="imp"][aria-pressed="true"] { background: var(--idk-soft); color: var(--idk); border-color: var(--idk) }
+.st button[data-v="ok"], .st button[data-v="bad"] { font-weight: 700; min-width: 32px }
+.st button[data-v="imp"] { margin-left: 6px }
 .ans { grid-column: 2 / -1; display: grid; gap: 4px }
 .ans textarea, .pnote textarea { width: 100%; min-height: 38px; resize: vertical; font: .88rem/1.5 var(--font-body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px }
 .ans .toggle { justify-self: start; background: none; border: 0; color: var(--accent); font: .8rem var(--font-body); cursor: pointer; padding: 0 }
@@ -131,14 +134,14 @@ nav.tabs a:focus-visible, button:focus-visible, textarea:focus-visible, select:f
 .ck .cnt { grid-row: 1 / span 2; grid-column: 2; align-self: center; font: .8rem var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums }
 .bar { grid-column: 1 / -1; display: flex; height: 6px; border-radius: 3px; overflow: hidden; background: var(--line) }
 .bar span { display: block }
-.bar .b-ok { background: var(--ok) } .bar .b-bad { background: var(--bad) } .bar .b-idk { background: var(--idk) }
+.bar .b-ok { background: var(--ok) } .bar .b-bad { background: var(--bad) } .bar .b-read { background: var(--accent) }
 .tag { font-size: .7rem; padding: 1px 6px; border-radius: 4px; background: var(--idk-soft); color: var(--idk); margin-left: 6px; font-weight: 500 }
 .ck .rows { border-top: 1px solid var(--line) }
 .row { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto; gap: 10px; padding: 7px 14px; align-items: center; border-top: 1px solid var(--line); font-size: .88rem }
 .row:first-child { border-top: 0 }
 .row a { color: var(--accent); font-size: .8rem; white-space: nowrap }
 .pill { font-size: .74rem; padding: 1px 8px; border-radius: 999px; background: var(--bg); color: var(--muted) }
-.pill.ok { background: var(--ok-soft); color: var(--ok) } .pill.bad { background: var(--bad-soft); color: var(--bad) } .pill.idk { background: var(--idk-soft); color: var(--idk) }
+.pill.ok { background: var(--ok-soft); color: var(--ok) } .pill.bad { background: var(--bad-soft); color: var(--bad) } .pill.read { background: var(--accent-soft); color: var(--accent) } .pill.imp { background: var(--idk-soft); color: var(--idk); margin-left: 4px }
 .empty { color: var(--muted); padding: 24px 0 }
 .wrongview { padding-top: 18px; max-width: 860px }
 .wrongview h2 { font-size: 1.05rem; margin: 18px 0 6px }
@@ -192,7 +195,9 @@ html.in-dt nav.tabs a.dt-hide { display: none }
   DATA.mis.forEach(k => KEYS["mis:" + k.c] = Object.assign({ subj: "mis" }, k));
   const SUBJ = { cs: "計算機概論", mis: "管理資訊系統" };
   const CODE = { cs: "442001", mis: "442003" };
-  const ST = { ok: "會", bad: "錯", idk: "不會" };
+  // 作答狀態 s：O、X、已讀過三選一；「重要」是另外的標記 m，可以和 s 同時存在
+  const ST = { ok: "O", bad: "X", read: "已讀過" };
+  const IMP = "重要";
   const paperId = p => p.s + p.y;
   const PAPERS = {};
   DATA.papers.forEach(p => PAPERS[paperId(p)] = p);
@@ -200,10 +205,17 @@ html.in-dt nav.tabs a.dt-hide { display: none }
   DATA.papers.forEach(p => p.qs.forEach(q => QINDEX.push({ p, q })));
   { const nq = document.getElementById("nq"); if (nq) nq.textContent = QINDEX.length; }
 
-  // ---------- state: { "<subj><year>": { q: { "<qid>": {s, a} }, pg: { "<n>": {s, n} } } }
+  // ---------- state: { "<subj><year>": { q: { "<qid>": {s, m, a} }, pg: { "<n>": {s, m, n} } } }
   let state = {};
   const LS = "nsysu-pq-v1";
   try { state = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch (e) { state = {}; }
+  // 舊版的「不會」（idk）併進 X，一樣留在錯題本；回傳有沒有改到
+  function migrate(ps) {
+    let n = 0;
+    if (ps) ["q", "pg"].forEach(k => Object.values(ps[k] || {}).forEach(x => { if (x && x.s === "idk") { x.s = "bad"; n++; } }));
+    return n > 0;
+  }
+  if (Object.keys(state).map(pid => migrate(state[pid])).some(Boolean)) try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {}
   let dbCol = null;
   const pending = {}, chains = {}, dirty = {};
 
@@ -213,13 +225,15 @@ html.in-dt nav.tabs a.dt-hide { display: none }
   function setQ(pid, qid, patch) {
     const ps = paperState(pid); ps.q = ps.q || {};
     const cur = Object.assign({}, ps.q[qid] || {}, patch);
-    if (!cur.s && !cur.a) delete ps.q[qid]; else ps.q[qid] = cur;
+    if (!cur.m) delete cur.m;
+    if (!cur.s && !cur.a && !cur.m) delete ps.q[qid]; else ps.q[qid] = cur;
     changed(pid);
   }
   function setPg(pid, n, patch) {
     const ps = paperState(pid); ps.pg = ps.pg || {};
     const cur = Object.assign({}, ps.pg[n] || {}, patch);
-    if (!cur.s && !cur.n) delete ps.pg[n]; else ps.pg[n] = cur;
+    if (!cur.m) delete cur.m;
+    if (!cur.s && !cur.n && !cur.m) delete ps.pg[n]; else ps.pg[n] = cur;
     changed(pid);
   }
   function changed(pid) {
@@ -253,31 +267,46 @@ html.in-dt nav.tabs a.dt-hide { display: none }
   }
   const main = document.getElementById("main");
   function counts(list) {
-    const c = { ok: 0, bad: 0, idk: 0, none: 0 };
-    list.forEach(({ p, q }) => { const s = qState(paperId(p), q.id).s; c[s || "none"]++; });
+    const c = { ok: 0, bad: 0, read: 0, imp: 0, none: 0, done: 0 };
+    list.forEach(({ p, q }) => {
+      const st = qState(paperId(p), q.id);
+      if (ST[st.s]) { c[st.s]++; c.done++; } else c.none++;
+      if (st.m) c.imp++;
+    });
     return c;
   }
   function renderStats() {
     const c = counts(QINDEX);
     const box = document.getElementById("stats"); box.textContent = "";
-    box.append("已做 ", el("b", { text: String(c.ok + c.bad + c.idk) }), " / " + QINDEX.length + "　",
-      el("span", { class: "k-ok", text: "會 " + c.ok }), el("span", { class: "k-bad", text: "錯 " + c.bad }), el("span", { class: "k-idk", text: "不會 " + c.idk }));
+    box.append("已做 ", el("b", { text: String(c.done) }), " / " + QINDEX.length + "　",
+      el("span", { class: "k-ok", text: "O " + c.ok }), el("span", { class: "k-bad", text: "X " + c.bad }),
+      el("span", { class: "k-read", text: ST.read + " " + c.read }), el("span", { class: "k-imp", text: IMP + " " + c.imp }));
+  }
+  // 狀態小標籤：作答狀態＋重要（錯題本裡沒標狀態的就不顯示「未做」）
+  function pills(st, showNone) {
+    return [ST[st.s] ? el("span", { class: "pill " + st.s, text: ST[st.s] }) : showNone ? el("span", { class: "pill", text: "未做" }) : null,
+      st.m ? el("span", { class: "pill imp", text: IMP }) : null];
   }
   function setSync(on, text) {
     document.getElementById("sync").classList.toggle("on", on);
     document.getElementById("synctext").textContent = text;
   }
-  function statusButtons(cur, onPick) {
+  function statusButtons(cur, mark, onPick, onMark) {
     const box = el("span", { class: "st", role: "group", "aria-label": "作答結果" });
-    ["ok", "bad", "idk"].forEach(v => {
-      const b = el("button", { type: "button", "data-v": v, "aria-pressed": String(cur === v), text: ST[v] });
-      b.addEventListener("click", () => {
-        const next = b.getAttribute("aria-pressed") === "true" ? "" : v;
-        box.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.v === next)));
-        onPick(next);
-      });
-      box.appendChild(b);
+    const tip = { bad: "答錯或不會，會收進錯題本" };
+    const ex = Object.keys(ST).map(v => el("button", { type: "button", "data-v": v, "aria-pressed": String(cur === v), text: ST[v], title: tip[v] || "" }));
+    ex.forEach(b => b.addEventListener("click", () => {
+      const next = b.getAttribute("aria-pressed") === "true" ? "" : b.dataset.v;
+      ex.forEach(x => x.setAttribute("aria-pressed", String(x.dataset.v === next)));
+      onPick(next);
+    }));
+    const im = el("button", { type: "button", "data-v": "imp", "aria-pressed": String(!!mark), text: IMP, title: "考前要再看，會收進錯題本；可以和 O、X、已讀過同時標" });
+    im.addEventListener("click", () => {
+      const on = im.getAttribute("aria-pressed") !== "true";
+      im.setAttribute("aria-pressed", String(on));
+      onMark(on);
     });
+    box.append(...ex, im);
     return box;
   }
 
@@ -337,7 +366,7 @@ html.in-dt nav.tabs a.dt-hide { display: none }
     row.append(
       el("span", { class: "qid", text: q.id }),
       el("span", { class: "qt" }, [q.t + (q.k === "申" || q.k === "問" ? "（申論／問答）" : q.k === "填" ? "（填充）" : ""), note ? el("span", { class: "hasnote", text: "有解析" }) : null, el("span", { class: "ch", text: key ? key.name + (key.book ? "" : "・課本沒有") : "" })]),
-      statusButtons(cur.s, v => setQ(pid, q.id, { s: v })),
+      statusButtons(cur.s, cur.m, v => setQ(pid, q.id, { s: v }), on => setQ(pid, q.id, { m: on ? 1 : 0 })),
       qb
     );
     return row;
@@ -408,7 +437,7 @@ html.in-dt nav.tabs a.dt-hide { display: none }
         ta.value = ps.n || "";
         let t; ta.addEventListener("input", () => { clearTimeout(t); t = setTimeout(() => setPg(pid, n, { n: ta.value.trim() }), 500); });
         card.appendChild(el("div", { class: "pnote" }, [
-          el("div", { style: "display:flex;gap:10px;align-items:center;flex-wrap:wrap" }, [el("label", { for: "n-" + pid + "-" + n, text: "這頁的練習筆記" }), statusButtons(ps.s, v => setPg(pid, n, { s: v }))]),
+          el("div", { style: "display:flex;gap:10px;align-items:center;flex-wrap:wrap" }, [el("label", { for: "n-" + pid + "-" + n, text: "這頁的練習筆記" }), statusButtons(ps.s, ps.m, v => setPg(pid, n, { s: v }), on => setPg(pid, n, { m: on ? 1 : 0 }))]),
           ta]));
       }
       const pre = el("pre", { class: "ocr", text: pg.txt || "（這頁辨識不到文字，請看原卷）" });
@@ -452,20 +481,20 @@ html.in-dt nav.tabs a.dt-hide { display: none }
         const c = counts(items), total = items.length;
         const card = el("div", { class: "ck" });
         const bar = el("span", { class: "bar" });
-        [["ok", "b-ok"], ["bad", "b-bad"], ["idk", "b-idk"]].forEach(([v, cl]) => { if (c[v]) bar.appendChild(el("span", { class: cl, style: "width:" + (100 * c[v] / total) + "%" })); });
+        ["ok", "bad", "read"].forEach(v => { if (c[v]) bar.appendChild(el("span", { class: "b-" + v, style: "width:" + (100 * c[v] / total) + "%" })); });
         const head = el("button", { type: "button", class: "head", "aria-expanded": String(open.has(s + k.c)) }, [
           el("span", { class: "nm" }, [k.name, k.book ? null : el("span", { class: "tag", text: "課本沒有" })]),
           el("span", { class: "src", text: k.src }),
-          el("span", { class: "cnt", text: (c.ok + c.bad + c.idk) + " / " + total }),
+          el("span", { class: "cnt", text: c.done + " / " + total }),
           bar]);
         card.appendChild(head);
         const rows = el("div", { class: "rows" });
         rows.hidden = !open.has(s + k.c);
         items.forEach(({ p, q }) => {
-          const st = qState(paperId(p), q.id).s;
+          const st = qState(paperId(p), q.id);
           rows.appendChild(el("div", { class: "row" }, [
             el("span", { class: "qid", text: q.id }),
-            el("span", null, [q.t + " ", el("span", { class: "pill" + (st ? " " + st : ""), text: st ? ST[st] : "未做" }), (DATA.notes || {})[p.s + ":" + q.id] ? el("span", { class: "hasnote", text: "有解析" }) : null]),
+            el("span", null, [q.t + " ", ...pills(st, true), (DATA.notes || {})[p.s + ":" + q.id] ? el("span", { class: "hasnote", text: "有解析" }) : null]),
             el("a", { href: "#y" + paperId(p) + "-p" + q.p + "-" + q.id.replace(/\s/g, ""), text: "看題目" })]));
         });
         head.addEventListener("click", () => {
@@ -547,9 +576,9 @@ html.in-dt nav.tabs a.dt-hide { display: none }
 
   function renderWrong() {
     const box = el("div", { class: "wrongview" });
-    const list = QINDEX.filter(({ p, q }) => { const s = qState(paperId(p), q.id).s; return s === "bad" || s === "idk"; });
+    const list = QINDEX.filter(({ p, q }) => { const st = qState(paperId(p), q.id); return st.s === "bad" || st.m; });
     if (!list.length) {
-      box.appendChild(el("p", { class: "empty", text: "還沒有錯題。做題時按「錯」或「不會」，題目就會收進這裡，依章節排好，方便考前重做。" }));
+      box.appendChild(el("p", { class: "empty", text: "還沒有錯題。做題時按「X」或「重要」，題目就會收進這裡，依章節排好，方便考前重做。" }));
     } else {
       const groups = {};
       list.forEach(x => { const k = x.p.s + ":" + x.q.c; (groups[k] = groups[k] || []).push(x); });
@@ -560,7 +589,7 @@ html.in-dt nav.tabs a.dt-hide { display: none }
           const qs = qState(paperId(p), q.id);
           box.appendChild(el("div", { class: "row" }, [
             el("span", { class: "qid", text: q.id }),
-            el("span", null, [q.t + " ", el("span", { class: "pill " + qs.s, text: ST[qs.s] })]),
+            el("span", null, [q.t + " ", ...pills(qs, false)]),
             el("a", { href: "#y" + paperId(p) + "-p" + q.p + "-" + q.id.replace(/\s/g, ""), text: "重做" }),
             qs.a ? el("span", { class: "mine", text: qs.a }) : null]));
         });
@@ -607,6 +636,7 @@ html.in-dt nav.tabs a.dt-hide { display: none }
       if (!uid) return;
       dbCol = db.collection("data/users/" + uid);
       let first = true;
+      const migrated = [];
       const timer = setTimeout(() => setSync(false, "暫時連不到帳號，先存在這個瀏覽器"), 10000);
       dbCol.onSnapshot(snap => {
         if (!snap.metadata.fromCache) clearTimeout(timer);
@@ -616,8 +646,10 @@ html.in-dt nav.tabs a.dt-hide { display: none }
           const body = d.data();
           if (!body || JSON.stringify(body) === JSON.stringify(state[d.id] || null)) return;
           state[d.id] = JSON.parse(JSON.stringify(body));
+          if (migrate(state[d.id])) migrated.push(d.id);   // 帳號裡的舊「不會」也改成 X，並存回去
           touched = true;
         });
+        migrated.splice(0).forEach(pid => changed(pid));
         if (first) {
           first = false;
           // upload anything only this browser had
