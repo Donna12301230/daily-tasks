@@ -81,6 +81,27 @@ nav.tabs a:focus-visible, button:focus-visible, textarea:focus-visible, select:f
 .ans textarea, .pnote textarea { width: 100%; min-height: 38px; resize: vertical; font: .88rem/1.5 var(--font-body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px }
 .ans .toggle { justify-self: start; background: none; border: 0; color: var(--accent); font: .8rem var(--font-body); cursor: pointer; padding: 0 }
 .qbody { grid-column: 1 / -1; display: grid; gap: 6px; margin-top: 2px; min-width: 0 }
+/* 我的筆記：檢視時是格式化的內容，編輯時有工具列 */
+.mynote { display: grid; gap: 6px; min-width: 0 }
+.mynote:not(:has(> :not([hidden]))) { display: none }
+.ntools { display: flex; flex-wrap: wrap; gap: 4px; align-items: center }
+.ntools[hidden], .ntbl[hidden] { display: none }
+.ntools button { border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 6px; font: 500 .78rem var(--font-body); padding: 3px 9px; cursor: pointer }
+.ntools button:disabled { opacity: .4; cursor: default }
+.ntbl { display: inline-flex; flex-wrap: wrap; gap: 4px; padding-left: 6px; border-left: 1px solid var(--line) }
+.nhint { font-size: .74rem; color: var(--muted) }
+.ned, .notev { font: .88rem/1.6 var(--font-body); color: var(--ink); overflow-x: auto; overflow-wrap: anywhere; min-width: 0 }
+.ned { min-height: 72px; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; outline: none }
+.ned:focus { border-color: var(--accent) }
+.ned:empty::before { content: attr(data-ph); color: var(--muted) }
+.notev { background: var(--bg); border-left: 3px solid var(--accent); border-radius: 6px; padding: 8px 12px }
+.ned ul, .ned ol, .notev ul, .notev ol { margin: 2px 0; padding-left: 22px }
+.ned p, .notev p { margin: 2px 0 }
+.ned table, .notev table { border-collapse: collapse; margin: 6px 0 }
+.ned th, .ned td, .notev th, .notev td { border: 1px solid var(--line); padding: 4px 8px; vertical-align: top; text-align: left; min-width: 4em }
+.ned th, .notev th { background: var(--accent-soft) }
+.ned code, .notev code { font: .82rem var(--font-mono); background: var(--sunk, var(--bg)); padding: 0 3px; border-radius: 3px }
+.ned pre, .notev pre { font: .8rem/1.5 var(--font-mono); white-space: pre-wrap; margin: 4px 0 }
 /* 框線用 outline：不佔版面，截圖的位置和高度才會剛好對到原卷 */
 .crop { position: relative; overflow: hidden; width: 100%; max-width: 900px; outline: 1px solid var(--line); outline-offset: -1px; border-radius: 6px; background: #fff }
 .crop img { position: absolute; left: 0; top: 0; width: 100%; max-width: none; display: block }
@@ -148,7 +169,7 @@ nav.tabs a:focus-visible, button:focus-visible, textarea:focus-visible, select:f
 .wrongview { padding-top: 18px; max-width: 860px }
 .wrongview h2 { font-size: 1.05rem; margin: 18px 0 6px }
 .wrongview .row { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 6px }
-.wrongview .mine { grid-column: 2 / -1; color: var(--muted); font-size: .82rem; white-space: pre-wrap }
+.wrongview .mine { grid-column: 2 / -1; font-size: .82rem }
 
 @media (max-width: 760px) {
   .yearview { grid-template-columns: minmax(0, 1fr) }
@@ -336,19 +357,201 @@ html.in-dt nav.tabs a.dt-hide { display: none }
     r.appendChild(el("p", { class: "legend", text: "每一年的每一題都標了章節。" }));
     return r;
   }
+  // ---------- 我的筆記：可以列點、編號、粗體、表格。存成只留基本標籤、沒有屬性的 HTML；舊的純文字筆記照樣讀
+  const NOTE_KEEP = { P: "p", DIV: "div", BR: "br", UL: "ul", OL: "ol", LI: "li", B: "b", STRONG: "b", I: "i", EM: "i", U: "u",
+    TABLE: "table", THEAD: "thead", TBODY: "tbody", TFOOT: "tbody", TR: "tr", TH: "th", TD: "td", CODE: "code", PRE: "pre", BLOCKQUOTE: "div" };
+  const NOTE_DROP = /^(SCRIPT|STYLE|TEMPLATE|IFRAME|FRAME|OBJECT|EMBED|SVG|MATH|CANVAS|VIDEO|AUDIO|IMG|PICTURE|SOURCE|BUTTON|INPUT|TEXTAREA|SELECT|OPTION|NOSCRIPT|HEAD|TITLE|META|LINK|BASE|COLGROUP|COL|CAPTION)$/;
+  const NOTE_STRUCT = /^(TABLE|THEAD|TBODY|TR|UL|OL)$/;
+  function cleanNote(html) {
+    const doc = new DOMParser().parseFromString(String(html || ""), "text/html");
+    const out = document.createElement("div");
+    (function walk(src, dst) {
+      src.childNodes.forEach(n => {
+        if (n.nodeType === 3) {
+          if (!(NOTE_STRUCT.test(dst.nodeName) && !n.nodeValue.trim())) dst.appendChild(document.createTextNode(n.nodeValue));
+          return;
+        }
+        if (n.nodeType !== 1) return;
+        const tag = n.tagName.toUpperCase();
+        if (NOTE_DROP.test(tag)) return;
+        if (/^H[1-6]$/.test(tag)) {   // 標題變成粗體的一行
+          const d = document.createElement("div"), b = document.createElement("b");
+          d.appendChild(b); dst.appendChild(d); walk(n, b); return;
+        }
+        const t = NOTE_KEEP[tag];
+        if (!t) { walk(n, dst); return; }   // 其他標籤（span、a⋯）只留裡面的文字
+        const e = document.createElement(t);
+        dst.appendChild(e);
+        if (t !== "br") walk(n, e);
+      });
+    })(doc.body, out);
+    return !out.textContent.trim() && !out.querySelector("table") ? "" : out.innerHTML;
+  }
+  function escHTML(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]); }
+  function noteHTML(a) { return !a ? "" : /<\/?[a-z][^>]*>/i.test(a) ? cleanNote(a) : escHTML(a).replace(/\n/g, "<br>"); }
+  // 貼上 Markdown（- 列點、1. 編號、| 表格 |、**粗體**）時轉成格式
+  function mdInline(s) { return escHTML(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>"); }
+  const MD_ROW = /^\s*\|.*\|\s*$/, MD_SEP = /^\s*\|?(\s*:?-{2,}:?\s*\|)+\s*(:?-{2,}:?\s*)?\|?\s*$/, MD_UL = /^\s*[-*•]\s+(.*)$/, MD_OL = /^\s*\d+[.)]\s+(.*)$/;
+  function mdToHtml(text) {
+    const lines = String(text).replace(/\r/g, "").split("\n"), out = [];
+    for (let i = 0; i < lines.length;) {
+      const ln = lines[i];
+      if (MD_ROW.test(ln)) {
+        const rows = [];
+        while (i < lines.length && MD_ROW.test(lines[i])) rows.push(lines[i++]);
+        const head = rows.length > 1 && MD_SEP.test(rows[1]);
+        const cells = r => r.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map(c => c.trim());
+        out.push("<table>" + rows.filter(r => !MD_SEP.test(r)).map((r, k) => {
+          const tg = head && k === 0 ? "th" : "td";
+          return "<tr>" + cells(r).map(c => "<" + tg + ">" + (mdInline(c) || "<br>") + "</" + tg + ">").join("") + "</tr>";
+        }).join("") + "</table>");
+        continue;
+      }
+      const rx = MD_UL.test(ln) ? MD_UL : MD_OL.test(ln) ? MD_OL : null;
+      if (rx) {
+        const items = [];
+        while (i < lines.length && rx.test(lines[i])) items.push("<li>" + mdInline(lines[i++].match(rx)[1]) + "</li>");
+        const tg = rx === MD_UL ? "ul" : "ol";
+        out.push("<" + tg + ">" + items.join("") + "</" + tg + ">");
+        continue;
+      }
+      const h = /^\s*#{1,6}\s+(.*)$/.exec(ln);
+      out.push("<div>" + (h ? "<b>" + mdInline(h[1]) + "</b>" : mdInline(ln) || "<br>") + "</div>");
+      i++;
+    }
+    return out.join("");
+  }
+  const looksMd = t => MD_ROW.test(t.split("\n").find(l => l.trim()) || "") || /^\s*([-*•]|\d+[.)])\s+\S/m.test(t) || /\*\*.+?\*\*/.test(t) || /^\s*\|.*\|\s*$/m.test(t);
+  function noteBox(pid, qid, kind) {
+    let html = noteHTML(qState(pid, qid).a || ""), editing = false, timer, range = null;
+    const box = el("div", { class: "mynote" });
+    const view = el("div", { class: "notev" });
+    const ed = el("div", { class: "ned", contenteditable: "true", role: "textbox", "aria-multiline": "true", "aria-label": "我的筆記",
+      "data-ph": (kind === "申" || kind === "問" ? "寫答題架構或重點" : "我的答案、為什麼錯") + "。可以列點，也可以直接貼上 AI 整理的表格" });
+    const tools = el("div", { class: "ntools", role: "toolbar", "aria-label": "筆記格式" });
+    const tbl = el("span", { class: "ntbl" });
+    const save = () => {
+      clearTimeout(timer);
+      const v = cleanNote(ed.innerHTML);
+      if (v !== html) { html = v; setQ(pid, qid, { a: v }); }
+    };
+    const inEd = n => n && ed.contains(n.nodeType === 1 ? n : n.parentNode);
+    const keep = () => { const s = getSelection(); if (s.rangeCount && inEd(s.anchorNode)) range = s.getRangeAt(0).cloneRange(); };
+    const curCell = () => {
+      const s = getSelection(); let n = s.rangeCount ? s.anchorNode : null;
+      n = n && (n.nodeType === 1 ? n : n.parentNode);
+      const c = n && n.closest && n.closest("td,th");
+      return c && ed.contains(c) ? c : null;
+    };
+    const caretIn = node => { const r = document.createRange(); r.selectNodeContents(node); r.collapse(true); const s = getSelection(); s.removeAllRanges(); s.addRange(r); keep(); };
+    const newCell = tag => { const c = document.createElement(tag); c.innerHTML = "<br>"; return c; };
+    const row = (n, tag) => "<tr>" + Array.from({ length: n }, () => "<" + tag + "><br></" + tag + ">").join("") + "</tr>";
+    function sync() {
+      const c = curCell();
+      tbl.hidden = !c;
+      bTable.disabled = !!c;
+    }
+    const tool = (label, title, fn) => {
+      const b = el("button", { type: "button", text: label, title: title });
+      b.addEventListener("mousedown", e => e.preventDefault());   // 按按鈕時游標留在筆記裡
+      b.addEventListener("click", () => {
+        ed.focus();
+        if (range) { const s = getSelection(); s.removeAllRanges(); s.addRange(range); }
+        fn(); keep(); sync(); save();
+      });
+      return b;
+    };
+    const bTable = tool("表格", "插入 3 欄 × 3 列的表格", () => document.execCommand("insertHTML", false, "<table>" + row(3, "th") + row(3, "td") + row(3, "td") + "</table><div><br></div>"));
+    tbl.append(
+      tool("＋列", "在下面加一列", () => {
+        const c = curCell(); if (!c) return;
+        const tr = c.parentNode, nr = document.createElement("tr");
+        [...tr.children].forEach(() => nr.appendChild(newCell("td")));
+        tr.after(nr); caretIn(nr.children[[...tr.children].indexOf(c)] || nr.firstChild);
+      }),
+      tool("＋欄", "在右邊加一欄", () => {
+        const c = curCell(); if (!c) return;
+        const i = [...c.parentNode.children].indexOf(c);
+        c.closest("table").querySelectorAll("tr").forEach(r => {
+          const ref = r.children[i], nc = newCell(ref && ref.tagName === "TH" ? "th" : "td");
+          if (ref) ref.after(nc); else r.appendChild(nc);
+        });
+        caretIn(c.nextElementSibling || c);
+      }),
+      tool("刪列", "刪掉這一列", () => {
+        const c = curCell(); if (!c) return;
+        const t = c.closest("table"), tr = c.parentNode, next = tr.nextElementSibling || tr.previousElementSibling;
+        tr.remove();
+        if (!t.querySelector("tr")) t.remove(); else if (next && next.firstElementChild) caretIn(next.firstElementChild);
+      }),
+      tool("刪欄", "刪掉這一欄", () => {
+        const c = curCell(); if (!c) return;
+        const t = c.closest("table"), i = [...c.parentNode.children].indexOf(c);
+        t.querySelectorAll("tr").forEach(r => { if (r.children[i]) r.children[i].remove(); if (!r.children.length) r.remove(); });
+        if (!t.querySelector("td,th")) t.remove(); else { const f = t.querySelector("td,th"); caretIn(f); }
+      })
+    );
+    tools.append(
+      tool("• 列點", "項目符號清單", () => document.execCommand("insertUnorderedList")),
+      tool("1. 編號", "編號清單", () => document.execCommand("insertOrderedList")),
+      tool("粗體", "粗體（Ctrl+B）", () => document.execCommand("bold")),
+      bTable, tbl,
+      el("span", { class: "nhint", text: "打「- 」開始列點" }));
+    ed.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(save, 500); keep(); sync(); });
+    ["keyup", "mouseup", "touchend", "focus"].forEach(ev => ed.addEventListener(ev, () => { keep(); sync(); }));
+    ed.addEventListener("blur", save);
+    // 貼上：AI 網頁複製的表格、列點、粗體保留下來（只留基本格式），Markdown 文字也轉成格式
+    ed.addEventListener("paste", e => {
+      const cd = e.clipboardData; if (!cd) return;
+      const h = cd.getData("text/html"), tx = cd.getData("text/plain");
+      let frag = h ? cleanNote(h) : "";
+      if ((!frag || !/<(table|ul|ol|li|b)\b/.test(frag)) && tx && looksMd(tx)) frag = mdToHtml(tx);
+      else if (!frag && tx) frag = escHTML(tx).replace(/\n/g, "<br>");
+      if (!frag) return;
+      e.preventDefault();
+      document.execCommand("insertHTML", false, frag);
+    });
+    // 一行開頭打「- 」「* 」或「1. 」就變成列點／編號
+    ed.addEventListener("keydown", e => {
+      if (e.key !== " " || e.isComposing) return;
+      const s = getSelection();
+      if (!s.isCollapsed || !s.anchorNode || s.anchorNode.nodeType !== 3) return;
+      const node = s.anchorNode, before = node.nodeValue.slice(0, s.anchorOffset);
+      if (!/^(-|\*|•|1\.)$/.test(before) || !/^(DIV|P)$/.test(node.parentNode.nodeName) || node.parentNode.closest("li,td,th")) return;
+      // 前面（到上一個區塊或換行為止）沒有別的字，才算一行的開頭
+      for (let pv = node.previousSibling; pv; pv = pv.previousSibling) {
+        if (pv.nodeType === 1 && /^(DIV|P|TABLE|UL|OL|BR|PRE)$/.test(pv.nodeName)) break;
+        if ((pv.textContent || "").trim()) return;
+      }
+      e.preventDefault();
+      node.nodeValue = node.nodeValue.slice(s.anchorOffset);
+      const r2 = document.createRange(); r2.setStart(node, 0); r2.collapse(true); s.removeAllRanges(); s.addRange(r2);
+      document.execCommand(before === "1." ? "insertOrderedList" : "insertUnorderedList");
+    });
+    function show() {
+      view.innerHTML = html;
+      view.hidden = editing || !html;
+      ed.hidden = tools.hidden = !editing;
+    }
+    show();
+    box.append(view, tools, ed);
+    return {
+      box,
+      label: () => editing ? "收起筆記" : html ? "編輯筆記" : "寫筆記",
+      toggle() {
+        if (editing) { save(); editing = false; show(); return; }
+        editing = true; ed.innerHTML = html; show(); sync(); ed.focus();
+        const r = document.createRange(); r.selectNodeContents(ed); r.collapse(false);
+        const s = getSelection(); s.removeAllRanges(); s.addRange(r); keep();
+      }
+    };
+  }
   function questionRow(p, q, hl) {
     const pid = paperId(p), cur = qState(pid, q.id), key = KEYS[p.s + ":" + q.c];
     const row = el("div", { class: "q" + (hl ? " hl" : ""), id: "q-" + pid + "-" + q.id.replace(/\s/g, "") });
-    const ta = el("textarea", { id: "a-" + pid + "-" + q.id.replace(/\s/g, ""), placeholder: q.k === "申" || q.k === "問" ? "寫答題架構或重點" : "我的答案、為什麼錯", rows: "2" });
-    ta.value = cur.a || "";
-    let t;
-    ta.addEventListener("input", () => { clearTimeout(t); t = setTimeout(() => setQ(pid, q.id, { a: ta.value.trim() }), 500); });
-    const ans = el("div", { class: "ans" });
-    const tog = el("button", { type: "button", class: "toggle", text: cur.a ? "收起作答" : "寫作答／筆記" });
-    ans.appendChild(tog);
-    if (!cur.a) ta.hidden = true;
-    tog.addEventListener("click", () => { ta.hidden = !ta.hidden; tog.textContent = ta.hidden ? "寫作答／筆記" : "收起作答"; if (!ta.hidden) ta.focus(); });
-    ans.appendChild(ta);
+    const nb = noteBox(pid, q.id, q.k);
+    const tog = el("button", { type: "button", class: "toggle", text: nb.label() });
+    tog.addEventListener("click", () => { nb.toggle(); tog.textContent = nb.label(); });
     const pg = p.pages[q.p - 1];
     const qb = el("div", { class: "qbody" });
     const parts = q.segs ? q.segs.map(s => [p.pages[s[0] - 1], [s[1], s[2]]]) : [[pg, q.crop || [0, 1]]];
@@ -377,7 +580,7 @@ html.in-dt nav.tabs a.dt-hide { display: none }
     mb.append(bt, bz, tog);
     qb.append(mb);
     if (ana) qb.append(ana);
-    qb.append(tx, ta);
+    qb.append(tx, nb.box);
     row.append(
       el("span", { class: "qid", text: q.id }),
       el("span", { class: "qt" }, [q.t + (q.k === "申" || q.k === "問" ? "（申論／問答）" : q.k === "填" ? "（填充）" : ""), note ? el("span", { class: "hasnote", text: "有解析" }) : null, el("span", { class: "ch", text: key ? key.name + (key.book ? "" : "・課本沒有") : "" })]),
@@ -612,7 +815,7 @@ html.in-dt nav.tabs a.dt-hide { display: none }
             el("span", { class: "qid", text: q.id }),
             el("span", null, [q.t + " ", ...pills(qs, false)]),
             el("a", { href: "#y" + paperId(p) + "-p" + q.p + "-" + q.id.replace(/\s/g, ""), text: "重做" }),
-            qs.a ? el("span", { class: "mine", text: qs.a }) : null]));
+            qs.a ? (() => { const m = el("div", { class: "mine notev" }); m.innerHTML = noteHTML(qs.a); return m; })() : null]));
         });
       });
     }
