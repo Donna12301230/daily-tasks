@@ -90,6 +90,12 @@ nav.tabs a:focus-visible, button:focus-visible, textarea:focus-visible, select:f
 .ntools button:disabled { opacity: .4; cursor: default }
 .ntbl { display: inline-flex; flex-wrap: wrap; gap: 4px; padding-left: 6px; border-left: 1px solid var(--line) }
 .nhint { font-size: .74rem; color: var(--muted) }
+.nfoot { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center }
+.nfoot[hidden] { display: none }
+.nsave { background: var(--accent); color: var(--paper); border: 0; border-radius: 6px; font: 600 .84rem var(--font-body); padding: 6px 20px; cursor: pointer }
+.nsave:hover { filter: brightness(1.08) }
+.nmsg { font-size: .8rem; color: var(--ok) }
+.nmsg:empty { display: none }
 .ned, .notev { font: .88rem/1.6 var(--font-body); color: var(--ink); overflow-x: auto; overflow-wrap: anywhere; min-width: 0 }
 .ned { min-height: 72px; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; outline: none }
 .ned:focus { border-color: var(--accent) }
@@ -422,7 +428,7 @@ html.in-dt nav.tabs a.dt-hide { display: none }
     return out.join("");
   }
   const looksMd = t => MD_ROW.test(t.split("\n").find(l => l.trim()) || "") || /^\s*([-*•]|\d+[.)])\s+\S/m.test(t) || /\*\*.+?\*\*/.test(t) || /^\s*\|.*\|\s*$/m.test(t);
-  function noteBox(pid, qid, kind) {
+  function noteBox(pid, qid, kind, onChange) {
     let html = noteHTML(qState(pid, qid).a || ""), editing = false, timer, range = null;
     const box = el("div", { class: "mynote" });
     const view = el("div", { class: "notev" });
@@ -528,17 +534,34 @@ html.in-dt nav.tabs a.dt-hide { display: none }
       const r2 = document.createRange(); r2.setStart(node, 0); r2.collapse(true); s.removeAllRanges(); s.addRange(r2);
       document.execCommand(before === "1." ? "insertOrderedList" : "insertUnorderedList");
     });
+    // 寫好按「儲存」（或 Ctrl+S、Ctrl+Enter）：存起來、收起編輯區，顯示排好的筆記。打字時也會自動暫存，避免忘了按
+    const foot = el("div", { class: "nfoot" });
+    const bSave = el("button", { type: "button", class: "nsave", text: "儲存" });
+    const msg = el("span", { class: "nmsg", role: "status" });
+    let msgTimer;
+    function done() {
+      save(); editing = false; show();
+      msg.textContent = html ? "已儲存" : "筆記是空的，沒有存";
+      clearTimeout(msgTimer); msgTimer = setTimeout(() => { msg.textContent = ""; }, 2500);
+      if (onChange) onChange();
+    }
+    bSave.addEventListener("click", done);
+    ed.addEventListener("keydown", e => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S" || e.key === "Enter")) { e.preventDefault(); done(); }
+    });
+    foot.append(bSave, el("span", { class: "nhint", text: "打字時也會自動暫存" }));
     function show() {
       view.innerHTML = html;
       view.hidden = editing || !html;
-      ed.hidden = tools.hidden = !editing;
+      ed.hidden = tools.hidden = foot.hidden = !editing;
     }
     show();
-    box.append(view, tools, ed);
+    box.append(view, tools, ed, foot, msg);
     return {
       box,
       label: () => editing ? "收起筆記" : html ? "編輯筆記" : "寫筆記",
       toggle() {
+        msg.textContent = "";
         if (editing) { save(); editing = false; show(); return; }
         editing = true; ed.innerHTML = html; show(); sync(); ed.focus();
         const r = document.createRange(); r.selectNodeContents(ed); r.collapse(false);
@@ -549,7 +572,7 @@ html.in-dt nav.tabs a.dt-hide { display: none }
   function questionRow(p, q, hl) {
     const pid = paperId(p), cur = qState(pid, q.id), key = KEYS[p.s + ":" + q.c];
     const row = el("div", { class: "q" + (hl ? " hl" : ""), id: "q-" + pid + "-" + q.id.replace(/\s/g, "") });
-    const nb = noteBox(pid, q.id, q.k);
+    const nb = noteBox(pid, q.id, q.k, () => { tog.textContent = nb.label(); });
     const tog = el("button", { type: "button", class: "toggle", text: nb.label() });
     tog.addEventListener("click", () => { nb.toggle(); tog.textContent = nb.label(); });
     const pg = p.pages[q.p - 1];
