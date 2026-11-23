@@ -28,8 +28,8 @@ FAKE = r"""<script>
     const emit = c => lis.filter(l => l.app === app && l.c === c).forEach(l => setTimeout(() => l.next(l.id ? snap(c, l.id) : qs(c)), 5));
     const ref = (c, id) => ({ id, path: c + "/" + id,
       get: async () => snap(c, id),
-      set: d => { noNested(d); return (async () => { colOf(c)[id] = frz(d); __writes.push(["set", app, c, id]); emit(c); })(); },
-      update: p => { noNested(p); return (async () => { colOf(c)[id] = merge(colOf(c)[id] || {}, frz(p)); __writes.push(["update", app, c, id]); emit(c); })(); },
+      set: d => { noNested(d); return (async () => { if (new TextEncoder().encode(JSON.stringify(d)).length > 1048576) throw Object.assign(new Error("Document exceeds 1 MiB"), { code: "invalid-argument" }); colOf(c)[id] = frz(d); __writes.push(["set", app, c, id]); emit(c); })(); },
+      update: p => { noNested(p); return (async () => { if (new TextEncoder().encode(JSON.stringify(merge(frz(colOf(c)[id] || {}), frz(p)))).length > 1048576) throw Object.assign(new Error("Document exceeds 1 MiB"), { code: "invalid-argument" }); colOf(c)[id] = merge(colOf(c)[id] || {}, frz(p)); __writes.push(["update", app, c, id]); emit(c); })(); },
       delete: async () => { delete colOf(c)[id]; __writes.push(["delete", app, c, id]); emit(c); },
       onSnapshot: next => { const l = { app, c, id, next }; lis.push(l); setTimeout(() => next(snap(c, id)), 15); return () => { const i = lis.indexOf(l); if (i >= 0) lis.splice(i, 1); }; } });
     const col = c => ({ path: c, doc: id => ref(c, id || "x" + Math.random().toString(36).slice(2, 8)), get: async () => qs(c),
