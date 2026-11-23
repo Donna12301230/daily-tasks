@@ -364,14 +364,19 @@ table.g tr.grp td.nm { box-shadow: inset 4px 0 0 var(--gc, transparent) }
   }
   function isRest(s) { const m = derive().dayMeta[s]; return m ? !!m.rest : dow(s) === 0; }
   function addWorkdays(s, n) { let x = s, k = 0; while (k < n) { x = addDays(x, 1); if (!isRest(x)) k++; } return x; }
+  // 讀書線：碩班的考古題（計概、MIS）各自一條，其餘照 track
+  const LINES = ["計概考古題", "MIS 考古題", "碩班", "多益", "iPAS"];
+  const LINE_NAME = { "碩班": "碩班（C 語言等）" };
+  const lineOf = it => it.src === "exam" ? (/^MIS/.test(it.title || "") ? "MIS 考古題" : "計概考古題")
+    : it.track === "碩班" && /^(?:(?:看題|做題)\s*)?(?:計概|作業系統|MIS|補充)/.test(it.title || "") ? "舊課本" : it.track;   // 改成考古題之前的課本進度不算進 C 語言那條
   function shiftTrack(track, from, n) {
     n = Math.max(1, Math.min(60, Number(n) || 0));
-    const list = derive().items.filter(it => it.tag === "讀" && it.track === track && !it.done && !it.review && it.date >= from);
+    const list = derive().items.filter(it => it.tag === "讀" && lineOf(it) === track && !it.done && !it.review && it.date >= from);
     if (!list.length) { toast("從 " + md(from) + " 起沒有未完成的" + track + "進度"); return; }
     const byDoc = {};
     list.forEach(it => { (byDoc[it.bucket] = byDoc[it.bucket] || {})[it.id] = { date: addWorkdays(it.date, n), moved: (it.moved || 0) + 1, orig: it.orig || it.date }; });
     Object.keys(byDoc).forEach(doc => write(doc, { items: byDoc[doc] }));
-    toast(track + "：" + list.length + " 天的進度往後挪 " + n + " 天（跳過週日與假日）");
+    toast((LINE_NAME[track] || track) + "：" + list.length + " 項進度往後挪 " + n + " 天（跳過週日與假日）");
   }
   function addItem(date, tag, title, track) {
     title = (title || "").trim(); if (!title) return;
@@ -421,7 +426,7 @@ table.g tr.grp td.nm { box-shadow: inset 4px 0 0 var(--gc, transparent) }
         + '<input type="date" id="dt-' + esc(it.id) + '" value="' + addDays(base, 1) + '" aria-label="選日期">'
         + '<button class="btn primary" data-act="movepick" data-id="' + esc(it.id) + '">確定</button>';
       if (it.tag === "讀" && !it.review) {
-        h += '<span class="sep"></span><span>或把' + esc(it.track) + '從這天起整條線往後挪</span>'
+        h += '<span class="sep"></span><span>或把' + esc(LINE_NAME[lineOf(it)] || lineOf(it)) + '從這天起整條線往後挪</span>'
           + '<input type="number" min="1" max="60" value="1" id="sh-' + esc(it.id) + '" aria-label="往後挪幾天"><span>天</span>'
           + '<button class="btn" data-act="shiftfrom" data-id="' + esc(it.id) + '">整條線挪</button>';
       }
@@ -791,20 +796,23 @@ table.g tr.grp td.nm { box-shadow: inset 4px 0 0 var(--gc, transparent) }
 
   function viewStudy() {
     const c = derive(), t = today();
-    let h = '<p class="status">讀書進度來自每日進度表。落後了就在這裡把整條線往後挪（跳過週日與春節），或在「今天」逐項延後。對照：<a href="' + LINKS.daily + '" target="_blank" rel="noopener">每日進度</a>・<a href="' + LINKS.practice + '" target="_blank" rel="noopener">考古題練習頁</a></p><div class="cards">';
-    TRACKS.forEach(tr => {
-      const all = c.items.filter(it => it.tag === "讀" && it.track === tr && !it.review);
+    let h = '<p class="status">計概、MIS 每天 1–2 題中山考古題（點題號直接打開那一題），其他照每日進度表。落後了就在這裡把整條線往後挪（跳過週日與假日），或在「今天」逐項延後。</p><div class="cards">';
+    LINES.forEach((tr, li) => {
+      const all = c.items.filter(it => it.tag === "讀" && lineOf(it) === tr && !it.review);
+      if (!all.length) return;
       const done = all.filter(it => it.done).length;
       const behind = all.filter(it => !it.done && it.date < t);
       const upcoming = all.filter(it => !it.done && it.date >= t).slice(0, 6);
       const last = all.length ? all[all.length - 1].date : null;
-      h += '<section class="card"><h3>' + tr + "</h3>"
-        + '<div class="stat"><div><b>' + done + "</b><small>已完成天數</small></div><div><b" + (behind.length ? ' style="color:var(--bad)"' : "") + ">" + behind.length + "</b><small>落後天數</small></div><div><b>" + all.length + "</b><small>總天數</small></div></div>"
+      const ex = all[0].src === "exam", unit = ex ? "天" : "項";
+      const qn = ex ? all.reduce((a, it) => a + ((it.qs || []).length), 0) : 0, qd = ex ? all.filter(it => it.done).reduce((a, it) => a + ((it.qs || []).length), 0) : 0;
+      h += '<section class="card"><h3>' + esc(LINE_NAME[tr] || tr) + "</h3>"
+        + '<div class="stat"><div><b>' + (ex ? qd : done) + "</b><small>" + (ex ? "已做題數" : "已完成") + "</small></div><div><b" + (behind.length ? ' style="color:var(--bad)"' : "") + ">" + behind.length + "</b><small>落後" + unit + "數</small></div><div><b>" + (ex ? qn : all.length) + "</b><small>" + (ex ? "總題數" : "總項數") + "</small></div></div>"
         + '<div class="prog"><span style="width:' + (all.length ? (100 * done / all.length).toFixed(1) : 0) + '%"></span></div>'
         + (last ? '<p class="status">目前排到 ' + esc(mdw(last)) + "</p>" : "")
-        + "<ol>" + upcoming.map(it => "<li><span>" + md(it.date) + "</span>" + esc(it.title) + "</li>").join("") + "</ol>"
+        + "<ol>" + upcoming.map(it => "<li><span>" + md(it.date) + "</span>" + (it.qs && it.qs.length ? it.qs.map(q => '<button class="btn ghost" data-act="qgo" data-k="' + esc(q[1]) + '" title="打開考古題這一題">' + esc(q[0]) + "</button>").join(" ") : esc(it.title)) + "</li>").join("") + "</ol>"
         + (upcoming.length ? "" : '<p class="status">沒有未完成的進度。</p>')
-        + '<div class="shift"><label>從 <input type="date" id="sf-' + tr + '" value="' + (behind.length ? behind[0].date : t) + '"></label><label>起往後挪 <input type="number" min="1" max="60" id="sn-' + tr + '" value="' + Math.max(1, Math.min(60, behind.length || 1)) + '"> 天</label>'
+        + '<div class="shift"><label>從 <input type="date" id="sf-' + li + '" value="' + (behind.length ? behind[0].date : t) + '"></label><label>起往後挪 <input type="number" min="1" max="60" id="sn-' + li + '" value="' + Math.max(1, Math.min(60, behind.length || 1)) + '"> 天</label>'
         + '<button class="btn primary" data-act="shifttrack" data-k="' + tr + '">整條線往後挪</button></div></section>';
     });
     return h + "</div>";
@@ -894,7 +902,7 @@ table.g tr.grp td.nm { box-shadow: inset 4px 0 0 var(--gc, transparent) }
     else if (a === "pp") { ui.open.has(id) ? ui.open.delete(id) : ui.open.add(id); render(); }
     else if (a === "move") moveItem(id, b.dataset.to);
     else if (a === "movepick") { const v = document.getElementById("dt-" + id).value; if (v) moveItem(id, v); }
-    else if (a === "shiftfrom") { const it = itemById(id); if (it) { ui.open.delete(id); shiftTrack(it.track, it.date, document.getElementById("sh-" + id).value); } }
+    else if (a === "shiftfrom") { const it = itemById(id); if (it) { ui.open.delete(id); shiftTrack(lineOf(it), it.date, document.getElementById("sh-" + id).value); } }
     else if (a === "del") delItem(id);
     else if (a === "day") location.hash = "day-" + b.dataset.to;
     else if (a === "openday") {
@@ -934,7 +942,7 @@ table.g tr.grp td.nm { box-shadow: inset 4px 0 0 var(--gc, transparent) }
       else { const t = derive().tasks.find(x => x.id === tid); if (t) { setTask(tid, { start: addDays(t.start, n), end: addDays(t.end, n), moved: (t.moved || 0) + 1 }); toast("整段延後 " + n + " 天"); } }
     }
     else if (a === "igall") { ui.igShowAll = !ui.igShowAll; render(); }
-    else if (a === "shifttrack") { const k = b.dataset.k; shiftTrack(k, document.getElementById("sf-" + k).value || today(), document.getElementById("sn-" + k).value); }
+    else if (a === "shifttrack") { const k = b.dataset.k, i = LINES.indexOf(k); shiftTrack(k, document.getElementById("sf-" + i).value || today(), document.getElementById("sn-" + i).value); }
   });
   $main.addEventListener("change", e => {
     const b = e.target; const a = b.dataset && b.dataset.act, id = b.dataset && b.dataset.id;

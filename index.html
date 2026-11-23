@@ -560,11 +560,12 @@ table.pm td.c-key { text-align: center }
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
   // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
-  const BUILD = "20261123a";
+  const BUILD = "20261123b";
   const TYPES = {
     today: { label: "今天", desc: "一份清單看完今天：任務、里程碑、考試、工作台的課程與讀書、固定時段。", view: vToday },
     // 總覽的月曆、甘特圖、重要日期共用同一個工作台頁面（frame），只是打開不同的畫面（hash）
     wbCal: { label: "月曆", desc: "整個月的課程、截止、讀書、IG 發文、專案期限、里程碑和考試。", src: "apps/workbench/index.html", frame: "workbench", hash: "cal" },
+    wbStudy: { label: "讀書進度", desc: "計概、MIS 考古題和多益、iPAS、C 語言每條讀書線的進度、落後天數和接下來要做的；可以整條線往後挪。", src: "apps/workbench/index.html", frame: "workbench", hash: "study" },
     wbGantt: { label: "甘特圖", desc: "專案、學習目標、考試和工作台排程的時程與每週負載。", src: "apps/workbench/index.html", frame: "workbench", hash: "gantt" },
     wbIG: { label: "IG 發文日程表", desc: "每一篇 IG 的日期、格式、開頭、結尾提問和狀態。", src: "apps/workbench/index.html", frame: "workbench", hash: "ig" },
     wbDates: { label: "重要日期", desc: "里程碑、考試、重要截止日，加上待確認事項、寫稿原則與路線圖。", src: "apps/workbench/index.html", frame: "workbench", hash: "lists" },
@@ -599,6 +600,7 @@ table.pm td.c-key { text-align: center }
       { id: "proj-plan", area: "work", type: "projectPlan", name: "專案計畫" },
       { id: "ig-posts", area: "work", type: "wbIG", name: "IG 發文日程表", parent: "proj-plan" },
       { id: "study-plan", area: "learn", type: "studyPlan", name: "目標" },
+      { id: "study-prog", area: "learn", type: "wbStudy", name: "讀書進度" },
       { id: "vocab", area: "learn", type: "vocabApp", name: "單字" },
       { id: "notes", area: "learn", type: "notes", name: "筆記" },
       { id: "os-notes", area: "learn", type: "osNotesApp", name: "作業系統" },
@@ -840,6 +842,16 @@ table.pm td.c-key { text-align: center }
     next.ipasAdded = 1;
     setCfg(next);
   }
+  // 新增的「讀書進度」（學習區，放在目標後面）：加過一次就不再加
+  function addStudyProg() {
+    if (cfgUpgrading || !live || !canWrite || !db || !S.cfg || !Array.isArray(S.cfg.mods) || S.cfg.studyProgAdded || S.cfg.mods.some(m => m.type === "wbStudy")) return;
+    const next = clone(S.cfg), i = next.mods.findIndex(m => m.type === "studyPlan"), sp = next.mods[i];
+    const mod = { id: "study-prog", area: sp ? sp.area : "learn", type: "wbStudy", name: "讀書進度" };
+    if (next.mods.some(m => m.id === mod.id)) mod.id = "study-prog-" + Date.now().toString(36);
+    next.mods.splice(i < 0 ? next.mods.length : i + 1, 0, mod);
+    next.studyProgAdded = 1;
+    setCfg(next);
+  }
   // 專案類別：沿用工作台原本的分類（商品開發、策展與補助、官網與系統…）
   const projSeen = new Set();
   function fillProjCats() {
@@ -875,7 +887,7 @@ table.pm td.c-key { text-align: center }
     });
     wbWrite("tasks", { igLinked: 1, tasks: links });
   }
-  function afterLive() { upgradeCfg(); addIpas(); mergeExamPrep(); fillProjCats(); makeIgProjects(); linkTwins(); }
+  function afterLive() { upgradeCfg(); addIpas(); addStudyProg(); mergeExamPrep(); fillProjCats(); makeIgProjects(); linkTwins(); }
   function mergeExamPrep() {
     if (!live || !canWrite || !db) return;
     arr("exams").filter(e => !prepSeen.has(e.id) && e.prepMerged === undefined && (e.goal === undefined || (e.prep || []).length)).forEach(e => {
@@ -908,7 +920,7 @@ table.pm td.c-key { text-align: center }
 
   /* ═════════ 工作台資料（今天頁直接讀，不再另外列一份） ═════════ */
   let wbMemo = null;
-  const WB_TYPES = ["wbCal", "wbGantt", "wbDates", "wbIG", "workbenchApp"];
+  const WB_TYPES = ["wbCal", "wbGantt", "wbStudy", "wbDates", "wbIG", "workbenchApp"];
   const wbModId = () => { for (const t of WB_TYPES) { const m = cfg().mods.find(x => x.type === t && !x.hidden); if (m) return m.id; } return ""; };
   function wbData() {
     const docs = S.wbDocs; if (!docs || !wbModId()) return null;
@@ -2543,7 +2555,42 @@ table.pm td.c-key { text-align: center }
   // 一次性：碩班的計概(一)、MIS 課本、補充和它們的看題／做題，換成「一天 1–2 題」的中山考古題（計概、MIS 各一條）。
   // 題目順序在工作台的 EXAM_PLAN（tools/exam_plan.py 產生）。C 語言課本那條線不動。舊的事項只標 deleted、不真的刪。
   let examPlanBusy = false;
+  const oldBook = it => {
+    if (it.tag !== "讀" || it.track !== "碩班" || it.src === "exam") return false;
+    const t = String(it.title || ""), d = String(it.detail || "");
+    if (/^(?:(?:看題|做題)\s*)?(?:計概|作業系統|MIS|補充)/.test(t) || /^(?:計概[(（]一[)）]|MIS |補充：)/.test(d)) return true;
+    return /^(?:看題|做題)\s/.test(t) && !/^(?:看題|做題)\s*C/.test(t);
+  };
+  const examRest = (W, d) => { const x = W.dayMeta[d]; return (x ? !!x.rest : dow(d) === 0) || (d >= "2027-05-01" && d <= "2027-05-22"); };   // 週日、假日、iPAS 衝刺（碩班 0 小時）不排
+  // 一次性（第二次）：轉換那天已經勾掉的課本進度也拿掉；考古題改從轉換隔天開始排
+  function examPlanFix() {
+    const docs = S.wbDocs || {}, start = (docs.meta || {}).examPlan;
+    if (!canWrite || !wbDb || !start || (docs.meta || {}).examPlanFix) return;
+    const W = wbData(); if (!W) return;
+    const patch = {}, put = (b, id, v) => { (patch[b] = patch[b] || { items: {} }).items[id] = v; };
+    let nOld = 0;
+    W.items.filter(it => it.date >= start && oldBook(it)).forEach(it => { put(it.bucket, it.id, { deleted: true, replacedBy: "exam" }); nOld++; });
+    const begin = addDays(start, 1) > today() ? addDays(start, 1) : today();
+    ["cs", "mis"].forEach(s => {
+      const list = W.items.filter(it => it.src === "exam" && !it.done && /^exam-(cs|mis)-\d+$/.test(it.id) && it.id.split("-")[1] === s)
+        .sort((a, b) => Number(a.id.split("-")[2]) - Number(b.id.split("-")[2]));
+      let d = begin;
+      list.forEach(it => {
+        while (examRest(W, d)) d = addDays(d, 1);
+        if (it.date !== d) {
+          const nb = "m-" + d.slice(0, 7);
+          if (nb === it.bucket) put(nb, it.id, { date: d, orig: d });
+          else { put(it.bucket, it.id, { deleted: true, movedTo: nb }); const c = Object.assign({}, it, { date: d, orig: d }); delete c.id; delete c.bucket; put(nb, it.id, c); }
+        }
+        d = addDays(d, 1);
+      });
+    });
+    Object.keys(patch).forEach(b => wbWrite(b, patch[b]));
+    wbWrite("meta", { examPlanFix: today() });
+    toast("考古題改從 " + md(begin) + " 開始" + (nOld ? "，拿掉 " + nOld + " 項課本進度" : ""));
+  }
   async function examPlan() {
+    if ((S.wbDocs && S.wbDocs.meta || {}).examPlan) { examPlanFix(); return; }
     const docs = S.wbDocs || {};
     if (examPlanBusy || !canWrite || !wbDb || (docs.meta || {}).examPlan || !Object.keys(docs).some(id => id.startsWith("m-"))) return;
     examPlanBusy = true;
@@ -2553,20 +2600,15 @@ table.pm td.c-key { text-align: center }
       if (!m) return;
       const plan = JSON.parse(m[1]), W = wbData(), t0 = today(), END = "2027-08-31";
       if (!W || (S.wbDocs.meta || {}).examPlan) return;
-      const old = it => {
-        if (it.tag !== "讀" || it.track !== "碩班" || it.done || it.src === "exam") return false;
-        const t = String(it.title || ""), d = String(it.detail || "");
-        if (/^(?:(?:看題|做題)\s*)?(?:計概|作業系統|MIS|補充)/.test(t) || /^(?:計概[(（]一[)）]|MIS |補充：)/.test(d)) return true;
-        return /^(?:看題|做題)\s/.test(t) && !/^(?:看題|做題)\s*C/.test(t);
-      };
+      const old = it => !it.done && oldBook(it);
       const patch = {}, put = (b, id, v) => { (patch[b] = patch[b] || { items: {} }).items[id] = v; };
       let nOld = 0;
       W.items.filter(old).forEach(it => { put(it.bucket, it.id, { deleted: true, replacedBy: "exam" }); nOld++; });
-      const rest = d => { const x = W.dayMeta[d]; return (x ? !!x.rest : dow(d) === 0) || (d >= "2027-05-01" && d <= "2027-05-22"); };   // 週日、假日、iPAS 衝刺（碩班 0 小時）不排
+      const rest = d => examRest(W, d);
       const SUBJ = { cs: "計概", mis: "MIS " };
       let nNew = 0;
       Object.keys(SUBJ).forEach(s => {
-        let d = t0, i = 0;
+        let d = addDays(t0, 1), i = 0;
         while (i < plan[s].length && d <= END) {
           if (!rest(d)) {
             const g = plan[s][i];
@@ -2580,7 +2622,7 @@ table.pm td.c-key { text-align: center }
         }
       });
       Object.keys(patch).forEach(b => wbWrite(b, patch[b]));
-      wbWrite("meta", { examPlan: t0 });
+      wbWrite("meta", { examPlan: t0, examPlanFix: t0 });
       toast("計概、MIS 改成每天 1–2 題考古題：排了 " + nNew + " 天份，換掉 " + nOld + " 項課本進度");
     } catch (e) { /* 下次打開再試 */ } finally { examPlanBusy = false; }
   }
