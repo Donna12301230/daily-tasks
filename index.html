@@ -560,7 +560,7 @@ table.pm td.c-key { text-align: center }
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
   // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
-  const BUILD = "20261122c";
+  const BUILD = "20261123a";
   const TYPES = {
     today: { label: "今天", desc: "一份清單看完今天：任務、里程碑、考試、工作台的課程與讀書、固定時段。", view: vToday },
     // 總覽的月曆、甘特圖、重要日期共用同一個工作台頁面（frame），只是打開不同的畫面（hash）
@@ -1087,8 +1087,10 @@ table.pm td.c-key { text-align: center }
       + (it.track ? '<span class="chip">' + esc(it.track) + (it.hours ? " " + esc(it.hours) + " 小時" : "") + "</span>" : it.hours ? '<span class="chip">' + esc(it.hours) + " 小時</span>" : "")
       + (o.late ? '<span class="chip bad">逾期・' + mdw(it.date) + "</span>" : "")
       + (it.moved ? '<span class="chip warn">延後過 ' + esc(it.moved) + " 次</span>" : "");
-    const note = it.detail && it.tag === "讀" ? '<span class="row-note">' + esc(String(it.detail).split(/\n/)[0]) + "</span>" : "";
-    const acts = (to ? '<a class="btn ghost sm" href="#m-' + esc(to.id) + '">打開' + esc(to.name) + "</a>" : "") + (o.acts || "");
+    const note = it.detail && it.tag === "讀" ? '<span class="row-note">' + esc(it.qs ? String(it.detail).split(/\n/).join("／") : String(it.detail).split(/\n/)[0]) + "</span>" : "";
+    const nm = it.qs && it.qs.length ? cfg().mods.find(x => x.type === "nsysuApp" && !x.hidden) : null;
+    const qa = nm ? it.qs.map(q => '<a class="btn ghost sm" href="#m-' + esc(nm.id) + "/" + esc(q[1]) + '" title="打開考古題這一題">' + esc(q[0]) + "</a>").join("") : "";
+    const acts = qa + (to && !qa ? '<a class="btn ghost sm" href="#m-' + esc(to.id) + '">打開' + esc(to.name) + "</a>" : "") + (o.acts || "");
     return '<div class="row' + (it.done ? " is-done" : "") + '"><input type="checkbox" id="wb-' + id + k + '" data-act="wbdone" data-id="' + id + '"' + chk(it.done) + ' aria-label="完成：' + esc(it.title) + '">'
       + '<label class="row-main" for="wb-' + id + k + '"><span class="row-title">' + (it.tag === "★" ? "◆ " : "") + esc(it.title) + "</span>" + note + (meta ? '<span class="row-meta">' + meta + "</span>" : "") + "</label>"
       + (acts ? '<span class="row-acts">' + acts + "</span>" : "") + "</div>";
@@ -2535,7 +2537,52 @@ table.pm td.c-key { text-align: center }
     wbUnsub = wbDb.collection("plan").onSnapshot(qs => {
       const m = {}; qs.docs.forEach(x => { m[x.id] = x.data(); });
       S.wbDocs = m; fillProjCats(); makeIgProjects(); linkTwins(); schedule();
+      if (!qs.metadata || !qs.metadata.fromCache) examPlan();
     }, () => schedule());
+  }
+  // 一次性：碩班的計概(一)、MIS 課本、補充和它們的看題／做題，換成「一天 1–2 題」的中山考古題（計概、MIS 各一條）。
+  // 題目順序在工作台的 EXAM_PLAN（tools/exam_plan.py 產生）。C 語言課本那條線不動。舊的事項只標 deleted、不真的刪。
+  let examPlanBusy = false;
+  async function examPlan() {
+    const docs = S.wbDocs || {};
+    if (examPlanBusy || !canWrite || !wbDb || (docs.meta || {}).examPlan || !Object.keys(docs).some(id => id.startsWith("m-"))) return;
+    examPlanBusy = true;
+    try {
+      const html = await (await fetch("apps/workbench/index.html?v=" + BUILD)).text();
+      const m = /const EXAM_PLAN = (\{.*?\});\n/.exec(html);
+      if (!m) return;
+      const plan = JSON.parse(m[1]), W = wbData(), t0 = today(), END = "2027-08-31";
+      if (!W || (S.wbDocs.meta || {}).examPlan) return;
+      const old = it => {
+        if (it.tag !== "讀" || it.track !== "碩班" || it.done || it.src === "exam") return false;
+        const t = String(it.title || ""), d = String(it.detail || "");
+        if (/^(?:(?:看題|做題)\s*)?(?:計概|作業系統|MIS|補充)/.test(t) || /^(?:計概[(（]一[)）]|MIS |補充：)/.test(d)) return true;
+        return /^(?:看題|做題)\s/.test(t) && !/^(?:看題|做題)\s*C/.test(t);
+      };
+      const patch = {}, put = (b, id, v) => { (patch[b] = patch[b] || { items: {} }).items[id] = v; };
+      let nOld = 0;
+      W.items.filter(old).forEach(it => { put(it.bucket, it.id, { deleted: true, replacedBy: "exam" }); nOld++; });
+      const rest = d => { const x = W.dayMeta[d]; return (x ? !!x.rest : dow(d) === 0) || (d >= "2027-05-01" && d <= "2027-05-22"); };   // 週日、假日、iPAS 衝刺（碩班 0 小時）不排
+      const SUBJ = { cs: "計概", mis: "MIS " };
+      let nNew = 0;
+      Object.keys(SUBJ).forEach(s => {
+        let d = t0, i = 0;
+        while (i < plan[s].length && d <= END) {
+          if (!rest(d)) {
+            const g = plan[s][i];
+            put("m-" + d.slice(0, 7), "exam-" + s + "-" + i, { date: d, orig: d, tag: "讀", track: "碩班", src: "exam", done: false, added: t0,
+              title: SUBJ[s] + "考古題 " + g.map(q => q[0]).join("、"),
+              detail: g.map(q => q[0] + "　" + q[2]).join("\n"),
+              qs: g.map(q => [q[0], q[1]]) });
+            i++; nNew++;
+          }
+          d = addDays(d, 1);
+        }
+      });
+      Object.keys(patch).forEach(b => wbWrite(b, patch[b]));
+      wbWrite("meta", { examPlan: t0 });
+      toast("計概、MIS 改成每天 1–2 題考古題：排了 " + nNew + " 天份，換掉 " + nOld + " 項課本進度");
+    } catch (e) { /* 下次打開再試 */ } finally { examPlanBusy = false; }
   }
   window.addEventListener("message", e => {
     if (e.origin !== location.origin || !e.data || !e.data.dt) return;
