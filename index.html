@@ -560,7 +560,7 @@ table.pm td.c-key { text-align: center }
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
   // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
-  const BUILD = "20261123b";
+  const BUILD = "20261123c";
   const TYPES = {
     today: { label: "今天", desc: "一份清單看完今天：任務、里程碑、考試、工作台的課程與讀書、固定時段。", view: vToday },
     // 總覽的月曆、甘特圖、重要日期共用同一個工作台頁面（frame），只是打開不同的畫面（hash）
@@ -2562,32 +2562,35 @@ table.pm td.c-key { text-align: center }
     return /^(?:看題|做題)\s/.test(t) && !/^(?:看題|做題)\s*C/.test(t);
   };
   const examRest = (W, d) => { const x = W.dayMeta[d]; return (x ? !!x.rest : dow(d) === 0) || (d >= "2027-05-01" && d <= "2027-05-22"); };   // 週日、假日、iPAS 衝刺（碩班 0 小時）不排
-  // 一次性（第二次）：轉換那天已經勾掉的課本進度也拿掉；考古題改從轉換隔天開始排
+  // 一次性補正：(1) examPlanFix：考古題改從轉換隔天開始排；(2) examPlanClean：舊的計概、MIS 課本進度（含已勾掉、以前的日期）全部拿掉
   function examPlanFix() {
-    const docs = S.wbDocs || {}, start = (docs.meta || {}).examPlan;
-    if (!canWrite || !wbDb || !start || (docs.meta || {}).examPlanFix) return;
+    const docs = S.wbDocs || {}, meta = docs.meta || {}, start = meta.examPlan;
+    if (!canWrite || !wbDb || !start || (meta.examPlanFix && meta.examPlanClean)) return;
     const W = wbData(); if (!W) return;
     const patch = {}, put = (b, id, v) => { (patch[b] = patch[b] || { items: {} }).items[id] = v; };
-    let nOld = 0;
-    W.items.filter(it => it.date >= start && oldBook(it)).forEach(it => { put(it.bucket, it.id, { deleted: true, replacedBy: "exam" }); nOld++; });
-    const begin = addDays(start, 1) > today() ? addDays(start, 1) : today();
-    ["cs", "mis"].forEach(s => {
-      const list = W.items.filter(it => it.src === "exam" && !it.done && /^exam-(cs|mis)-\d+$/.test(it.id) && it.id.split("-")[1] === s)
-        .sort((a, b) => Number(a.id.split("-")[2]) - Number(b.id.split("-")[2]));
-      let d = begin;
-      list.forEach(it => {
-        while (examRest(W, d)) d = addDays(d, 1);
-        if (it.date !== d) {
-          const nb = "m-" + d.slice(0, 7);
-          if (nb === it.bucket) put(nb, it.id, { date: d, orig: d });
-          else { put(it.bucket, it.id, { deleted: true, movedTo: nb }); const c = Object.assign({}, it, { date: d, orig: d }); delete c.id; delete c.bucket; put(nb, it.id, c); }
-        }
-        d = addDays(d, 1);
+    let nOld = 0, begin = null;
+    if (!meta.examPlanClean) W.items.filter(it => oldBook(it) && !it.added).forEach(it => { put(it.bucket, it.id, { deleted: true, replacedBy: "exam" }); nOld++; });
+    if (!meta.examPlanFix) {
+      begin = addDays(start, 1) > today() ? addDays(start, 1) : today();
+      ["cs", "mis"].forEach(s => {
+        const list = W.items.filter(it => it.src === "exam" && !it.done && /^exam-(cs|mis)-\d+$/.test(it.id) && it.id.split("-")[1] === s)
+          .sort((a, b) => Number(a.id.split("-")[2]) - Number(b.id.split("-")[2]));
+        let d = begin;
+        list.forEach(it => {
+          while (examRest(W, d)) d = addDays(d, 1);
+          if (it.date !== d) {
+            const nb = "m-" + d.slice(0, 7);
+            if (nb === it.bucket) put(nb, it.id, { date: d, orig: d });
+            else { put(it.bucket, it.id, { deleted: true, movedTo: nb }); const c = Object.assign({}, it, { date: d, orig: d, deleted: false }); delete c.id; delete c.bucket; put(nb, it.id, c); }
+          }
+          d = addDays(d, 1);
+        });
       });
-    });
+    }
     Object.keys(patch).forEach(b => wbWrite(b, patch[b]));
-    wbWrite("meta", { examPlanFix: today() });
-    toast("考古題改從 " + md(begin) + " 開始" + (nOld ? "，拿掉 " + nOld + " 項課本進度" : ""));
+    wbWrite("meta", { examPlanFix: meta.examPlanFix || today(), examPlanClean: today() });
+    const msg = [begin ? "考古題改從 " + md(begin) + " 開始" : "", nOld ? "拿掉 " + nOld + " 項舊的課本進度" : ""].filter(Boolean).join("，");
+    if (msg) toast(msg);
   }
   async function examPlan() {
     if ((S.wbDocs && S.wbDocs.meta || {}).examPlan) { examPlanFix(); return; }
@@ -2600,7 +2603,7 @@ table.pm td.c-key { text-align: center }
       if (!m) return;
       const plan = JSON.parse(m[1]), W = wbData(), t0 = today(), END = "2027-08-31";
       if (!W || (S.wbDocs.meta || {}).examPlan) return;
-      const old = it => !it.done && oldBook(it);
+      const old = it => oldBook(it) && !it.added;
       const patch = {}, put = (b, id, v) => { (patch[b] = patch[b] || { items: {} }).items[id] = v; };
       let nOld = 0;
       W.items.filter(old).forEach(it => { put(it.bucket, it.id, { deleted: true, replacedBy: "exam" }); nOld++; });
@@ -2622,7 +2625,7 @@ table.pm td.c-key { text-align: center }
         }
       });
       Object.keys(patch).forEach(b => wbWrite(b, patch[b]));
-      wbWrite("meta", { examPlan: t0, examPlanFix: t0 });
+      wbWrite("meta", { examPlan: t0, examPlanFix: t0, examPlanClean: t0 });
       toast("計概、MIS 改成每天 1–2 題考古題：排了 " + nNew + " 天份，換掉 " + nOld + " 項課本進度");
     } catch (e) { /* 下次打開再試 */ } finally { examPlanBusy = false; }
   }
