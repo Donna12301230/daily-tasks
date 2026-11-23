@@ -348,6 +348,34 @@ document.addEventListener("click", function (ev) {
   parent.postMessage({ dt: "nav", type: "nsysuApp", sub: a.getAttribute("data-dtref") }, location.origin);
 }, true);
 </script><style>html.in-dt.dt-picking header.top{display:none}html.in-dt a.dtref,html.in-dt a.dtmore-btn{color:var(--accent);text-decoration:underline;text-underline-offset:3px;cursor:pointer}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap"><style id="dt-vocab">/* 單字練習放進平台時：字型與介面跟筆記、考古題一致（原本的網站不受影響） */
+html.in-dt { --font-body: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif; --font-display: "LXGW WenKai TC", "Noto Sans TC", "Microsoft JhengHei", serif; --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace; --radius: 12px; --shadow: none }
+html.in-dt body { font: 15px/1.6 var(--font-body) }
+html.in-dt .small { font-size: .82rem }
+html.in-dt h1, html.in-dt h2 { font-family: var(--font-display); font-weight: 700 }
+html.in-dt h2 { font-size: 1.5rem; line-height: 1.3 }
+html.in-dt .hero h1 { font-size: 1.65rem }
+html.in-dt h3 { font-size: .98rem; font-weight: 700 }
+html.in-dt .c-word, html.in-dt .q-word, html.in-dt .opt.en, html.in-dt .spell-res b, html.in-dt .spell input { font-family: var(--font-body) }
+html.in-dt textarea, html.in-dt .spell-hint { font-family: var(--font-mono) }
+/* 按鈕、標籤：跟平台同一種大小 */
+html.in-dt .btn { padding: 5px 12px; border-radius: 8px; font-size: .86rem; font-weight: 500; line-height: 1.35 }
+html.in-dt .btn.sm { padding: 2px 9px; font-size: .8rem }
+html.in-dt .btn.big { padding: 11px 18px; font-size: 1rem; font-weight: 600 }
+html.in-dt .btn:hover { border-color: var(--muted) }
+html.in-dt .btn.primary:hover { border-color: var(--accent); filter: brightness(1.08) }
+html.in-dt .tag { font-size: .74rem; line-height: 1.55; padding: 0 7px; border: 1px solid var(--line); background: transparent; color: var(--muted); font-weight: 500 }
+html.in-dt .tag.ok { border-color: transparent; background: var(--ok-soft); color: var(--ok) }
+html.in-dt .tag.star { border-color: transparent; background: var(--star-soft); color: var(--star) }
+html.in-dt select, html.in-dt input[type=text], html.in-dt .search input { border-radius: 8px; font-size: .9rem }
+html.in-dt nav a { font-size: .9rem }
+html.in-dt .hero { border-radius: 12px; padding: 16px 18px }
+/* 選擇單字庫：跟「選擇課程」「選擇考古題」同一種清單（靠左、滿版、目前使用中的不另外加框） */
+html.in-dt.dt-picking main.wrap { max-width: none; padding-top: 22px }
+html.in-dt .bank { border-radius: 12px }
+html.in-dt .bank.cur { border-color: var(--line); box-shadow: none }
+html.in-dt .bank-title { margin-bottom: 2px }
+</style>
 </head>
 <body>
 <header class="top">

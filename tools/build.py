@@ -123,6 +123,9 @@ def term_refs():
     return out
 
 
+VOCAB_CSS = open(os.path.join(TOOLS, "vocab_dt.css"), encoding="utf-8").read()   # 單字放進平台時：字型與介面跟筆記、考古題一致
+VOCAB_FONT = ('<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?'
+              'family=IBM+Plex+Mono:wght@400;600&family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">')
 VOCAB_JS = ("<script>window.DT_TERM_REFS=__REFS__;\n" + open(os.path.join(TOOLS, "vocab_refs.js"), encoding="utf-8").read() + "</script>"
             "<style>html.in-dt.dt-picking header.top{display:none}"
             "html.in-dt a.dtref,html.in-dt a.dtmore-btn{color:var(--accent);text-decoration:underline;text-underline-offset:3px;cursor:pointer}</style>")
@@ -147,6 +150,7 @@ def inject(html, app, depth):
         head += "<style>" + PICK_CSS + "</style>"
     if app == "vocab":
         head += VOCAB_JS.replace("__REFS__", json.dumps(term_refs(), ensure_ascii=False, separators=(",", ":")))
+        head += VOCAB_FONT + '<style id="dt-vocab">' + VOCAB_CSS + "</style>"
     if "</head>" not in html or "</body>" not in html:
         raise SystemExit(f"{app}: 找不到 </head> 或 </body>")
     html = html.replace("</head>", head + "\n</head>", 1)
