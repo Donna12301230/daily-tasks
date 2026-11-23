@@ -560,7 +560,7 @@ table.pm td.c-key { text-align: center }
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
   // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
-  const BUILD = "20261124e";
+  const BUILD = "20261124f";
   const TYPES = {
     today: { label: "今天", desc: "一份清單看完今天：任務、里程碑、考試、工作台的課程與讀書、固定時段。", view: vToday },
     // 總覽的月曆、甘特圖、重要日期共用同一個工作台頁面（frame），只是打開不同的畫面（hash）
@@ -2625,7 +2625,7 @@ table.pm td.c-key { text-align: center }
   /* ── 考古題每日進度：中山（計概、MIS）、iPAS 初級（管理、技術）、多益（Vol.7、Vol.8）共用一套排法 ──
      依章節排；期限是那場考試的前一個月（平台「考試」裡有就用，沒有用預估日期）；
      週日、假日、空大期中／期末考那一週不排；iPAS 衝刺期中山暫停；延後時同一科後面的整組往後挪。 */
-  const EXAM_VER = 3;   // 3：事項編號改成「科目＋日期」，並清掉重複的事項
+  const EXAM_VER = 4;   // 3：事項編號改成「科目＋日期」並清掉重複；4：同一天題目一樣、或同一筆在兩個月份的也算重複
   // EXAM_REV:BEGIN
   const EXAM_REV = {"cs": "76173539", "mis": "c98212b2", "ipm": "ee5b0c9a", "ipt": "848e482e", "ipr": "0f9c2c26", "ipd": "c0a64217", "toeic7": "e8a4c7bf", "toeic8": "d5e3dd28"};
   // EXAM_REV:END
@@ -2752,7 +2752,8 @@ table.pm td.c-key { text-align: center }
   }
   // 每一科的排程條件（期限、開始日、不排的日子、版本）；跟上次排的時候不同就把那一科明天起還沒做的重排（做過的、今天以前的不動）
   const examSig = s => [EXAM_VER, EXAM_REV[s] || "", SUBJ[s].after ? SUBJ[s].after() : "", examEndOf(s), JSON.stringify(examOff(s))].join("|");   // 不放「明天」，免得每天都重排
-  const examStale = meta => !!meta.examPlan && Object.keys(SUBJ).filter(s => ((meta.examSig || {})[s] || "") !== examSig(s));
+  // 有比這一版新的程式排過（meta.examVer 比較大）就不動，免得舊分頁跟新分頁輪流重排
+  const examStale = meta => !!meta.examPlan && !((meta.examVer || 0) > EXAM_VER) && Object.keys(SUBJ).filter(s => ((meta.examSig || {})[s] || "") !== examSig(s));
   let examFitBusy = false;
   const examFitDone = new Set();   // 這個頁面已經照哪些條件排過（同樣條件不再排第二次）
   async function examPlanFit() {
@@ -2768,9 +2769,14 @@ table.pm td.c-key { text-align: center }
       subs.forEach(s => {
         const mine = W.items.filter(it => it.src === "exam" && subOf(it) === s);
         const keep0 = mine.filter(it => it.done || it.date <= t0), redo = mine.filter(it => !(it.done || it.date <= t0));
-        // 同一天同一筆重複的（以前重排疊出來的）只留一筆：有打勾的優先
+        // 重複的（以前重排疊出來的）只留一筆，有打勾的優先：同一筆編號出現在兩個月份、同一天標題一樣、或同一天題目一樣都算
         const byKey = {}, keep = [];
-        keep0.slice().sort((a, b) => (b.done ? 1 : 0) - (a.done ? 1 : 0)).forEach(it => { const k = it.date + "|" + it.title; if (byKey[k]) put(it.bucket, it.id, { deleted: true, replacedBy: "dup" }); else { byKey[k] = 1; keep.push(it); } });
+        const keysOf = it => [it.id, it.date + "|" + it.title].concat(it.qs && it.qs.length ? [it.date + "|q|" + it.qs.map(q => q[1]).sort().join(",")] : []);
+        keep0.slice().sort((a, b) => (b.done ? 1 : 0) - (a.done ? 1 : 0)).forEach(it => {
+          const ks = keysOf(it);
+          if (ks.some(k => byKey[k])) put(it.bucket, it.id, { deleted: true, replacedBy: "dup" });
+          else { ks.forEach(k => { byKey[k] = 1; }); keep.push(it); }
+        });
         const seen = new Set(); keep.forEach(it => (it.qs || [{ 1: it.title }]).forEach(q => seen.add(q[1] || it.title)));
         const seenU = new Set(); keep.forEach(it => (it.units || []).forEach(u => seenU.add(u)));
         const left = SUBJ[s].pack === "book"
@@ -2782,7 +2788,7 @@ table.pm td.c-key { text-align: center }
         sig[s] = examSig(s); off[s] = examOff(s).map(r => r[0] + "~" + r[1]); examFitDone.add(s + "|" + sig[s]);
       });
       Object.keys(patch).forEach(b => wbWrite(b, patch[b]));
-      wbWrite("meta", { examSig: sig, examOff: off });
+      wbWrite("meta", { examSig: sig, examOff: off, examVer: EXAM_VER });
       if (msg.length) toast("考古題重排：" + msg.join("；"));
     } catch (e) { /* 下次打開再試 */ } finally { examFitBusy = false; }
   }
