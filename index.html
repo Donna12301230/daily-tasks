@@ -560,7 +560,7 @@ table.pm td.c-key { text-align: center }
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
   // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
-  const BUILD = "20261124l";
+  const BUILD = "20261124m";
   const TYPES = {
     today: { label: "今天", desc: "一份清單看完今天：任務、里程碑、考試、工作台的課程與讀書、固定時段。", view: vToday },
     // 總覽的月曆、甘特圖、重要日期共用同一個工作台頁面（frame），只是打開不同的畫面（hash）
@@ -2857,8 +2857,21 @@ table.pm td.c-key { text-align: center }
     Object.keys(patch).forEach(b => wbWrite(b, patch[b]));
     wbWrite("meta", { regRemind: t0 });
   }
+  // 一次性：多益那條線裡標題是「App 單字」的事項先不排（還沒打勾的標成刪除，打勾過的留著）
+  function dropAppVocabItems() {
+    const meta = (S.wbDocs || {}).meta || {};
+    if (meta.appVocabItemsOff || !canWrite || !wbDb || !live || !wbFresh) return;
+    const patch = {}; let n = 0;
+    wbAllItems().forEach(it => {
+      if (it.done || !/^\s*app\s*單字/i.test(String(it.title || ""))) return;
+      (patch[it.bucket] = patch[it.bucket] || { items: {} }).items[it.id] = { deleted: true, replacedBy: "noAppVocab" }; n++;
+    });
+    Object.keys(patch).forEach(b => wbWrite(b, patch[b]));
+    wbWrite("meta", { appVocabItemsOff: today() });
+    if (n) toast("拿掉 " + n + " 天的「App 單字」");
+  }
   async function examPlan() {
-    dropVocabApp(); addRegReminders();
+    dropVocabApp(); dropAppVocabItems(); addRegReminders();
     if ((S.wbDocs && S.wbDocs.meta || {}).examPlan) { examPlanFix(); examPlanFit(); return; }
     const docs = S.wbDocs || {};
     if (examPlanBusy || !canWrite || !wbDb || !live || (docs.meta || {}).examPlan || !Object.keys(docs).some(id => id.startsWith("m-"))) return;
