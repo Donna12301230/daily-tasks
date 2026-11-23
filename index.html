@@ -560,7 +560,7 @@ table.pm td.c-key { text-align: center }
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
   // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
-  const BUILD = "20261124k";
+  const BUILD = "20261124l";
   const TYPES = {
     today: { label: "今天", desc: "一份清單看完今天：任務、里程碑、考試、工作台的課程與讀書、固定時段。", view: vToday },
     // 總覽的月曆、甘特圖、重要日期共用同一個工作台頁面（frame），只是打開不同的畫面（hash）
@@ -2633,9 +2633,9 @@ table.pm td.c-key { text-align: center }
   /* ── 考古題每日進度：中山（計概、MIS）、iPAS 初級（管理、技術）、多益（Vol.7、Vol.8）共用一套排法 ──
      依章節排；期限是那場考試的前一個月（平台「考試」裡有就用，沒有用預估日期）；
      週日、假日、空大期中／期末考那一週不排；iPAS 衝刺期中山暫停；延後時同一科後面的整組往後挪。 */
-  const EXAM_VER = 6;   // 3：事項編號改成「科目＋日期」並清掉重複；4：同一天題目一樣、或同一筆在兩個月份的也算重複；5：整份重寫月份文件（之前寫入被拒絕但排程紀錄已寫成功的，要重排一次）
+  const EXAM_VER = 6;   // 題目有變（例如計概加進 C 語言）靠 EXAM_REV 觸發重排   // 3：事項編號改成「科目＋日期」並清掉重複；4：同一天題目一樣、或同一筆在兩個月份的也算重複；5：整份重寫月份文件（之前寫入被拒絕但排程紀錄已寫成功的，要重排一次）
   // EXAM_REV:BEGIN
-  const EXAM_REV = {"cs": "76173539", "mis": "c98212b2", "ipm": "ee5b0c9a", "ipt": "848e482e", "ipr": "0f9c2c26", "ipd": "c0a64217", "toeic7": "e8a4c7bf", "toeic8": "d5e3dd28"};
+  const EXAM_REV = {"cs": "5e3f19e4", "mis": "c98212b2", "ipm": "ee5b0c9a", "ipt": "848e482e", "ipr": "0f9c2c26", "ipd": "c0a64217", "toeic7": "e8a4c7bf", "toeic8": "d5e3dd28"};
   // EXAM_REV:END
   const firstExam = (re, not) => arr("exams").filter(e => isDate(e.date) && re.test(e.name || "") && !(not && not.test(e.name || ""))).sort(byDate);
   const nsysuExam = () => { const t0 = today(), xs = arr("exams").filter(e => isDate(e.date) && e.date > t0);
@@ -2837,8 +2837,28 @@ table.pm td.c-key { text-align: center }
     wbWrite("meta", { vocabAppOff: today() });
     if (n) toast("多益單字拿掉「App」：改了 " + n + " 天");
   }
+  // 一次性：報名日期提醒（參考 115 年 iPAS 簡章、116 學年度中山招生時程推估），放進工作台當「截止與交件」的重要事項，會出現在「重要日期」和當天
+  const REG_REMIND = [
+    ["2027-04-10", "iPAS 初級報名截止（預估）", "參考 115 年：1/1–4/10 報名、5/23 考試。官方公告後以官網為準。"],
+    ["2027-05-01", "iPAS 中級（8 月場）開始報名（預估）", "參考 115 年：5/1–7/10 報名、8/22 考試；中級不必先考過初級。"],
+    ["2027-07-10", "iPAS 中級（8 月場）報名截止（預估）", "參考 115 年：5/1–7/10 報名。"],
+    ["2027-05-24", "確認多益第一場報名（預估 7/11 場）", "多益報名通常在考前約一個月截止，先確認場次。"],
+    ["2027-07-26", "確認多益第二場報名（預估 9/12 場）", "兩場要隔兩個月以上；成績約考後兩週出來，要趕在中山甄試報名前。"],
+    ["2027-10-01", "中山資管碩士班甄試開始報名（預估）", "參考 116 學年度：10/1–10/14 報名、11 月上旬面試；附上多益成績。"],
+    ["2027-10-14", "中山甄試報名截止（預估）", "參考 116 學年度：10/14 截止。"],
+    ["2027-12-01", "中山碩士班考試開始報名（預估）", "參考 116 學年度：12/1–12/16 報名、2 月初考試。"],
+    ["2027-12-16", "中山碩士班考試報名截止（預估）", "參考 116 學年度：12/16 截止。"],
+  ];
+  function addRegReminders() {
+    const meta = (S.wbDocs || {}).meta || {};
+    if (meta.regRemind || !canWrite || !wbDb || !live || !wbFresh) return;
+    const t0 = today(), patch = {};
+    REG_REMIND.forEach(([d, title, detail], i) => { (patch["m-" + d.slice(0, 7)] = patch["m-" + d.slice(0, 7)] || { items: {} }).items["rem-reg-" + i] = { date: d, orig: d, tag: "交", title, detail, important: true, done: false, added: t0 }; });
+    Object.keys(patch).forEach(b => wbWrite(b, patch[b]));
+    wbWrite("meta", { regRemind: t0 });
+  }
   async function examPlan() {
-    dropVocabApp();
+    dropVocabApp(); addRegReminders();
     if ((S.wbDocs && S.wbDocs.meta || {}).examPlan) { examPlanFix(); examPlanFit(); return; }
     const docs = S.wbDocs || {};
     if (examPlanBusy || !canWrite || !wbDb || !live || (docs.meta || {}).examPlan || !Object.keys(docs).some(id => id.startsWith("m-"))) return;

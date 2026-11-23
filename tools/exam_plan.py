@@ -3,7 +3,7 @@
 寫進工作台（apps/workbench/index.html 的 EXAM_PLAN）。工作台第一次打開時會把計概(一)、MIS 課本、
 補充和它們的看題／做題換成「一天 1–2 題」的考古題（見 examPlan()）。
 順序：依章節（照考古題網站「依章節」的順序），同一章裡新的年度在前、同一年照原卷題號；同一天不跨章節。選擇題一天 2 題，問答／填充／申論一天 1 題。
-計概的 C 語言章節（含二元樹）不排進來，留給 C 語言課本那條線。
+計概的 C 語言章節（含二元樹）也照章節排進來。
 用法：python tools/exam_plan.py"""
 import json
 import os
@@ -33,8 +33,6 @@ def groups(s):
         if p["s"] != s:
             continue
         for n, q in enumerate(p["qs"]):
-            if s == "cs" and is_c(q["c"]):
-                continue
             qs.append((order.get(q["c"], 999), -p["y"], n, p, q))
     qs.sort(key=lambda x: x[:3])
     out, cur, curc = [], [], None
