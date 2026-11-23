@@ -560,7 +560,7 @@ table.pm td.c-key { text-align: center }
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
   // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
-  const BUILD = "20261124c";
+  const BUILD = "20261124d";
   const TYPES = {
     today: { label: "今天", desc: "一份清單看完今天：任務、里程碑、考試、工作台的課程與讀書、固定時段。", view: vToday },
     // 總覽的月曆、甘特圖、重要日期共用同一個工作台頁面（frame），只是打開不同的畫面（hash）
@@ -2627,7 +2627,7 @@ table.pm td.c-key { text-align: center }
      週日、假日、空大期中／期末考那一週不排；iPAS 衝刺期中山暫停；延後時同一科後面的整組往後挪。 */
   const EXAM_VER = 2;
   // EXAM_REV:BEGIN
-  const EXAM_REV = {"cs": "76173539", "mis": "c98212b2", "ipm": "7b260263", "ipt": "2f154c66", "ipr": "0f9c2c26", "ipd": "c0a64217", "toeic7": "e8a4c7bf", "toeic8": "d5e3dd28"};
+  const EXAM_REV = {"cs": "76173539", "mis": "c98212b2", "ipm": "ee5b0c9a", "ipt": "848e482e", "ipr": "0f9c2c26", "ipd": "c0a64217", "toeic7": "e8a4c7bf", "toeic8": "d5e3dd28"};
   // EXAM_REV:END
   const firstExam = (re, not) => arr("exams").filter(e => isDate(e.date) && re.test(e.name || "") && !(not && not.test(e.name || ""))).sort(byDate);
   const nsysuExam = () => { const t0 = today(), xs = arr("exams").filter(e => isDate(e.date) && e.date > t0);
@@ -2640,8 +2640,8 @@ table.pm td.c-key { text-align: center }
   const SUBJ = {
     cs: { name: "計概考古題", line: "計概考古題", title: "計概考古題 ", track: "碩班", app: "nsysuApp", pack: "max3", date: () => examDate(nsysuExam, "2028-02-01"), pause: [["2027-05-01", "2027-05-22"]] },
     mis: { name: "MIS 考古題", line: "MIS 考古題", title: "MIS 考古題 ", track: "碩班", app: "nsysuApp", pack: "max3", date: () => examDate(nsysuExam, "2028-02-01"), pause: [["2027-05-01", "2027-05-22"]] },
-    ipm: { name: "iPAS 管理", line: "iPAS 管理", title: "iPAS 管理 ", track: "iPAS", app: "ipasApp", pack: "even", date: () => examDate(ipasExam, "2027-05-15") },
-    ipt: { name: "iPAS 技術", line: "iPAS 技術", title: "iPAS 技術 ", track: "iPAS", app: "ipasApp", pack: "even", date: () => examDate(ipasExam, "2027-05-15") },
+    ipm: { name: "iPAS 管理", line: "iPAS 管理", title: "iPAS 管理 ", track: "iPAS", app: "ipasApp", pack: "book", date: () => examDate(ipasExam, "2027-05-15") },
+    ipt: { name: "iPAS 技術", line: "iPAS 技術", title: "iPAS 技術 ", track: "iPAS", app: "ipasApp", pack: "book", date: () => examDate(ipasExam, "2027-05-15") },
     ipr: { name: "iPAS 中級規劃", line: "iPAS 中級規劃", title: "iPAS 中級規劃 ", track: "iPAS", app: "ipasApp", pack: "even", date: () => examDate(ipas2Exam, "2027-08-22"), after: () => examDate(ipasExam, "2027-05-15") },
     ipd: { name: "iPAS 中級防護", line: "iPAS 中級防護", title: "iPAS 中級防護 ", track: "iPAS", app: "ipasApp", pack: "even", date: () => examDate(ipas2Exam, "2027-08-22"), after: () => examDate(ipasExam, "2027-05-15") },
     toeic7: { name: "多益 Vol.7", line: "多益官方題", title: "多益 ", track: "多益", app: "", pack: "one", date: () => examDate(() => toeicExam(1), "2027-07-11"), after: () => examDate(ipasExam, "2027-05-15") },
@@ -2683,10 +2683,40 @@ table.pm td.c-key { text-align: center }
     runs.forEach(r => { const n = Math.ceil(r.length / k), sz = Math.ceil(r.length / n); for (let i = 0; i < r.length; i += sz) out.push(r.slice(i, i + sz)); });
     return out;
   }
-  const examPack = (s, groups, days) => SUBJ[s].pack === "max3" ? examPackMax3(groups, days) : SUBJ[s].pack === "even" ? examPackEven(groups, days) : groups;
+  // iPAS 初級以書為主：plan 是書的小節 [{u, t, p, n 頁數, q 配到這一小節的題目}]。份量＝頁數 ×3 分＋題數 ×1.5 分；
+  // 題目多的小節，題目拆成幾份分在後面幾天（讀一次、題目分天做）。每天照「剩下的份量 ÷ 剩下的天數」裝，用滿到期限。
+  function examPackBook(units, days) {
+    days = Math.max(1, days);
+    const ld = x => x.n * 3 + x.q.length * 1.5, total = units.reduce((a, x) => a + ld(x), 0);
+    const cap = Math.max(3, Math.round(total / days / 1.5));   // 一份最多幾題
+    const pieces = [];
+    units.forEach(x => {
+      const n = x.read === false ? 0 : x.n;
+      if (!x.q.length) { if (n) pieces.push({ x, read: true, n, q: [] }); return; }
+      for (let i = 0; i < x.q.length; i += cap) pieces.push({ x, read: i === 0 && n > 0, n: i === 0 ? n : 0, q: x.q.slice(i, i + cap) });
+    });
+    const pl = p => p.n * 3 + p.q.length * 1.5;
+    let left = pieces.reduce((a, p) => a + pl(p), 0), dl = days;
+    const out = []; let cur = [], c = 0;
+    pieces.forEach((p, i) => {
+      cur.push(p); c += pl(p);
+      const target = left / dl, more = pieces.length - i - 1;
+      if ((c >= target * 0.85 && dl > 1) || more === 0 || more < dl - 1) { out.push(cur); left -= c; dl = Math.max(1, dl - 1); cur = []; c = 0; }
+    });
+    return out;
+  }
+  const examPack = (s, groups, days) => SUBJ[s].pack === "max3" ? examPackMax3(groups, days) : SUBJ[s].pack === "even" ? examPackEven(groups, days) : SUBJ[s].pack === "book" ? examPackBook(groups, days) : groups;
   const examDays = (rest, from, end) => { let n = 0; for (let d = from; d <= end; d = addDays(d, 1)) if (!rest(d)) n++; return n; };
   function examItem(s, g, d, t0) {
     const S0 = SUBJ[s], ip = S0.pack === "even", one = S0.pack === "one";
+    if (S0.pack === "book") {   // 一天讀幾個小節，加上配到的考古題（題目多的小節會分好幾天做）
+      const refs = [].concat(...g.map(p => p.q)), rd = g.filter(p => p.read).map(p => p.x), qu = [...new Set(g.filter(p => !p.read).map(p => p.x.u))];
+      const range = xs => (xs.length > 1 ? xs[0].u + "–" + xs[xs.length - 1].u : xs[0].u);
+      return { date: d, orig: d, tag: "讀", track: S0.track, src: "exam", sub: s, done: false, deleted: false, added: t0,
+        title: S0.title + (rd.length ? "讀 " + range(rd) + "（p." + rd[0].p + "）" + (refs.length ? "＋" + refs.length + " 題" : "") : "做 " + qu.join("、") + " 考古題 " + refs.length + " 題"),
+        detail: [...new Map(g.map(p => [p.x.u, p.x.u + " " + p.x.t + (p.read ? "" : "（考古題）")])).values()].join("\n"), units: rd.map(x => x.u),
+        qs: refs.length ? refs.map(q => ({ 0: q[0], 1: q[1] })) : null };
+    }
     return { date: d, orig: d, tag: "讀", track: S0.track, src: "exam", sub: s, done: false, deleted: false, added: t0,
       title: one ? S0.title + g[0][0] : ip ? S0.title + g.length + " 題｜" + g[0][2] : S0.title + g.map(q => q[0]).join("、"),
       detail: one ? g[0][2] : ip ? g.map(q => q[0]).join("、") : g.map(q => q[0] + "　" + q[2]).join("\n"),
@@ -2737,7 +2767,10 @@ table.pm td.c-key { text-align: center }
         const mine = W.items.filter(it => it.src === "exam" && subOf(it) === s);
         const keep = mine.filter(it => it.done || it.date <= t0), redo = mine.filter(it => !(it.done || it.date <= t0));
         const seen = new Set(); keep.forEach(it => (it.qs || [{ 1: it.title }]).forEach(q => seen.add(q[1] || it.title)));
-        const left = plan[s].map(g => g.filter(q => !seen.has(q[1] || (SUBJ[s].title + q[0])))).filter(g => g.length);
+        const seenU = new Set(); keep.forEach(it => (it.units || []).forEach(u => seenU.add(u)));
+        const left = SUBJ[s].pack === "book"
+          ? plan[s].map(x => Object.assign({}, x, { read: !seenU.has(x.u), q: x.q.filter(q => !seen.has(q[1])) })).filter(x => x.read || x.q.length)
+          : plan[s].map(g => g.filter(q => !seen.has(q[1] || (SUBJ[s].title + q[0])))).filter(g => g.length);
         redo.forEach(it => put(it.bucket, it.id, { deleted: true, replacedBy: "replan" }));
         const end = examEndOf(s);
         if (left.length) msg.push(examMsg(s, examLay(W, s, left, examStartOf(s), end, put, t0, tag), end));

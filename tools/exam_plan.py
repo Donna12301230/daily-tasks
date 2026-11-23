@@ -72,6 +72,28 @@ def ipas(s):
     return [[r[3]] for r in rows]
 
 
+# iPAS 初級以書為主：照《iPAS 初級資安工程師攻略》的小節順序，每一小節帶著配到它的題目（tools/ipas_chapters.py 標的 u）。
+# 平台照期限把小節分成每天一份（看頁數和題數），所以每天是「讀幾個小節＋這幾節的考古題」。
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import ipas_books  # noqa: E402
+
+
+def book(s):
+    qs = {}
+    for p in IP["papers"]:
+        if p["s"] != s:
+            continue
+        rnd = p["y"] + "-" + p["r"] if p["y"] else "樣題"
+        yk = -int(p["y"]) * 10 - int(p["r"]) if p["y"] else 0
+        for n, q in enumerate(p["qs"], 1):
+            qs.setdefault(q["u"], []).append((yk, n, [rnd + " #" + str(n), "year/" + p["id"] + "/" + str(n)]))
+    out = []
+    for x in ipas_books.units(s):
+        out.append({"u": x["u"], "t": x["t"], "p": x["p"], "n": x["n"], "q": [r[2] for r in sorted(qs.get(x["u"], []), key=lambda r: r[:2])]})
+    return out
+
+
 # 多益官方全真試題 Vol.7、Vol.8（各 2 回）：一天一個 Part，每一回的 Part 都做完後，在下一個週六計時做一次整回
 PARTS = [("Part 1", "聽力・照片描述 6 題"), ("Part 2", "聽力・應答問題 25 題"), ("Part 3", "聽力・簡短對話 39 題"), ("Part 4", "聽力・簡短獨白 30 題"),
          ("Part 5", "閱讀・句子填空 30 題"), ("Part 6", "閱讀・段落填空 16 題"), ("Part 7", "閱讀・單篇／多篇閱讀 54 題")]
@@ -86,7 +108,7 @@ def toeic(v):
     return out
 
 
-plan = {"cs": groups("cs"), "mis": groups("mis"), "ipm": ipas("I11"), "ipt": ipas("I12"), "ipr": ipas("I21"), "ipd": ipas("I22"), "toeic7": toeic(7), "toeic8": toeic(8)}
+plan = {"cs": groups("cs"), "mis": groups("mis"), "ipm": book("I11"), "ipt": book("I12"), "ipr": ipas("I21"), "ipd": ipas("I22"), "toeic7": toeic(7), "toeic8": toeic(8)}
 js = "const EXAM_PLAN = " + json.dumps(plan, ensure_ascii=False, separators=(",", ":")) + ";"
 path = os.path.join(ROOT, "apps/workbench/index.html")
 html = open(path, encoding="utf-8").read()
@@ -103,4 +125,6 @@ ih2, n2 = re.subn(r"  // EXAM_REV:BEGIN\n.*?\n  // EXAM_REV:END", lambda m: "  /
 if not n2:
     raise SystemExit("平台裡找不到 EXAM_REV 標記")
 open(ipath, "w", encoding="utf-8").write(ih2)
-print("計概 %d 天、MIS %d 天、iPAS 管理 %d 題、技術 %d 題、中級規劃 %d 題、中級防護 %d 題、多益 Vol.7 %d 天、Vol.8 %d 天" % tuple(len(plan[k]) for k in ("cs", "mis", "ipm", "ipt", "ipr", "ipd", "toeic7", "toeic8")))
+print("計概 %d 天、MIS %d 天、中級規劃 %d 題、中級防護 %d 題、多益 Vol.7 %d 天、Vol.8 %d 天" % tuple(len(plan[k]) for k in ("cs", "mis", "ipr", "ipd", "toeic7", "toeic8")))
+for k in ("ipm", "ipt"):
+    print("iPAS %s：%d 小節、%d 頁、%d 題" % ("管理" if k == "ipm" else "技術", len(plan[k]), sum(x["n"] for x in plan[k]), sum(len(x["q"]) for x in plan[k])))

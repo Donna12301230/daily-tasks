@@ -82,10 +82,23 @@ def score(s, q):
     return best
 
 
+# 初級改以書為主：關鍵字先判斷大概的節（上面的 CH），再配到書裡最相關的小節（tools/ipas_books.py）；
+# 配不到小節的，平均分給同一節的各小節。每題記 c＝書的節（例如 2.1）、u＝小節（例如 2.1.3）。
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import ipas_books  # noqa: E402
+
+HINT = {"I11": {"m11": "2.1", "m12": "2.2", "m13": "2.3", "m24": "2.4", "m21": "3.1", "m22": "3.2", "m31": "4.1", "m32": "4.2", "m41": "5.1", "m42": "5.2"},
+        "I12": {"t11": "2.1", "t12": "2.2", "t21": "3.1", "t22": "3.2", "t23": "3.3", "t31": "4.1", "t32": "4.1", "t33": "4.2", "t41": "5.1", "t42": "5.2", "t43": "5.3"}}
+
 D = json.load(open(PATH, encoding="utf-8"))
 D["ch"] = {s: [[c, n] for c, n, _ in v] for s, v in CH.items()}
+for s, b in ipas_books.BOOKS.items():
+    D["ch"][s] = [[sec, sec + " " + name] for sec, name, _ in b["sections"]]
 cnt = {s: Counter() for s in CH}
 guess = 0
+load = Counter()
+book_units = {s: ipas_books.units(s) for s in ipas_books.BOOKS}
 for p in D["papers"]:
     prev = None
     for q in p["qs"]:
@@ -93,10 +106,19 @@ for p in D["papers"]:
         if not c:
             c = prev or RX[p["s"]][0][0]
             guess += 1
-        q["c"] = c
         prev = c
+        if p["s"] in ipas_books.BOOKS:
+            hint = HINT[p["s"]][c]
+            u, v = ipas_books.match(p["s"], q, hint)
+            if not u or v < 2:   # 只有選項裡零星提到的不算，分給同一節題目最少的小節
+                us = [x["u"] for x in book_units[p["s"]] if x["sec"] == hint]
+                u = min(us, key=lambda x: (load[(p["s"], x)], us.index(x)))
+            load[(p["s"], u)] += 1
+            q["u"] = u
+            c = u.rsplit(".", 1)[0]
+        q["c"] = c
         cnt[p["s"]][c] += 1
 json.dump(D, open(PATH, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
 for s in CH:
-    print(s, ", ".join("%s %d" % (c, cnt[s][c]) for c, _, _ in RX[s]))
+    print(s, ", ".join("%s %d" % (c, cnt[s][c]) for c, _ in D["ch"][s]))
 print("沿用前一題章節：%d 題" % guess)
