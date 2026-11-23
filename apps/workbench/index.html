@@ -419,9 +419,11 @@ table.g tr.grp td.nm { box-shadow: inset 4px 0 0 var(--gc, transparent) }
     const list = derive().items.filter(it => it.tag === "讀" && lineOf(it) === track && !it.done && !it.review && it.date >= from);
     if (!list.length) { toast("從 " + md(from) + " 起沒有未完成的" + track + "進度"); return; }
     const byDoc = {};
-    list.forEach(it => { (byDoc[it.bucket] = byDoc[it.bucket] || {})[it.id] = { date: addWorkdays(it.date, n), moved: (it.moved || 0) + 1, orig: it.orig || it.date }; });
+    // 考古題那幾條線也跳過空大考試週、iPAS 衝刺期（跟平台排的時候同一套），其他線照原本跳過週日與假日
+    const fwd = it => { const r = it.src === "exam" ? examRestOf(subOf(it)) : isRest; let x = it.date, k = 0; while (k < n) { x = addDays(x, 1); if (!r(x)) k++; } return x; };
+    list.forEach(it => { (byDoc[it.bucket] = byDoc[it.bucket] || {})[it.id] = { date: fwd(it), moved: (it.moved || 0) + 1, orig: it.orig || it.date }; });
     Object.keys(byDoc).forEach(doc => write(doc, { items: byDoc[doc] }));
-    toast((LINE_NAME[track] || track) + "：" + list.length + " 項進度往後挪 " + n + " 天（跳過週日與假日）");
+    toast((LINE_NAME[track] || track) + "：" + list.length + " 項進度往後挪 " + n + " 天（跳過週日與假日" + (list[0].src === "exam" ? "、空大考試週" : "") + "）");
   }
   function addItem(date, tag, title, track) {
     title = (title || "").trim(); if (!title) return;
