@@ -560,7 +560,7 @@ table.pm td.c-key { text-align: center }
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
   // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
-  const BUILD = "20261123g";
+  const BUILD = "20261123h";
   const TYPES = {
     today: { label: "今天", desc: "一份清單看完今天：任務、里程碑、考試、工作台的課程與讀書、固定時段。", view: vToday },
     // 總覽的月曆、甘特圖、重要日期共用同一個工作台頁面（frame），只是打開不同的畫面（hash）
@@ -1123,9 +1123,26 @@ table.pm td.c-key { text-align: center }
     if (ui.pp !== key) return "";
     const t0 = today(), from = !isDate(cur) || cur < t0 ? t0 : cur, isT = from === t0, nm = addDays(mondayOf(from), 7);
     const opt = (d, l) => '<button class="btn sm" data-act="ppgo" data-k="' + esc(key) + '" data-to="' + d + '">' + l + "・" + md(d) + "</button>";
+    const [pk, pa] = key.split(":"), ex = pk === "w" && (wbItem(pa) || {}).src === "exam";
     return '<div class="ppbar" data-form><span class="muted small">延到</span>' + opt(addDays(from, 1), isT ? "明天" : "隔天") + opt(addDays(from, 2), isT ? "後天" : "再隔一天") + opt(nm, "下週一")
-      + '<input type="date" id="pp-d" value="' + addDays(from, 1) + '" aria-label="選日期"><button class="btn primary sm" data-act="ppgo" data-k="' + esc(key) + '">確定</button><button class="btn ghost sm" data-act="pp" data-k="' + esc(key) + '">取消</button></div>';
+      + '<input type="date" id="pp-d" value="' + addDays(from, 1) + '" aria-label="選日期"><button class="btn primary sm" data-act="ppgo" data-k="' + esc(key) + '">確定</button><button class="btn ghost sm" data-act="pp" data-k="' + esc(key) + '">取消</button>'
+      + (ex ? '<label class="small"><input type="checkbox" id="pp-set"' + (ui.ppSet === false ? "" : " checked") + '> 後面的考古題整組一起往後延</label>' : "") + "</div>";
   }
+  // 考古題整組往後延：這一題移到 to，同一科後面還沒做的題目一起往後挪同樣的「可讀書天數」（跳過週日、假日、iPAS 衝刺）
+  const examSubj = it => (/^MIS/.test(it.title || "") ? "mis" : "cs");
+  function moveExamSet(it, to) {
+    const W = wbData(); if (!W || !(to > it.date)) { moveWb(it, to); return 0; }
+    let n = 0; for (let d = addDays(it.date, 1); d <= to; d = addDays(d, 1)) if (!examRest(W, d)) n++;
+    const rest = W.items.filter(x => x.src === "exam" && x.id !== it.id && !x.done && x.date >= it.date && examSubj(x) === examSubj(it));
+    moveWb(it, to);
+    if (!n || !rest.length) return 0;
+    const fwd = d => { let k = 0; while (k < n) { d = addDays(d, 1); if (!examRest(W, d)) k++; } return d; };
+    const byDoc = {};
+    rest.forEach(x => { (byDoc[x.bucket] = byDoc[x.bucket] || { items: {} }).items[x.id] = { date: fwd(x.date), moved: (x.moved || 0) + 1, orig: x.orig || x.date }; });
+    Object.keys(byDoc).forEach(b => wbWrite(b, byDoc[b]));
+    return rest.length;
+  }
+  const examSetMsg = (k, n) => (n ? "，後面 " + n + " 天份" + (k === "mis" ? "MIS" : "計概") + "考古題一起往後延" : "");
   function moveWb(it, to) {
     wbWrite(it.bucket, { items: { [it.id]: { date: to, moved: (it.moved || 0) + 1, orig: it.orig || it.date } } });
     const [lk, la, lb] = String(it.link || "").split(":");
@@ -2155,14 +2172,22 @@ table.pm td.c-key { text-align: center }
       if (newTask(val("qa-t"), to, val("qa-d"))) { const f = document.getElementById("qa-t"); if (f) { f.value = ""; f.focus(); } } else return false;
     },
     tmove: el => { patch("tasks", el.dataset.id, { due: el.dataset.to }); toast("已改到 " + mdw(el.dataset.to)); },
-    wbmove: el => { const it = wbItem(el.dataset.id), to = el.dataset.to; if (!it || !isDate(to) || to === it.date) return false; moveWb(it, to); toast("工作台事項移到 " + mdw(to)); },
+    wbmove: el => {
+      const it = wbItem(el.dataset.id), to = el.dataset.to; if (!it || !isDate(to) || to === it.date) return false;
+      if (it.src === "exam") { const n = moveExamSet(it, to); toast("移到 " + mdw(to) + examSetMsg(examSubj(it), n)); return; }
+      moveWb(it, to); toast("工作台事項移到 " + mdw(to));
+    },
     pp: el => { ui.pp = ui.pp === el.dataset.k ? null : el.dataset.k; },
     ppgo: el => {
       const key = el.dataset.k, to = el.dataset.to || val("pp-d");
       if (!isDate(to)) { toast("請選日期"); return false; }
       const [k, a, b] = key.split(":");
       if (k === "t" && S.tasks[a]) { const t = S.tasks[a], q = { due: to }; if (isDate(t.start) && t.start > to) q.start = to; patch("tasks", a, q); syncLinkedDate("t:" + a, to); }
-      else if (k === "w") { const it = wbItem(a); if (!it) return false; moveWb(it, to); }
+      else if (k === "w") {
+        const it = wbItem(a); if (!it) return false;
+        if (it.src === "exam") { const box = document.getElementById("pp-set"); ui.ppSet = box ? box.checked : true; if (ui.ppSet) { const n = moveExamSet(it, to); ui.pp = null; toast((to === today() ? "移到今天" : "延到 " + mdw(to)) + examSetMsg(examSubj(it), n)); return; } }
+        moveWb(it, to);
+      }
       else if (k === "m" && S.projects[a]) { patch("projects", a, { ms: (S.projects[a].ms || []).map(x => (x.id === b ? Object.assign({}, x, { date: to }) : x)) }); syncLinkedDate("m:" + a + ":" + b, to); }
       else if (k === "p") { const W = wbData(), po = W && W.posts.find(x => x.id === a); if (!po) return false; wbWrite("posts", { posts: { [a]: { date: to, moved: (po.moved || 0) + 1, orig: po.orig || po.date } } }); }
       else return false;

@@ -372,10 +372,26 @@ table.g tr.grp td.nm { box-shadow: inset 4px 0 0 var(--gc, transparent) }
   }
   function moveItem(id, to) {
     const it = itemById(id); if (!it || !to || to === it.date) return;
+    const box = document.getElementById("ps-" + id);
+    if (box) ui.examSet = box.checked;
+    const n = it.src === "exam" && ui.examSet !== false ? shiftExamAfter(it, to) : 0;
     setItem(it, { date: to, moved: (it.moved || 0) + 1, orig: it.orig || it.date });
     linkToBoard(it, { date: to });
     ui.open.delete(id);
-    toast("已移到 " + mdw(to));
+    toast("已移到 " + mdw(to) + (n ? "，後面 " + n + " 天份" + lineOf(it) + "一起往後延" : ""));
+  }
+  // 考古題整組往後延：同一科後面還沒做的題目一起往後挪同樣的「可讀書天數」（跟平台 moveExamSet 同一套：跳過週日、假日、iPAS 衝刺）
+  const examRest = s => isRest(s) || (s >= "2027-05-01" && s <= "2027-05-22");
+  function shiftExamAfter(it, to) {
+    if (!(to > it.date)) return 0;
+    let n = 0; for (let d = addDays(it.date, 1); d <= to; d = addDays(d, 1)) if (!examRest(d)) n++;
+    const rest = derive().items.filter(x => x.src === "exam" && x.id !== it.id && !x.done && x.date >= it.date && lineOf(x) === lineOf(it));
+    if (!n || !rest.length) return 0;
+    const fwd = d => { let k = 0; while (k < n) { d = addDays(d, 1); if (!examRest(d)) k++; } return d; };
+    const byDoc = {};
+    rest.forEach(x => { (byDoc[x.bucket] = byDoc[x.bucket] || {})[x.id] = { date: fwd(x.date), moved: (x.moved || 0) + 1, orig: x.orig || x.date }; });
+    Object.keys(byDoc).forEach(doc => write(doc, { items: byDoc[doc] }));
+    return rest.length;
   }
   function isRest(s) { const m = derive().dayMeta[s]; return m ? !!m.rest : dow(s) === 0; }
   function addWorkdays(s, n) { let x = s, k = 0; while (k < n) { x = addDays(x, 1); if (!isRest(x)) k++; } return x; }
@@ -446,7 +462,8 @@ table.g tr.grp td.nm { box-shadow: inset 4px 0 0 var(--gc, transparent) }
         + '<button class="btn" data-act="move" data-id="' + esc(it.id) + '" data-to="' + addDays(base, 2) + '">再隔一天</button>'
         + '<button class="btn" data-act="move" data-id="' + esc(it.id) + '" data-to="' + nextMon + '">下週一 ' + md(nextMon) + "</button>"
         + '<input type="date" id="dt-' + esc(it.id) + '" value="' + addDays(base, 1) + '" aria-label="選日期">'
-        + '<button class="btn primary" data-act="movepick" data-id="' + esc(it.id) + '">確定</button>';
+        + '<button class="btn primary" data-act="movepick" data-id="' + esc(it.id) + '">確定</button>'
+        + (it.src === "exam" ? '<label><input type="checkbox" id="ps-' + esc(it.id) + '"' + (ui.examSet === false ? "" : " checked") + '> 後面的考古題整組一起往後延</label>' : "");
       if (it.tag === "讀" && !it.review) {
         h += '<span class="sep"></span><span>或把' + esc(LINE_NAME[lineOf(it)] || lineOf(it)) + '從這天起整條線往後挪</span>'
           + '<input type="number" min="1" max="60" value="1" id="sh-' + esc(it.id) + '" aria-label="往後挪幾天"><span>天</span>'
