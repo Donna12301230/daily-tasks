@@ -560,7 +560,7 @@ table.pm td.c-key { text-align: center }
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
   // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
-  const BUILD = "20261123k";
+  const BUILD = "20261124a";
   const TYPES = {
     today: { label: "今天", desc: "一份清單看完今天：任務、里程碑、考試、工作台的課程與讀書、固定時段。", view: vToday },
     // 總覽的月曆、甘特圖、重要日期共用同一個工作台頁面（frame），只是打開不同的畫面（hash）
@@ -583,7 +583,7 @@ table.pm td.c-key { text-align: center }
     // 考古題：平台的「選擇考古題」頁列出每一套（group: "examBanks" 的模組會收在它底下）
     examBanks: { label: "考古題", desc: "選一套考古題進去練習：目前有中山資管、iPAS 資安初級，之後可以加多益等。", view: vExamBanks },
     nsysuApp: { label: "中山資管考古題", desc: "資管碩士班甲組・計算機概論＋管理資訊系統・94–115 學年度：依年度、依章節、錯題本。", src: "apps/nsysu/index.html", group: "examBanks" },
-    ipasApp: { label: "iPAS 資安初級考古題", desc: "資訊安全工程師初級・I11 管理＋I12 技術・109–113 年＋樣題，共 1000 題單選：依年度、模擬考、隨機練習、錯題本。", src: "apps/ipas/index.html", group: "examBanks" },
+    ipasApp: { label: "iPAS 資安初級考古題", desc: "資訊安全工程師・初級 I11 管理＋I12 技術（109–115 年＋樣題，1100 題單選）、中級 I21 規劃＋I22 防護（115 年，含複選、題組）：依年度、模擬考、隨機練習、錯題本、搜尋。", src: "apps/ipas/index.html", group: "examBanks" },
     // group：預設收進同一區的這種模組頁裡（不佔分頁），可在「擴充」改成獨立分頁
     osNotesApp: { label: "作業系統筆記", desc: "空大作業系統的白話筆記、考試重點、小測驗和互動示範。", src: "apps/os-notes/index.html", group: "notes" },
     genaiApp: { label: "生成式 AI 講義", desc: "一講一頁的課程講義、名詞對照和自我檢核。", src: "apps/genai/index.html", group: "notes" },
@@ -2626,10 +2626,14 @@ table.pm td.c-key { text-align: center }
      依章節排；期限是那場考試的前一個月（平台「考試」裡有就用，沒有用預估日期）；
      週日、假日、空大期中／期末考那一週不排；iPAS 衝刺期中山暫停；延後時同一科後面的整組往後挪。 */
   const EXAM_VER = 2;
+  // EXAM_REV:BEGIN
+  const EXAM_REV = {"cs": "76173539", "mis": "c98212b2", "ipm": "969bb27d", "ipt": "b74d6ab7", "ipr": "0f9c2c26", "ipd": "c0a64217", "toeic7": "e8a4c7bf", "toeic8": "d5e3dd28"};
+  // EXAM_REV:END
   const firstExam = (re, not) => arr("exams").filter(e => isDate(e.date) && re.test(e.name || "") && !(not && not.test(e.name || ""))).sort(byDate);
   const nsysuExam = () => { const t0 = today(), xs = arr("exams").filter(e => isDate(e.date) && e.date > t0);
     return xs.filter(e => e.kind === "入學考" && /碩|研究所|中山|資管/.test(e.name || "")).sort(byDate)[0] || xs.filter(e => e.kind === "入學考" || /碩士|研究所|中山資管/.test(e.name || "")).sort(byDate)[0] || null; };
   const ipasExam = () => firstExam(/iPAS/i, /中級/).filter(e => e.date >= "2027-01-01")[0] || null;
+  const ipas2Exam = () => firstExam(/iPAS.*中級|中級.*iPAS/i).filter(e => e.date >= "2027-01-01")[0] || null;
   // 多益兩場：名稱寫「第一場／1」「第二場／2」的優先，不然照日期（2027 年起）的第 1、2 場
   const toeicExam = k => { const xs = firstExam(/多益|TOEIC/i).filter(e => e.date >= "2027-01-01"); return xs.find(e => (k === 1 ? /第?[一1]場|#1|\(1\)/ : /第?[二2]場|#2|\(2\)/).test(e.name || "")) || xs[k - 1] || null; };
   const examDate = (f, def) => { const e = f(); return e ? e.date : def; };
@@ -2638,6 +2642,8 @@ table.pm td.c-key { text-align: center }
     mis: { name: "MIS 考古題", line: "MIS 考古題", title: "MIS 考古題 ", track: "碩班", app: "nsysuApp", pack: "max3", date: () => examDate(nsysuExam, "2028-02-01"), pause: [["2027-05-01", "2027-05-22"]] },
     ipm: { name: "iPAS 管理", line: "iPAS 管理", title: "iPAS 管理 ", track: "iPAS", app: "ipasApp", pack: "even", date: () => examDate(ipasExam, "2027-05-15") },
     ipt: { name: "iPAS 技術", line: "iPAS 技術", title: "iPAS 技術 ", track: "iPAS", app: "ipasApp", pack: "even", date: () => examDate(ipasExam, "2027-05-15") },
+    ipr: { name: "iPAS 中級規劃", line: "iPAS 中級規劃", title: "iPAS 中級規劃 ", track: "iPAS", app: "ipasApp", pack: "even", date: () => examDate(ipas2Exam, "2027-08-22"), after: () => examDate(ipasExam, "2027-05-15") },
+    ipd: { name: "iPAS 中級防護", line: "iPAS 中級防護", title: "iPAS 中級防護 ", track: "iPAS", app: "ipasApp", pack: "even", date: () => examDate(ipas2Exam, "2027-08-22"), after: () => examDate(ipasExam, "2027-05-15") },
     toeic7: { name: "多益 Vol.7", line: "多益官方題", title: "多益 ", track: "多益", app: "", pack: "one", date: () => examDate(() => toeicExam(1), "2027-07-11"), after: () => examDate(ipasExam, "2027-05-15") },
     toeic8: { name: "多益 Vol.8", line: "多益官方題", title: "多益 ", track: "多益", app: "", pack: "one", date: () => examDate(() => toeicExam(2), "2027-09-12"), after: () => examDate(() => toeicExam(1), "2027-07-11") },
   };
@@ -2714,7 +2720,7 @@ table.pm td.c-key { text-align: center }
     return m ? JSON.parse(m[1]) : null;
   }
   // 每一科的排程條件（期限、開始日、不排的日子、版本）；跟上次排的時候不同就把那一科明天起還沒做的重排（做過的、今天以前的不動）
-  const examSig = s => [EXAM_VER, SUBJ[s].after ? SUBJ[s].after() : "", examEndOf(s), JSON.stringify(examOff(s))].join("|");   // 不放「明天」，免得每天都重排
+  const examSig = s => [EXAM_VER, EXAM_REV[s] || "", SUBJ[s].after ? SUBJ[s].after() : "", examEndOf(s), JSON.stringify(examOff(s))].join("|");   // 不放「明天」，免得每天都重排
   const examStale = meta => !!meta.examPlan && Object.keys(SUBJ).filter(s => ((meta.examSig || {})[s] || "") !== examSig(s));
   let examFitBusy = false;
   async function examPlanFit() {
@@ -2742,7 +2748,24 @@ table.pm td.c-key { text-align: center }
       if (msg.length) toast("考古題重排：" + msg.join("；"));
     } catch (e) { /* 下次打開再試 */ } finally { examFitBusy = false; }
   }
+  // 一次性：多益單字事項不再附「＋App 20 分」（只留 TSL 新字）
+  const APP_RE = /\s*[＋+]\s*App\s*\d*\s*分(?:鐘)?/i;
+  function dropVocabApp() {
+    const meta = (S.wbDocs || {}).meta || {};
+    if (meta.vocabAppOff || !canWrite || !wbDb || !live) return;
+    const patch = {}; let n = 0;
+    wbAllItems().forEach(it => {
+      if (it.done) return;
+      const p = {};
+      ["title", "detail"].forEach(k => { if (APP_RE.test(String(it[k] || ""))) p[k] = String(it[k]).replace(APP_RE, ""); });
+      if (Object.keys(p).length) { ((patch[it.bucket] = patch[it.bucket] || { items: {} }).items[it.id] = p); n++; }
+    });
+    Object.keys(patch).forEach(b => wbWrite(b, patch[b]));
+    wbWrite("meta", { vocabAppOff: today() });
+    if (n) toast("多益單字拿掉「App」：改了 " + n + " 天");
+  }
   async function examPlan() {
+    dropVocabApp();
     if ((S.wbDocs && S.wbDocs.meta || {}).examPlan) { examPlanFix(); examPlanFit(); return; }
     const docs = S.wbDocs || {};
     if (examPlanBusy || !canWrite || !wbDb || !live || (docs.meta || {}).examPlan || !Object.keys(docs).some(id => id.startsWith("m-"))) return;

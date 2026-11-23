@@ -118,7 +118,7 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
 <div class="wrap">
   <header class="top">
     <h1>iPAS 資訊安全工程師・初級考古題</h1>
-    <p class="sub">I11 資訊安全管理概論＋I12 資訊安全技術概論・109–113 年＋官方樣題・每份 50 題單選</p>
+    <p class="sub">初級 I11 管理＋I12 技術（109–115 年＋官方樣題，每份 50 題單選）・中級 I21 規劃實務＋I22 防護實務（115 年，每份 40 題，含複選、題組）</p>
     <span class="sync" id="sync"><i></i><span id="synctext">作答紀錄先存在這個瀏覽器</span></span>
   </header>
   <nav class="tabs" aria-label="檢視">
@@ -135,7 +135,9 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
 <script>
 (function () {
   "use strict";
-  const SUBJ = { I11: "資訊安全管理概論", I12: "資訊安全技術概論" };
+  const SUBJ = { I11: "資訊安全管理概論", I12: "資訊安全技術概論", I21: "資訊安全規劃實務", I22: "資訊安全防護實務" };
+  const SHORT = { I11: "管理", I12: "技術", I21: "中級規劃", I22: "中級防護" };
+  const SUBJ_SEG = [["all", "全部"], ["I11", "I11 管理"], ["I12", "I12 技術"], ["I21", "I21 中級規劃"], ["I22", "I22 中級防護"]];
   const LET = ["A", "B", "C", "D"];
   const main = document.getElementById("main");
   let PAPERS = [], BY = {}, curPaper = null;
@@ -225,6 +227,9 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
     opts = opts || {};
     const p = BY[pid], q = p.qs[n - 1], r = rec(pid, n) || {};
     const chosen = opts.mock ? opts.mockPick : r.c, reveal = !opts.mock && !!r.c;
+    const multi = q.a.length > 1, sel = opts.sel || "";   // 複選題：先點選項（可多選）再按「送出」
+    const has = (str, L) => !!str && str.indexOf(L) >= 0;
+    const sortL = str => str.split("").sort().join("");
     const box = el("article", { class: "q", id: "q-" + pid + "-" + n });
     const star = el("button", { type: "button", class: "star", "aria-pressed": String(!!r.m), text: r.m ? "★ 重要" : "☆ 重要", title: "標成重要題，錯題本可以只看重要" });
     star.addEventListener("click", () => { const on = !(rec(pid, n) || {}).m; setRec(pid, n, { m: on ? 1 : 0 }); star.setAttribute("aria-pressed", String(on)); star.textContent = on ? "★ 重要" : "☆ 重要"; });
@@ -246,13 +251,14 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
       const L = LET[i];
       let cls = "opt", tag = "";
       if (reveal) {
-        if (L === q.a) { cls += " right"; tag = L === chosen ? "✓ 你的答案" : "✓ 正確答案"; }
-        else if (L === chosen) { cls += " wrong"; tag = "✗ 你的答案"; }
-      } else if (opts.mock && L === chosen) cls += " pick";
-      const b = el("button", { type: "button", class: cls, disabled: reveal, "aria-pressed": opts.mock ? String(L === chosen) : null },
+        if (has(q.a, L)) { cls += " right"; tag = has(chosen, L) ? "✓ 你的答案" : "✓ 正確答案"; }
+        else if (has(chosen, L)) { cls += " wrong"; tag = "✗ 你的答案"; }
+      } else if ((opts.mock && has(chosen, L)) || (multi && has(sel, L))) cls += " pick";
+      const b = el("button", { type: "button", class: cls, disabled: reveal, "aria-pressed": opts.mock || multi ? String(opts.mock ? has(chosen, L) : has(sel, L)) : null },
         [el("span", { class: "L", text: "(" + L + ")" }), el("span", { class: "t" }, hlText(t, opts.q)), el("span", { class: "tag", text: tag })]);
       b.addEventListener("click", () => {
-        if (opts.mock) { opts.onMock(L); box.replaceWith(qcard(pid, n, Object.assign({}, opts, { mockPick: L }))); return; }
+        if (opts.mock) { const v = multi ? sortL(has(chosen, L) ? (chosen || "").replace(L, "") : (chosen || "") + L) : L; opts.onMock(v); box.replaceWith(qcard(pid, n, Object.assign({}, opts, { mockPick: v }))); return; }
+        if (multi) { box.replaceWith(qcard(pid, n, Object.assign({}, opts, { sel: sortL(has(sel, L) ? sel.replace(L, "") : sel + L) }))); return; }
         answer(pid, n, L);
         box.replaceWith(qcard(pid, n, opts));
         if (opts.after) opts.after(L === q.a);
@@ -260,6 +266,8 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
       list.append(b);
     });
     box.append(list);
+    if (multi && !reveal && !opts.mock) box.append(el("div", { class: "row" }, [el("button", { type: "button", class: "btn primary", disabled: !sel, text: "送出（複選）",
+      onclick: () => { answer(pid, n, sel); box.replaceWith(qcard(pid, n, Object.assign({}, opts, { sel: "" }))); if (opts.after) opts.after(sel === q.a); } })]));
     if (reveal) box.append(el("div", { class: "res " + (chosen === q.a ? "ok" : "bad"), text: chosen === q.a ? "答對了" : "答錯了，正確答案是 (" + q.a + ")" + (opts.wrongBook ? "" : "，已收進錯題本") }));
     return box;
   }
@@ -274,16 +282,16 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
     PAPERS.forEach(x => { const k = x.y ? x.y + "-" + x.r : "樣題"; if (!rounds.includes(k)) rounds.push(k); });
     rounds.slice().sort((a, b) => (a === "樣題") - (b === "樣題") || (a < b ? 1 : -1)).forEach(k => {
       const row = el("div", { class: "yr" }, [el("b", { text: k })]);
-      ["I11", "I12"].forEach(s => {
+      Object.keys(SUBJ).filter(s => PAPERS.some(y => (y.y ? y.y + "-" + y.r : "樣題") === k && y.s === s)).forEach(s => {
         const x = PAPERS.find(y => (y.y ? y.y + "-" + y.r : "樣題") === k && y.s === s);
         if (!x) { row.append(el("span")); return; }
         const st = paperStat(x.id);
         row.append(el("button", { type: "button", class: x.id === curPaper ? "cur" : "", "aria-current": x.id === curPaper ? "true" : null, title: x.name, onclick: () => go("year/" + x.id) },
-          [s === "I11" ? "管理" : "技術", el("small", { text: st.done ? st.ok + "/" + st.done + " 對" : "未作答" })]));
+          [SHORT[s], el("small", { text: st.done ? st.ok + "/" + st.done + " 對" : "未作答" })]));
       });
       rail.append(row);
     });
-    rail.append(el("p", { class: "lg", text: "管理＝I11 資訊安全管理概論；技術＝I12 資訊安全技術概論。數字是答對／已作答。" }));
+    rail.append(el("p", { class: "lg", text: "初級：管理＝I11 資訊安全管理概論、技術＝I12 資訊安全技術概論；中級：規劃＝I21 資訊安全規劃實務、防護＝I22 資訊安全防護實務。數字是答對／已作答。" }));
 
     const body = el("section", { "aria-label": p.name });
     const st = paperStat(p.id);
@@ -293,7 +301,7 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
       el("span", { class: "grow" }),
       el("div", { class: "seg", role: "group", "aria-label": "作答方式" }, [
         el("button", { type: "button", "aria-pressed": String(!mockMode), text: "練習", title: "每題選完馬上對答案", onclick: () => { mockMode = false; mock = null; renderYear(); } }),
-        el("button", { type: "button", "aria-pressed": String(mockMode), text: "模擬考", title: "50 題做完交卷才看分數和答案", onclick: () => { mockMode = true; mock = { pid: p.id, picks: {} }; renderYear(); } }),
+        el("button", { type: "button", "aria-pressed": String(mockMode), text: "模擬考", title: "整份做完交卷才看分數和答案", onclick: () => { mockMode = true; mock = { pid: p.id, picks: {} }; renderYear(); } }),
       ]),
       el("a", { class: "btn", href: p.pdf, target: "_blank", rel: "noopener", text: "原卷 PDF" }),
     ]);
@@ -325,7 +333,7 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
       ]));
     }
     const qs = el("div", { class: "qs" });
-    p.qs.forEach((_, i) => qs.append(qcard(p.id, i + 1, inMock ? { mock: true, mockPick: mock.picks[i + 1], onMock: c => { mock.picks[i + 1] = c; const m = document.getElementById("mockn"); if (m) m.textContent = "模擬考作答中：已選 " + Object.keys(mock.picks).length + " / " + p.qs.length + " 題"; } } : { after: () => renderRailOnly() })));
+    p.qs.forEach((_, i) => qs.append(qcard(p.id, i + 1, inMock ? { mock: true, mockPick: mock.picks[i + 1], onMock: c => { if (c) mock.picks[i + 1] = c; else delete mock.picks[i + 1]; const m = document.getElementById("mockn"); if (m) m.textContent = "模擬考作答中：已選 " + Object.keys(mock.picks).length + " / " + p.qs.length + " 題"; } } : { after: () => renderRailOnly() })));
     body.append(qs);
     const view = el("div", { class: "yearview" }, [rail, body]);
     main.textContent = ""; main.append(view);
@@ -365,7 +373,7 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
     const n = pool().length;
     main.append(el("section", { class: "panel" }, [
       el("strong", { text: "從全部考古題隨機抽題，一次一題" }),
-      segRow("科目", "subj", [["all", "兩科都要"], ["I11", "I11 管理"], ["I12", "I12 技術"]]),
+      segRow("科目", "subj", SUBJ_SEG),
       segRow("範圍", "src", [["all", "全部"], ["new", "沒做過的"], ["bad", "答錯過的"], ["imp", "重要"]]),
       segRow("題數", "count", [[10, "10 題"], [20, "20 題"], [50, "50 題"]]),
       el("div", { class: "row" }, [
@@ -415,7 +423,7 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
     const seg = (key, list) => el("div", { class: "seg", role: "group" }, list.map(([v, t]) => el("button", { type: "button", "aria-pressed": String(wb[key] === v), text: t, onclick: () => { wb[key] = v; renderWrong(); } })));
     main.append(el("div", { class: "bar" }, [
       seg("only", [["bad", "還沒訂正"], ["ever", "答錯過"], ["imp", "重要"]]),
-      seg("subj", [["all", "兩科"], ["I11", "I11 管理"], ["I12", "I12 技術"]]),
+      seg("subj", SUBJ_SEG),
       el("span", { class: "muted small", text: items.length + " 題" }),
     ]));
     main.append(el("p", { class: "muted small", style: "margin:0 0 10px", text: wb.only === "bad" ? "最近一次答錯的題目。按「再做一次」重答，答對就算訂正，下次打開錯題本就不會再出現。" : wb.only === "ever" ? "曾經答錯過的題目，含已經訂正的。" : "你標成重要的題目。" }));

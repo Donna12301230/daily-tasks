@@ -53,7 +53,7 @@ def groups(s):
     return out
 
 
-# iPAS 初級：依章節（tools/ipas_chapters.py 標的 c），同一章裡新的場次在前（樣題最後）；每題一筆，一天幾題由平台照期限平均分
+# iPAS 初級、中級：依章節（tools/ipas_chapters.py 標的 c），同一章裡新的場次在前（樣題最後）；每題一筆，一天幾題由平台照期限平均分
 IP = json.load(open(os.path.join(ROOT, "apps/ipas/data.json"), encoding="utf-8"))
 
 
@@ -86,7 +86,7 @@ def toeic(v):
     return out
 
 
-plan = {"cs": groups("cs"), "mis": groups("mis"), "ipm": ipas("I11"), "ipt": ipas("I12"), "toeic7": toeic(7), "toeic8": toeic(8)}
+plan = {"cs": groups("cs"), "mis": groups("mis"), "ipm": ipas("I11"), "ipt": ipas("I12"), "ipr": ipas("I21"), "ipd": ipas("I22"), "toeic7": toeic(7), "toeic8": toeic(8)}
 js = "const EXAM_PLAN = " + json.dumps(plan, ensure_ascii=False, separators=(",", ":")) + ";"
 path = os.path.join(ROOT, "apps/workbench/index.html")
 html = open(path, encoding="utf-8").read()
@@ -94,4 +94,13 @@ new, n = re.subn(r"  // EXAM_PLAN:BEGIN\n.*?\n  // EXAM_PLAN:END", lambda m: "  
 if not n:
     raise SystemExit("工作台裡找不到 EXAM_PLAN 標記")
 open(path, "w", encoding="utf-8").write(new)
-print("計概 %d 天、MIS %d 天、iPAS 管理 %d 題、技術 %d 題、多益 Vol.7 %d 天、Vol.8 %d 天" % tuple(len(plan[k]) for k in ("cs", "mis", "ipm", "ipt", "toeic7", "toeic8")))
+# 每一科題目的指紋寫進平台（index.html 的 EXAM_REV）：題目有增減時，平台打開就會把那一科明天起還沒做的重排
+import hashlib
+rev = {k: hashlib.md5(json.dumps(v, ensure_ascii=False).encode("utf-8")).hexdigest()[:8] for k, v in plan.items()}
+ipath = os.path.join(ROOT, "index.html")
+ih = open(ipath, encoding="utf-8").read()
+ih2, n2 = re.subn(r"  // EXAM_REV:BEGIN\n.*?\n  // EXAM_REV:END", lambda m: "  // EXAM_REV:BEGIN\n  const EXAM_REV = " + json.dumps(rev) + ";\n  // EXAM_REV:END", ih, flags=re.S)
+if not n2:
+    raise SystemExit("平台裡找不到 EXAM_REV 標記")
+open(ipath, "w", encoding="utf-8").write(ih2)
+print("計概 %d 天、MIS %d 天、iPAS 管理 %d 題、技術 %d 題、中級規劃 %d 題、中級防護 %d 題、多益 Vol.7 %d 天、Vol.8 %d 天" % tuple(len(plan[k]) for k in ("cs", "mis", "ipm", "ipt", "ipr", "ipd", "toeic7", "toeic8")))
