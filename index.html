@@ -560,7 +560,7 @@ table.pm td.c-key { text-align: center }
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
   // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
-  const BUILD = "20261123c";
+  const BUILD = "20261123d";
   const TYPES = {
     today: { label: "今天", desc: "一份清單看完今天：任務、里程碑、考試、工作台的課程與讀書、固定時段。", view: vToday },
     // 總覽的月曆、甘特圖、重要日期共用同一個工作台頁面（frame），只是打開不同的畫面（hash）
@@ -920,18 +920,26 @@ table.pm td.c-key { text-align: center }
 
   /* ═════════ 工作台資料（今天頁直接讀，不再另外列一份） ═════════ */
   let wbMemo = null;
+  // 計概、MIS 改成考古題之前的課本進度（計概(一)、MIS、補充和它們的看題／做題）；轉換之後一律不顯示
+  const oldBook = it => {
+    if (!it || it.tag !== "讀" || it.track !== "碩班" || it.src === "exam") return false;
+    const t = String(it.title || ""), d = String(it.detail || "");
+    if (/^(?:(?:看題|做題)\s*)?(?:計概|作業系統|MIS|補充)/.test(t) || /^(?:計概[(（]一[)）]|MIS |補充：)/.test(d)) return true;
+    return /^(?:看題|做題)\s/.test(t) && !/^(?:看題|做題)\s*C/.test(t);
+  };
+
   const WB_TYPES = ["wbCal", "wbGantt", "wbStudy", "wbDates", "wbIG", "workbenchApp"];
   const wbModId = () => { for (const t of WB_TYPES) { const m = cfg().mods.find(x => x.type === t && !x.hidden); if (m) return m.id; } return ""; };
   function wbData() {
     const docs = S.wbDocs; if (!docs || !wbModId()) return null;
     if (wbMemo && wbMemo.docs === docs) return wbMemo;
-    const byDate = {}, items = [], dayMeta = {};
+    const byDate = {}, items = [], dayMeta = {}, examOn = !!(docs.meta || {}).examPlan;
     Object.keys(docs).forEach(id => {
       if (!id.startsWith("m-")) return;
       Object.assign(dayMeta, docs[id].days || {});
       const its = docs[id].items || {};
       Object.keys(its).forEach(iid => {
-        const it = its[iid]; if (!it || it.deleted || !isDate(it.date)) return;
+        const it = its[iid]; if (!it || it.deleted || !isDate(it.date) || (examOn && oldBook(it))) return;
         const x = Object.assign({ id: iid, bucket: id }, it); items.push(x); (byDate[it.date] = byDate[it.date] || []).push(x);
       });
     });
@@ -2555,12 +2563,7 @@ table.pm td.c-key { text-align: center }
   // 一次性：碩班的計概(一)、MIS 課本、補充和它們的看題／做題，換成「一天 1–2 題」的中山考古題（計概、MIS 各一條）。
   // 題目順序在工作台的 EXAM_PLAN（tools/exam_plan.py 產生）。C 語言課本那條線不動。舊的事項只標 deleted、不真的刪。
   let examPlanBusy = false;
-  const oldBook = it => {
-    if (it.tag !== "讀" || it.track !== "碩班" || it.src === "exam") return false;
-    const t = String(it.title || ""), d = String(it.detail || "");
-    if (/^(?:(?:看題|做題)\s*)?(?:計概|作業系統|MIS|補充)/.test(t) || /^(?:計概[(（]一[)）]|MIS |補充：)/.test(d)) return true;
-    return /^(?:看題|做題)\s/.test(t) && !/^(?:看題|做題)\s*C/.test(t);
-  };
+  const wbAllItems = () => { const out = [], docs = S.wbDocs || {}; Object.keys(docs).forEach(id => { if (id.startsWith("m-")) Object.entries(docs[id].items || {}).forEach(([iid, it]) => { if (it && !it.deleted) out.push(Object.assign({ id: iid, bucket: id }, it)); }); }); return out; };
   const examRest = (W, d) => { const x = W.dayMeta[d]; return (x ? !!x.rest : dow(d) === 0) || (d >= "2027-05-01" && d <= "2027-05-22"); };   // 週日、假日、iPAS 衝刺（碩班 0 小時）不排
   // 一次性補正：(1) examPlanFix：考古題改從轉換隔天開始排；(2) examPlanClean：舊的計概、MIS 課本進度（含已勾掉、以前的日期）全部拿掉
   function examPlanFix() {
@@ -2569,7 +2572,7 @@ table.pm td.c-key { text-align: center }
     const W = wbData(); if (!W) return;
     const patch = {}, put = (b, id, v) => { (patch[b] = patch[b] || { items: {} }).items[id] = v; };
     let nOld = 0, begin = null;
-    if (!meta.examPlanClean) W.items.filter(it => oldBook(it) && !it.added).forEach(it => { put(it.bucket, it.id, { deleted: true, replacedBy: "exam" }); nOld++; });
+    if (!meta.examPlanClean) wbAllItems().filter(oldBook).forEach(it => { put(it.bucket, it.id, { deleted: true, replacedBy: "exam" }); nOld++; });
     if (!meta.examPlanFix) {
       begin = addDays(start, 1) > today() ? addDays(start, 1) : today();
       ["cs", "mis"].forEach(s => {
@@ -2603,7 +2606,7 @@ table.pm td.c-key { text-align: center }
       if (!m) return;
       const plan = JSON.parse(m[1]), W = wbData(), t0 = today(), END = "2027-08-31";
       if (!W || (S.wbDocs.meta || {}).examPlan) return;
-      const old = it => oldBook(it) && !it.added;
+      const old = oldBook;
       const patch = {}, put = (b, id, v) => { (patch[b] = patch[b] || { items: {} }).items[id] = v; };
       let nOld = 0;
       W.items.filter(old).forEach(it => { put(it.bucket, it.id, { deleted: true, replacedBy: "exam" }); nOld++; });

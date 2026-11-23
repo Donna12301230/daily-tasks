@@ -298,11 +298,11 @@ table.g tr.grp td.nm { box-shadow: inset 4px 0 0 var(--gc, transparent) }
   }
   function derive() {
     if (cache && cache.rev === rev) return cache;
-    const items = [], dayMeta = {};
+    const items = [], dayMeta = {}, examOn = !!(S.docs.meta || {}).examPlan;   // 改成考古題之後，舊的計概、MIS 課本進度不顯示
     for (const id in S.docs) {
       if (!id.startsWith("m-")) continue;
       const d = S.docs[id];
-      for (const iid in (d.items || {})) { const it = d.items[iid]; if (!it || it.deleted) continue; items.push(Object.assign({ id: iid, bucket: id }, it)); }
+      for (const iid in (d.items || {})) { const it = d.items[iid]; if (!it || it.deleted || (examOn && lineOf(it) === "舊課本")) continue; items.push(Object.assign({ id: iid, bucket: id }, it)); }
       Object.assign(dayMeta, d.days || {});
     }
     items.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
@@ -368,7 +368,14 @@ table.g tr.grp td.nm { box-shadow: inset 4px 0 0 var(--gc, transparent) }
   const LINES = ["計概考古題", "MIS 考古題", "碩班", "多益", "iPAS"];
   const LINE_NAME = { "碩班": "碩班（C 語言等）" };
   const lineOf = it => it.src === "exam" ? (/^MIS/.test(it.title || "") ? "MIS 考古題" : "計概考古題")
-    : it.track === "碩班" && /^(?:(?:看題|做題)\s*)?(?:計概|作業系統|MIS|補充)/.test(it.title || "") ? "舊課本" : it.track;   // 改成考古題之前的課本進度不算進 C 語言那條
+    : oldBook(it) ? "舊課本" : it.track;   // 改成考古題之前的課本進度不算進 C 語言那條
+  // 跟平台（index.html 的 oldBook）同一套規則
+  function oldBook(it) {
+    if (!it || it.tag !== "讀" || it.track !== "碩班" || it.src === "exam") return false;
+    const t = String(it.title || ""), d = String(it.detail || "");
+    if (/^(?:(?:看題|做題)\s*)?(?:計概|作業系統|MIS|補充)/.test(t) || /^(?:計概[(（]一[)）]|MIS |補充：)/.test(d)) return true;
+    return /^(?:看題|做題)\s/.test(t) && !/^(?:看題|做題)\s*C/.test(t);
+  }
   function shiftTrack(track, from, n) {
     n = Math.max(1, Math.min(60, Number(n) || 0));
     const list = derive().items.filter(it => it.tag === "讀" && lineOf(it) === track && !it.done && !it.review && it.date >= from);
