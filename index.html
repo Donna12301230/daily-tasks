@@ -560,7 +560,7 @@ table.pm td.c-key { text-align: center }
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
   // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
-  const BUILD = "20261124j";
+  const BUILD = "20261124k";
   const TYPES = {
     today: { label: "今天", desc: "一份清單看完今天：任務、里程碑、考試、工作台的課程與讀書、固定時段。", view: vToday },
     // 總覽的月曆、甘特圖、重要日期共用同一個工作台頁面（frame），只是打開不同的畫面（hash）
@@ -2633,7 +2633,7 @@ table.pm td.c-key { text-align: center }
   /* ── 考古題每日進度：中山（計概、MIS）、iPAS 初級（管理、技術）、多益（Vol.7、Vol.8）共用一套排法 ──
      依章節排；期限是那場考試的前一個月（平台「考試」裡有就用，沒有用預估日期）；
      週日、假日、空大期中／期末考那一週不排；iPAS 衝刺期中山暫停；延後時同一科後面的整組往後挪。 */
-  const EXAM_VER = 5;   // 3：事項編號改成「科目＋日期」並清掉重複；4：同一天題目一樣、或同一筆在兩個月份的也算重複；5：整份重寫月份文件（之前寫入被拒絕但排程紀錄已寫成功的，要重排一次）
+  const EXAM_VER = 6;   // 3：事項編號改成「科目＋日期」並清掉重複；4：同一天題目一樣、或同一筆在兩個月份的也算重複；5：整份重寫月份文件（之前寫入被拒絕但排程紀錄已寫成功的，要重排一次）
   // EXAM_REV:BEGIN
   const EXAM_REV = {"cs": "76173539", "mis": "c98212b2", "ipm": "ee5b0c9a", "ipt": "848e482e", "ipr": "0f9c2c26", "ipd": "c0a64217", "toeic7": "e8a4c7bf", "toeic8": "d5e3dd28"};
   // EXAM_REV:END
@@ -2645,6 +2645,8 @@ table.pm td.c-key { text-align: center }
   // 多益兩場：名稱寫「第一場／1」「第二場／2」的優先，不然照日期（2027 年起）的第 1、2 場
   const toeicExam = k => { const xs = firstExam(/多益|TOEIC/i).filter(e => e.date >= "2027-01-01"); return xs.find(e => (k === 1 ? /第?[一1]場|#1|\(1\)/ : /第?[二2]場|#2|\(2\)/).test(e.name || "")) || xs[k - 1] || null; };
   const examDate = (f, def) => { const e = f(); return e ? e.date : def; };
+  const EXAM_OF = { cs: () => nsysuExam(), mis: () => nsysuExam(), ipm: () => ipasExam(), ipt: () => ipasExam(), ipr: () => ipas2Exam(), ipd: () => ipas2Exam(), toeic7: () => toeicExam(1), toeic8: () => toeicExam(2) };
+  const EXAM_LABEL = { cs: "中山資管碩士班考試", mis: "中山資管碩士班考試", ipm: "iPAS 初級", ipt: "iPAS 初級", ipr: "iPAS 中級", ipd: "iPAS 中級", toeic7: "多益第一場", toeic8: "多益第二場" };
   // iPAS 初級預設日期：參考 115 年（2026/5/23 週六），116 年估同一週的週六；中山的 iPAS 衝刺期跟著它：考前三週暫停
   const IPAS_DEF = "2027-05-22";
   const ipasSprint = () => { const d = examDate(ipasExam, IPAS_DEF); return [[addDays(d, -21), d]]; };
@@ -2779,7 +2781,7 @@ table.pm td.c-key { text-align: center }
       if (subs0.length > subs.length) toast("考古題資料還沒更新完，等幾分鐘重新整理再排（" + subs0.filter(s => !okShape(s)).map(s => SUBJ[s].name).join("、") + "）");
       if (!subs.length) return;
       const patch = {}, put = (b, id, v) => { (patch[b] = patch[b] || { items: {} }).items[id] = v; };
-      const tag = Date.now().toString(36), msg = [], sig = {}, off = {};
+      const tag = Date.now().toString(36), msg = [], sig = {}, off = {}, info = {};
       subsDone.length = 0;
       subs.forEach(s => {
         const mine = W.items.filter(it => it.src === "exam" && subOf(it) === s);
@@ -2801,6 +2803,8 @@ table.pm td.c-key { text-align: center }
         const end = examEndOf(s);
         if (left.length) msg.push(examMsg(s, examLay(W, s, left, examStartOf(s), end, put, t0, tag), end));
         sig[s] = examSig(s); off[s] = examOff(s).map(r => r[0] + "~" + r[1]); examFitDone.add(s + "|" + sig[s]); subsDone.push(s + "|" + sig[s]);
+        const ex = EXAM_OF[s] && EXAM_OF[s]();
+        info[s] = { exam: ex ? ex.name || EXAM_LABEL[s] : EXAM_LABEL[s], date: SUBJ[s].date(), end, est: !ex, start: examStartOf(s) };
       });
       // 每個月的文件：套上這次的改動，再把已刪除的考古題事項拿掉，整份重寫
       let gone = 0; const writes = [];
@@ -2813,7 +2817,7 @@ table.pm td.c-key { text-align: center }
       });
       // 每個月的文件都寫成功才記下「排過了」；有一份失敗就不記，下次打開再排一次
       await Promise.all(writes);
-      wbWrite("meta", { examSig: sig, examOff: off, examVer: EXAM_VER });
+      wbWrite("meta", { examSig: sig, examOff: off, examVer: EXAM_VER, examInfo: info });
       if (msg.length) toast("考古題重排：" + msg.join("；") + (gone ? "（清掉 " + gone + " 筆舊的、重複的）" : ""));
     } catch (e) { subsDone.forEach(k => examFitDone.delete(k)); toast("考古題重排沒有完成：" + ((e && (e.code || e.message)) || e) + "，下次打開會再試"); } finally { examFitBusy = false; }
   }

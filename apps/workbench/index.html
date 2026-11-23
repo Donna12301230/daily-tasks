@@ -183,6 +183,9 @@ table.t td.n { text-align: right; font-family: var(--font-mono) }
 .card[data-act="sline"] { cursor: pointer }
 .card[data-act="sline"]:hover { border-color: var(--t-study) }
 .card.on { border-color: var(--t-study); box-shadow: 0 0 0 1px var(--t-study) }
+.exam-info { margin: 2px 0 6px; font-size: .8rem }
+.exam-info.est { color: var(--warn, #b26a00) }
+.exam-info .bad { color: var(--bad) }
 .card .more { margin: 8px 0 0; font-size: .8rem; color: var(--t-study) }
 .allprog { margin-top: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px }
 .allprog header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px }
@@ -843,6 +846,13 @@ table.g tr.grp td.nm { box-shadow: inset 4px 0 0 var(--gc, transparent) }
     return h + "</section>";
   }
 
+  // 這條線對應哪場考試：日期從平台「學習目標」的考試讀到就寫名稱，沒有就標「預估」；期限＝考前一個月
+  function examInfoLine(all) {
+    const info = (S.docs.meta || {}).examInfo || {}, subs = [...new Set(all.filter(it => it.src === "exam").map(subOf))].filter(s => info[s]);
+    if (!subs.length) return "";
+    return subs.map(s => { const x = info[s]; return '<p class="status exam-info' + (x.est ? " est" : "") + '">' + esc(x.exam) + " " + esc(mdw(x.date)) + (x.est ? "（預估，學習目標裡還沒有這場考試）" : "（學習目標）") + "・期限 " + esc(mdw(x.end)) + (last2(all, s) > x.end ? '・<b class="bad">排到期限之後</b>' : "") + "</p>"; }).join("");
+  }
+  const last2 = (all, s) => all.filter(it => subOf(it) === s).reduce((a, it) => (it.date > a ? it.date : a), "");
   function viewStudy() {
     const c = derive(), t = today();
     let h = '<p class="status">中山計概、MIS 和 iPAS 依章節每天做考古題、多益官方題一天一個 Part（點題號直接打開那一題），其他照每日進度表。落後了就在這裡把整條線往後挪（跳過週日與假日），或在「今天」逐項延後。</p><div class="cards">';
@@ -859,6 +869,7 @@ table.g tr.grp td.nm { box-shadow: inset 4px 0 0 var(--gc, transparent) }
         + '<div class="stat"><div><b>' + (ex ? qd : done) + "</b><small>" + (ex ? "已做題數" : "已完成") + "</small></div><div><b" + (behind.length ? ' style="color:var(--bad)"' : "") + ">" + behind.length + "</b><small>落後" + unit + "數</small></div><div><b>" + (ex ? qn : all.length) + "</b><small>" + (ex ? "總題數" : "總項數") + "</small></div></div>"
         + '<div class="prog"><span style="width:' + (all.length ? (100 * done / all.length).toFixed(1) : 0) + '%"></span></div>'
         + (last ? '<p class="status">目前排到 ' + esc(mdw(last)) + "</p>" : "")
+        + examInfoLine(all)
         + "<ol>" + upcoming.map(it => "<li><span>" + md(it.date) + "</span>" + (it.qs && it.qs.length ? it.qs.map(q => qBtn(it, q)).join(" ") : esc(it.title)) + "</li>").join("") + "</ol>"
         + (upcoming.length ? "" : '<p class="status">沒有未完成的進度。</p>')
         + '<p class="more">' + (ui.sline === tr ? "▲ 收起全部進度" : "▼ 點卡片看全部 " + all.length + " " + unit) + "</p>"
