@@ -560,7 +560,7 @@ table.pm td.c-key { text-align: center }
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
   // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
-  const BUILD = "20261123d";
+  const BUILD = "20261123e";
   const TYPES = {
     today: { label: "今天", desc: "一份清單看完今天：任務、里程碑、考試、工作台的課程與讀書、固定時段。", view: vToday },
     // 總覽的月曆、甘特圖、重要日期共用同一個工作台頁面（frame），只是打開不同的畫面（hash）
@@ -2595,40 +2595,84 @@ table.pm td.c-key { text-align: center }
     const msg = [begin ? "考古題改從 " + md(begin) + " 開始" : "", nOld ? "拿掉 " + nOld + " 項舊的課本進度" : ""].filter(Boolean).join("，");
     if (msg) toast(msg);
   }
+  // 題目在截止日前排不完時，把相鄰「2 題＋1 題」的兩天併成一天 3 題，平均散開，直到排得下
+  const EXAM_END = "2027-08-31", EXAM_SUBJ = { cs: "計概", mis: "MIS " };
+  function examPack(groups, days) {
+    const need = groups.length - days; if (need <= 0) return groups;
+    const cand = [];
+    for (let i = 0; i + 1 < groups.length; i++) if (groups[i].length + groups[i + 1].length === 3) { cand.push(i); i++; }
+    const pick = new Set(cand.length <= need ? cand : Array.from({ length: need }, (_, k) => cand[Math.floor((k + 0.5) * cand.length / need)]));
+    const out = [];
+    for (let i = 0; i < groups.length; i++) { if (pick.has(i)) { out.push(groups[i].concat(groups[i + 1])); i++; } else out.push(groups[i]); }
+    return out;
+  }
+  const examDays = (W, from) => { let n = 0; for (let d = from; d <= EXAM_END; d = addDays(d, 1)) if (!examRest(W, d)) n++; return n; };
+  const examItem = (s, g, d, t0) => ({ date: d, orig: d, tag: "讀", track: "碩班", src: "exam", done: false, added: t0,
+    title: EXAM_SUBJ[s] + "考古題 " + g.map(q => q[0]).join("、"),
+    detail: g.map(q => q[0] + "　" + q[2]).join("\n"),
+    qs: g.map(q => [q[0], q[1]]) });
+  async function loadExamPlan() {
+    const html = await (await fetch("apps/workbench/index.html?v=" + BUILD)).text();
+    const m = /const EXAM_PLAN = (\{.*?\});\n/.exec(html);
+    return m ? JSON.parse(m[1]) : null;
+  }
+  // 一次性補正 examPlanFit：已經轉換過的，明天起還沒做的考古題重新排，排不完的科目有幾天改成 3 題（做過的、今天以前的不動）
+  let examFitBusy = false;
+  async function examPlanFit() {
+    const meta = (S.wbDocs || {}).meta || {};
+    if (examFitBusy || !canWrite || !wbDb || !meta.examPlan || meta.examPlanFit) return;
+    examFitBusy = true;
+    try {
+      const plan = await loadExamPlan(), W = wbData(), t0 = today();
+      if (!plan || !W || ((S.wbDocs.meta || {}).examPlanFit)) return;
+      const patch = {}, put = (b, id, v) => { (patch[b] = patch[b] || { items: {} }).items[id] = v; };
+      const msg = [];
+      Object.keys(EXAM_SUBJ).forEach(s => {
+        const mine = W.items.filter(it => it.src === "exam" && (s === "mis") === /^MIS/.test(it.title || ""));
+        const keep = mine.filter(it => it.done || it.date <= t0), redo = mine.filter(it => !(it.done || it.date <= t0));
+        const seen = new Set(); keep.forEach(it => (it.qs || []).forEach(q => seen.add(q[1])));
+        const left = plan[s].map(g => g.filter(q => !seen.has(q[1]))).filter(g => g.length);
+        const start = addDays(t0, 1), days = examDays(W, start);
+        if (left.length <= days) return;
+        const groups = examPack(left, days);
+        redo.forEach(it => put(it.bucket, it.id, { deleted: true, replacedBy: "fit" }));
+        let d = start, i = 0, n3 = 0;
+        while (i < groups.length && d <= EXAM_END) {
+          if (!examRest(W, d)) { if (groups[i].length === 3) n3++; put("m-" + d.slice(0, 7), "exam-" + s + "-f" + i, examItem(s, groups[i], d, t0)); i++; }
+          d = addDays(d, 1);
+        }
+        msg.push(EXAM_SUBJ[s].trim() + "有 " + n3 + " 天排 3 題" + (i < groups.length ? "，還有 " + (groups.length - i) + " 天份排不下" : "，8/31 前排得完"));
+      });
+      Object.keys(patch).forEach(b => wbWrite(b, patch[b]));
+      wbWrite("meta", { examPlanFit: t0 });
+      if (msg.length) toast("考古題重排：" + msg.join("；"));
+    } catch (e) { /* 下次打開再試 */ } finally { examFitBusy = false; }
+  }
   async function examPlan() {
-    if ((S.wbDocs && S.wbDocs.meta || {}).examPlan) { examPlanFix(); return; }
+    if ((S.wbDocs && S.wbDocs.meta || {}).examPlan) { examPlanFix(); examPlanFit(); return; }
     const docs = S.wbDocs || {};
     if (examPlanBusy || !canWrite || !wbDb || (docs.meta || {}).examPlan || !Object.keys(docs).some(id => id.startsWith("m-"))) return;
     examPlanBusy = true;
     try {
-      const html = await (await fetch("apps/workbench/index.html?v=" + BUILD)).text();
-      const m = /const EXAM_PLAN = (\{.*?\});\n/.exec(html);
-      if (!m) return;
-      const plan = JSON.parse(m[1]), W = wbData(), t0 = today(), END = "2027-08-31";
+      const plan = await loadExamPlan(), W = plan && wbData(), t0 = today();
+      if (!plan) return;
       if (!W || (S.wbDocs.meta || {}).examPlan) return;
       const old = oldBook;
       const patch = {}, put = (b, id, v) => { (patch[b] = patch[b] || { items: {} }).items[id] = v; };
       let nOld = 0;
       W.items.filter(old).forEach(it => { put(it.bucket, it.id, { deleted: true, replacedBy: "exam" }); nOld++; });
       const rest = d => examRest(W, d);
-      const SUBJ = { cs: "計概", mis: "MIS " };
       let nNew = 0;
-      Object.keys(SUBJ).forEach(s => {
+      Object.keys(EXAM_SUBJ).forEach(s => {
+        const groups = examPack(plan[s], examDays(W, addDays(t0, 1)));
         let d = addDays(t0, 1), i = 0;
-        while (i < plan[s].length && d <= END) {
-          if (!rest(d)) {
-            const g = plan[s][i];
-            put("m-" + d.slice(0, 7), "exam-" + s + "-" + i, { date: d, orig: d, tag: "讀", track: "碩班", src: "exam", done: false, added: t0,
-              title: SUBJ[s] + "考古題 " + g.map(q => q[0]).join("、"),
-              detail: g.map(q => q[0] + "　" + q[2]).join("\n"),
-              qs: g.map(q => [q[0], q[1]]) });
-            i++; nNew++;
-          }
+        while (i < groups.length && d <= EXAM_END) {
+          if (!rest(d)) { put("m-" + d.slice(0, 7), "exam-" + s + "-" + i, examItem(s, groups[i], d, t0)); i++; nNew++; }
           d = addDays(d, 1);
         }
       });
       Object.keys(patch).forEach(b => wbWrite(b, patch[b]));
-      wbWrite("meta", { examPlan: t0, examPlanFix: t0, examPlanClean: t0 });
+      wbWrite("meta", { examPlan: t0, examPlanFix: t0, examPlanClean: t0, examPlanFit: t0 });
       toast("計概、MIS 改成每天 1–2 題考古題：排了 " + nNew + " 天份，換掉 " + nOld + " 項課本進度");
     } catch (e) { /* 下次打開再試 */ } finally { examPlanBusy = false; }
   }
