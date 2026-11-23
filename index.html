@@ -560,7 +560,7 @@ table.pm td.c-key { text-align: center }
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
   // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
-  const BUILD = "20261123f";
+  const BUILD = "20261123g";
   const TYPES = {
     today: { label: "今天", desc: "一份清單看完今天：任務、里程碑、考試、工作台的課程與讀書、固定時段。", view: vToday },
     // 總覽的月曆、甘特圖、重要日期共用同一個工作台頁面（frame），只是打開不同的畫面（hash）
@@ -953,7 +953,8 @@ table.pm td.c-key { text-align: center }
     if (!wbDb) { toast("工作台還沒連上，這次沒有存到"); return; }
     const cur = S.wbDocs || {};
     S.wbDocs = Object.assign({}, cur, { [docId]: merge(clone(cur[docId] || {}), clone(p)) });
-    wbDb.doc("plan/" + docId).update(p).catch(() => toast("工作台沒有存到，請稍後再試"));
+    try { wbDb.doc("plan/" + docId).update(p).catch(() => toast("工作台沒有存到，請稍後再試")); }
+    catch (e) { toast("工作台沒有存到：" + ((e && e.message) || "資料格式不對")); }   // Firestore 檢查到不合法的資料會當場丟錯，不是回傳失敗
     schedule();
   }
   const wbSetDone = (it, done) => wbWrite(it.bucket, { items: { [it.id]: { done, doneAt: done ? today() : null } } });
@@ -2610,7 +2611,7 @@ table.pm td.c-key { text-align: center }
   const examItem = (s, g, d, t0) => ({ date: d, orig: d, tag: "讀", track: "碩班", src: "exam", done: false, added: t0,
     title: EXAM_SUBJ[s] + "考古題 " + g.map(q => q[0]).join("、"),
     detail: g.map(q => q[0] + "　" + q[2]).join("\n"),
-    qs: g.map(q => [q[0], q[1]]) });
+    qs: g.map(q => ({ 0: q[0], 1: q[1] })) });   // Firestore 不收陣列裡的陣列，所以每題存成 {0: 題號, 1: 考古題的位置}，讀的時候照樣用 q[0]、q[1]
   async function loadExamPlan() {
     const html = await (await fetch("apps/workbench/index.html?v=" + BUILD)).text();
     const m = /const EXAM_PLAN = (\{.*?\});\n/.exec(html);

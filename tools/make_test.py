@@ -17,6 +17,8 @@ FAKE = r"""<script>
   const lis = [];
   const frz = o => JSON.parse(JSON.stringify(o));
   window.__writes = []; window.__store = store;
+  // 跟 Firestore 一樣：陣列裡不能直接放陣列，寫入時當場丟錯
+  function noNested(v, inArr) { if (Array.isArray(v)) { if (inArr) throw new Error("Nested arrays are not supported"); v.forEach(x => noNested(x, true)); } else if (v && typeof v === "object") for (const k in v) noNested(v[k], false); }
   function merge(t, p) { for (const k in p) { const v = p[k]; if (v && typeof v === "object" && !Array.isArray(v)) { if (!t[k] || typeof t[k] !== "object") t[k] = {}; merge(t[k], v); } else t[k] = v; } return t; }
   function makeDb(app) {
     const base = store[app] = store[app] || {};
@@ -26,8 +28,8 @@ FAKE = r"""<script>
     const emit = c => lis.filter(l => l.app === app && l.c === c).forEach(l => setTimeout(() => l.next(l.id ? snap(c, l.id) : qs(c)), 5));
     const ref = (c, id) => ({ id, path: c + "/" + id,
       get: async () => snap(c, id),
-      set: async d => { colOf(c)[id] = frz(d); __writes.push(["set", app, c, id]); emit(c); },
-      update: async p => { colOf(c)[id] = merge(colOf(c)[id] || {}, frz(p)); __writes.push(["update", app, c, id]); emit(c); },
+      set: d => { noNested(d); return (async () => { colOf(c)[id] = frz(d); __writes.push(["set", app, c, id]); emit(c); })(); },
+      update: p => { noNested(p); return (async () => { colOf(c)[id] = merge(colOf(c)[id] || {}, frz(p)); __writes.push(["update", app, c, id]); emit(c); })(); },
       delete: async () => { delete colOf(c)[id]; __writes.push(["delete", app, c, id]); emit(c); },
       onSnapshot: next => { const l = { app, c, id, next }; lis.push(l); setTimeout(() => next(snap(c, id)), 15); return () => { const i = lis.indexOf(l); if (i >= 0) lis.splice(i, 1); }; } });
     const col = c => ({ path: c, doc: id => ref(c, id || "x" + Math.random().toString(36).slice(2, 8)), get: async () => qs(c),
