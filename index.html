@@ -560,7 +560,7 @@ table.pm td.c-key { text-align: center }
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
   // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
-  const BUILD = "20261124h";
+  const BUILD = "20261124i";
   const TYPES = {
     today: { label: "今天", desc: "一份清單看完今天：任務、里程碑、考試、工作台的課程與讀書、固定時段。", view: vToday },
     // 總覽的月曆、甘特圖、重要日期共用同一個工作台頁面（frame），只是打開不同的畫面（hash）
@@ -961,9 +961,9 @@ table.pm td.c-key { text-align: center }
   function wbSetDoc(docId, doc) {
     if (!wbDb) return;
     S.wbDocs = Object.assign({}, S.wbDocs || {}, { [docId]: doc });
-    try { wbDb.doc("plan/" + docId).set(clone(doc)).catch(e => toast("工作台沒有存到（" + docId + "）：" + ((e && (e.code || e.message)) || "請稍後再試"))); }
-    catch (e) { toast("工作台沒有存到（" + docId + "）：" + ((e && e.message) || "資料格式不對")); }
     schedule();
+    try { return wbDb.doc("plan/" + docId).set(clone(doc)).catch(e => { toast("工作台沒有存到（" + docId + "）：" + ((e && (e.code || e.message)) || "請稍後再試")); throw e; }); }
+    catch (e) { toast("工作台沒有存到（" + docId + "）：" + ((e && e.message) || "資料格式不對")); return Promise.reject(e); }
   }
   const wbSetDone = (it, done) => wbWrite(it.bucket, { items: { [it.id]: { done, doneAt: done ? today() : null } } });
 
@@ -2633,7 +2633,7 @@ table.pm td.c-key { text-align: center }
   /* ── 考古題每日進度：中山（計概、MIS）、iPAS 初級（管理、技術）、多益（Vol.7、Vol.8）共用一套排法 ──
      依章節排；期限是那場考試的前一個月（平台「考試」裡有就用，沒有用預估日期）；
      週日、假日、空大期中／期末考那一週不排；iPAS 衝刺期中山暫停；延後時同一科後面的整組往後挪。 */
-  const EXAM_VER = 4;   // 3：事項編號改成「科目＋日期」並清掉重複；4：同一天題目一樣、或同一筆在兩個月份的也算重複
+  const EXAM_VER = 5;   // 3：事項編號改成「科目＋日期」並清掉重複；4：同一天題目一樣、或同一筆在兩個月份的也算重複；5：整份重寫月份文件（之前寫入被拒絕但排程紀錄已寫成功的，要重排一次）
   // EXAM_REV:BEGIN
   const EXAM_REV = {"cs": "76173539", "mis": "c98212b2", "ipm": "ee5b0c9a", "ipt": "848e482e", "ipr": "0f9c2c26", "ipd": "c0a64217", "toeic7": "e8a4c7bf", "toeic8": "d5e3dd28"};
   // EXAM_REV:END
@@ -2763,7 +2763,7 @@ table.pm td.c-key { text-align: center }
   // 有比這一版新的程式排過（meta.examVer 比較大）就不動，免得舊分頁跟新分頁輪流重排
   const examStale = meta => !!meta.examPlan && !((meta.examVer || 0) > EXAM_VER) && Object.keys(SUBJ).filter(s => ((meta.examSig || {})[s] || "") !== examSig(s));
   let examFitBusy = false, wbFresh = false;
-  const examFitDone = new Set();   // 這個頁面已經照哪些條件排過（同樣條件不再排第二次）
+  const examFitDone = new Set(), subsDone = [];   // 這個頁面已經照哪些條件排過（同樣條件不再排第二次）
   async function examPlanFit() {
     const st = examStale((S.wbDocs || {}).meta || {});
     if (examFitBusy || !canWrite || !wbDb || !live || !wbFresh || !st || !st.length || st.every(s => examFitDone.has(s + "|" + examSig(s)))) return;
@@ -2777,6 +2777,7 @@ table.pm td.c-key { text-align: center }
       if (!subs.length) return;
       const patch = {}, put = (b, id, v) => { (patch[b] = patch[b] || { items: {} }).items[id] = v; };
       const tag = Date.now().toString(36), msg = [], sig = {}, off = {};
+      subsDone.length = 0;
       subs.forEach(s => {
         const mine = W.items.filter(it => it.src === "exam" && subOf(it) === s);
         const keep0 = mine.filter(it => it.done || it.date <= t0), redo = mine.filter(it => !(it.done || it.date <= t0));
@@ -2796,20 +2797,22 @@ table.pm td.c-key { text-align: center }
         redo.forEach(it => put(it.bucket, it.id, { deleted: true, replacedBy: "replan" }));
         const end = examEndOf(s);
         if (left.length) msg.push(examMsg(s, examLay(W, s, left, examStartOf(s), end, put, t0, tag), end));
-        sig[s] = examSig(s); off[s] = examOff(s).map(r => r[0] + "~" + r[1]); examFitDone.add(s + "|" + sig[s]);
+        sig[s] = examSig(s); off[s] = examOff(s).map(r => r[0] + "~" + r[1]); examFitDone.add(s + "|" + sig[s]); subsDone.push(s + "|" + sig[s]);
       });
       // 每個月的文件：套上這次的改動，再把已刪除的考古題事項拿掉，整份重寫
-      let gone = 0;
+      let gone = 0; const writes = [];
       new Set(Object.keys(S.wbDocs || {}).filter(id => id.startsWith("m-")).concat(Object.keys(patch))).forEach(b => {
         const next = merge(clone((S.wbDocs || {})[b] || {}), clone(patch[b] || {})), its = next.items || {};
         let n = 0;
         Object.keys(its).forEach(id => { const it = its[id]; if (it && it.deleted && it.src === "exam") { delete its[id]; n++; } });
         gone += n;
-        if (patch[b] || n) wbSetDoc(b, next);
+        if (patch[b] || n) writes.push(wbSetDoc(b, next));
       });
+      // 每個月的文件都寫成功才記下「排過了」；有一份失敗就不記，下次打開再排一次
+      await Promise.all(writes);
       wbWrite("meta", { examSig: sig, examOff: off, examVer: EXAM_VER });
       if (msg.length) toast("考古題重排：" + msg.join("；") + (gone ? "（清掉 " + gone + " 筆舊的、重複的）" : ""));
-    } catch (e) { toast("考古題重排沒有完成：" + ((e && e.message) || e)); } finally { examFitBusy = false; }
+    } catch (e) { subsDone.forEach(k => examFitDone.delete(k)); toast("考古題重排沒有完成：" + ((e && (e.code || e.message)) || e) + "，下次打開會再試"); } finally { examFitBusy = false; }
   }
   // 一次性：多益單字事項不再附「＋App 20 分」（只留 TSL 新字）
   const APP_RE = /\s*[＋+]\s*App\s*\d*\s*分(?:鐘)?/i;
