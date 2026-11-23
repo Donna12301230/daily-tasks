@@ -723,7 +723,7 @@ table.pm td.c-key { text-align: center }
     if (t.proj && S.projects[t.proj]) { const p = S.projects[t.proj]; return { label: p.name, ac: pcol(p) }; }
     if (t.goal && S.goals[t.goal]) { const g = S.goals[t.goal], m = modById(g.mod); return { label: g.name, ac: m ? acolByArea(m.area) : "var(--c6)" }; }
     const m = modById(t.mod); if (m) return { label: m.name, ac: acolByArea(m.area) };
-    return { label: "未分類", ac: "var(--c6)" };
+    return { label: t.tmp ? "臨時待辦事務" : "未分類", ac: "var(--c6)" };
   }
   // 已經內建的網站（單字、考古題、筆記）連結改成在平台裡打開，不跳出去
   const SITE_TYPES = [[/donna12301230\.github\.io\/vocab-trainer/i, "vocabApp"], [/donna12301230\.github\.io\/nsysu-mis-exams/i, "nsysuApp"], [/donna12301230\.github\.io\/os-notes/i, "osNotesApp"], [/donna12301230\.github\.io\/genai-lecture-notes/i, "genaiApp"]];
@@ -1278,7 +1278,7 @@ table.pm td.c-key { text-align: center }
   function quickAdd() {
     const opts = addTargets();
     if (!opts) return '<div class="qadd muted small">到「擴充」加一個任務清單或專案管理模組，就能在這裡快速新增。</div>';
-    return '<div class="qadd" data-form><input type="text" id="qa-t" placeholder="新增一件事…" data-enter="qadd" aria-label="任務名稱"><select id="qa-to" aria-label="放到哪裡"><option value=""' + (ui.qaTo ? "" : " selected") + ' disabled>放到哪個專案或目標…</option>' + opts + '</select><input type="date" id="qa-d" value="' + today() + '" aria-label="期限"><button class="btn primary" data-act="qadd">加入</button></div>';
+    return '<div class="qadd" data-form><input type="text" id="qa-t" placeholder="新增一件事…" data-enter="qadd" aria-label="任務名稱"><select id="qa-to" aria-label="放到哪裡"><option value=""' + (ui.qaTo ? "" : " selected") + ' disabled>放到哪個專案或目標…</option><option value="x:tmp"' + sel(ui.qaTo === "x:tmp") + '>臨時待辦事務</option>' + opts + '</select><input type="date" id="qa-d" value="' + today() + '" aria-label="期限"><button class="btn primary" data-act="qadd">加入</button></div>';
   }
   const vTarget = mid => Number(modDoc(mid).target) || 50;
   const vCount = (mid, d) => Number((dayLog(d).vc || {})[mid]) || 0;
@@ -2030,6 +2030,7 @@ table.pm td.c-key { text-align: center }
     const d = { t: title, st: "todo", due: isDate(due) ? due : "", pri: 0, at: today() };
     if (k === "p") { const p = S.projects[id]; d.proj = id; d.mod = (p && modOfType(p.area, "projectBoard")) || ""; }
     else if (k === "g") { const g = S.goals[id]; d.goal = id; d.mod = g ? g.mod : ""; }
+    else if (k === "x") { d.mod = ""; d.tmp = true; }
     else d.mod = id;
     Object.assign(d, extra || {});
     return put("tasks", uid("t"), d);
