@@ -560,7 +560,7 @@ table.pm td.c-key { text-align: center }
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
   // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
-  const BUILD = "20261124b";
+  const BUILD = "20261124c";
   const TYPES = {
     today: { label: "今天", desc: "一份清單看完今天：任務、里程碑、考試、工作台的課程與讀書、固定時段。", view: vToday },
     // 總覽的月曆、甘特圖、重要日期共用同一個工作台頁面（frame），只是打開不同的畫面（hash）
@@ -2627,7 +2627,7 @@ table.pm td.c-key { text-align: center }
      週日、假日、空大期中／期末考那一週不排；iPAS 衝刺期中山暫停；延後時同一科後面的整組往後挪。 */
   const EXAM_VER = 2;
   // EXAM_REV:BEGIN
-  const EXAM_REV = {"cs": "76173539", "mis": "c98212b2", "ipm": "fbed334b", "ipt": "d8adb77a", "ipr": "0f9c2c26", "ipd": "c0a64217", "toeic7": "e8a4c7bf", "toeic8": "d5e3dd28"};
+  const EXAM_REV = {"cs": "76173539", "mis": "c98212b2", "ipm": "7b260263", "ipt": "2f154c66", "ipr": "0f9c2c26", "ipd": "c0a64217", "toeic7": "e8a4c7bf", "toeic8": "d5e3dd28"};
   // EXAM_REV:END
   const firstExam = (re, not) => arr("exams").filter(e => isDate(e.date) && re.test(e.name || "") && !(not && not.test(e.name || ""))).sort(byDate);
   const nsysuExam = () => { const t0 = today(), xs = arr("exams").filter(e => isDate(e.date) && e.date > t0);
