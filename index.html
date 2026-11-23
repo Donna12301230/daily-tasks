@@ -580,8 +580,9 @@ table.pm td.c-key { text-align: center }
     workbenchApp: { label: "工作台", desc: "月曆、甘特圖、IG 發文、讀書進度與清單（原本的赫滋與羊工作台）。", src: "apps/workbench/index.html" },
     vocabApp: { label: "單字練習", desc: "先選單字庫，再做閃卡、不熟清單、每天 10 個今日複習、考試和發音；中山資管英文術語的題號點了會跳到考古題。", src: "apps/vocab/index.html", hash: "/banks" },
     // 考古題：平台的「選擇考古題」頁列出每一套（group: "examBanks" 的模組會收在它底下）
-    examBanks: { label: "考古題", desc: "選一套考古題進去練習：目前有中山資管，之後可以加多益、iPAS 等。", view: vExamBanks },
+    examBanks: { label: "考古題", desc: "選一套考古題進去練習：目前有中山資管、iPAS 資安初級，之後可以加多益等。", view: vExamBanks },
     nsysuApp: { label: "中山資管考古題", desc: "資管碩士班甲組・計算機概論＋管理資訊系統・94–115 學年度：依年度、依章節、錯題本。", src: "apps/nsysu/index.html", group: "examBanks" },
+    ipasApp: { label: "iPAS 資安初級考古題", desc: "資訊安全工程師初級・I11 管理＋I12 技術・109–113 年＋樣題，共 1000 題單選：依年度、模擬考、隨機練習、錯題本。", src: "apps/ipas/index.html", group: "examBanks" },
     // group：預設收進同一區的這種模組頁裡（不佔分頁），可在「擴充」改成獨立分頁
     osNotesApp: { label: "作業系統筆記", desc: "空大作業系統的白話筆記、考試重點、小測驗和互動示範。", src: "apps/os-notes/index.html", group: "notes" },
     genaiApp: { label: "生成式 AI 講義", desc: "一講一頁的課程講義、名詞對照和自我檢核。", src: "apps/genai/index.html", group: "notes" },
@@ -604,6 +605,7 @@ table.pm td.c-key { text-align: center }
       { id: "genai", area: "learn", type: "genaiApp", name: "生成式 AI" },
       { id: "pq", area: "learn", type: "examBanks", name: "考古題" },
       { id: "nsysu", area: "learn", type: "nsysuApp", name: "中山資管考古題" },
+      { id: "ipas", area: "learn", type: "ipasApp", name: "iPAS 資安初級考古題" },
       // 已經併進別頁的舊模組：資料還在，只是不放在選單（可在「擴充」打開）
       { id: "proj-board", area: "work", type: "projectBoard", name: "專案管理", hidden: true },
       { id: "exams", area: "learn", type: "exams", name: "考試", hidden: true },
@@ -828,6 +830,16 @@ table.pm td.c-key { text-align: center }
     (old.mods || []).forEach(m => { if (!known.has(m.id)) next.mods.push(m); });
     setCfg(next);
   }
+  // 新增的考古題（iPAS 資安初級）：已經有自己版面的人只補這一個模組，放在中山資管後面；加過一次就不再加（刪掉了不會跑回來）
+  function addIpas() {
+    if (cfgUpgrading || !live || !canWrite || !db || !S.cfg || !Array.isArray(S.cfg.mods) || S.cfg.ipasAdded || S.cfg.mods.some(m => m.type === "ipasApp")) return;
+    const next = clone(S.cfg), i = next.mods.findIndex(m => m.type === "nsysuApp"), nsysu = next.mods[i];
+    const mod = { id: "ipas", area: nsysu ? nsysu.area : "learn", type: "ipasApp", name: "iPAS 資安初級考古題" };
+    if (next.mods.some(m => m.id === "ipas")) mod.id = "ipas-" + Date.now().toString(36);
+    next.mods.splice(i < 0 ? next.mods.length : i + 1, 0, mod);
+    next.ipasAdded = 1;
+    setCfg(next);
+  }
   // 專案類別：沿用工作台原本的分類（商品開發、策展與補助、官網與系統…）
   const projSeen = new Set();
   function fillProjCats() {
@@ -863,7 +875,7 @@ table.pm td.c-key { text-align: center }
     });
     wbWrite("tasks", { igLinked: 1, tasks: links });
   }
-  function afterLive() { upgradeCfg(); mergeExamPrep(); fillProjCats(); makeIgProjects(); linkTwins(); }
+  function afterLive() { upgradeCfg(); addIpas(); mergeExamPrep(); fillProjCats(); makeIgProjects(); linkTwins(); }
   function mergeExamPrep() {
     if (!live || !canWrite || !db) return;
     arr("exams").filter(e => !prepSeen.has(e.id) && e.prepMerged === undefined && (e.goal === undefined || (e.prep || []).length)).forEach(e => {
@@ -1209,6 +1221,18 @@ table.pm td.c-key { text-align: center }
     c.done = c.ok + c.bad + c.read;
     return c;
   }
+  // iPAS 考古題：每題記選了哪個答案（c）、對錯（s）、重要（m）
+  function ipasProgress() {
+    const s = readLS("ipas-pq-v1"); if (!s) return null;
+    const c = { done: 0, ok: 0, bad: 0, imp: 0 };
+    Object.values(s).forEach(p => Object.values((p && p.q) || {}).forEach(q => {
+      if (!q) return;
+      if (q.c) { c.done++; if (q.s === "ok") c.ok++; }
+      if (q.s === "bad") c.bad++;
+      if (q.m) c.imp++;
+    }));
+    return c;
+  }
   // 單字、考古題：只在有東西要做（或有紀錄可看）時出現；沒紀錄就不佔位置
   function sideApps() {
     let h = "";
@@ -1224,6 +1248,11 @@ table.pm td.c-key { text-align: center }
     if (em && q && (q.done || q.imp)) {
       h += '<section class="panel" style="--ac:' + acolByArea(em.area) + '"><div class="ph"><h3>考古題</h3><span class="sum"><a href="#m-' + esc(em.id) + '">練習</a></span></div><div class="pb">'
         + '<div class="btnrow"><span class="chip ok">O ' + q.ok + '</span><span class="chip bad">X ' + q.bad + '</span><span class="chip">已讀過 ' + q.read + '</span><span class="chip warn">重要 ' + q.imp + "</span></div></div></section>";
+    }
+    const im = cfg().mods.find(x => x.type === "ipasApp" && !x.hidden), iq = im ? ipasProgress() : null;
+    if (im && iq && (iq.done || iq.imp || iq.bad)) {
+      h += '<section class="panel" style="--ac:' + acolByArea(im.area) + '"><div class="ph"><h3>iPAS 考古題</h3><span class="sum"><a href="#m-' + esc(im.id) + '">練習</a></span></div><div class="pb">'
+        + '<div class="btnrow"><span class="chip">已做 ' + iq.done + '</span><span class="chip ok">答對 ' + iq.ok + '</span><span class="chip bad">錯題本 ' + iq.bad + '</span><span class="chip warn">重要 ' + iq.imp + "</span></div></div></section>";
     }
     return h;
   }
@@ -1668,13 +1697,18 @@ table.pm td.c-key { text-align: center }
   function vExamBanks(m) {
     const kids = cfg().mods.filter(x => !x.hidden && parentOf(x) === m.id);
     const stat = x => {
+      if (x.type === "ipasApp") {
+        const q = ipasProgress();
+        if (!q || !(q.done || q.imp || q.bad)) return "還沒有作答紀錄";
+        return "已做 " + q.done + " 題（答對 " + q.ok + "）・錯題本 " + q.bad + " 題" + (q.imp ? "・重要 " + q.imp + " 題" : "");
+      }
       if (x.type !== "nsysuApp") return "";
       const q = nsysuProgress();
       if (!q || !(q.done || q.imp)) return "還沒有作答紀錄";
       return "已做 " + q.done + " 題（O " + q.ok + "・X " + q.bad + "・已讀過 " + q.read + "）" + (q.imp ? "・重要 " + q.imp + " 題" : "");
     };
     const rows = kids.map(x => pickRow({ title: x.name, meta: ((TYPES[x.type] || {}).desc || "") + (stat(x) ? "　" + stat(x) : ""), btns: [{ href: "#m-" + x.id, label: "進入", primary: true }] }));
-    return '<h2 class="pick-h">選擇考古題</h2><p class="muted small" style="margin:4px 0 0">每一套考古題分開記錄作答；之後可以再加多益、iPAS 等。</p>'
+    return '<h2 class="pick-h">選擇考古題</h2><p class="muted small" style="margin:4px 0 0">每一套考古題分開記錄作答；之後可以再加多益等。</p>'
       + (rows.length ? '<ul class="picks">' + rows.join("") + "</ul>" : '<p class="empty">還沒有考古題。</p>');
   }
   function noteCourse(m, c, all) {

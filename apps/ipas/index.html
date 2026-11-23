@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>iPAS 資安初級考古題</title>
+<script>document.documentElement.dataset.dtApp="ipas";if(window.parent!==window)document.documentElement.classList.add("in-dt")</script>
+<style id="dt-theme">html.in-dt:root{--bg:#f3f5f9;--paper:#ffffff;--ink:#1c2333;--muted:#5b6678;--line:#d8dee8;--accent:#2b3f7a;--accent-soft:#e2e7f5}@media (prefers-color-scheme: dark){html.in-dt:root:not([data-theme="light"]){--bg:#12151c;--paper:#1a1f29;--ink:#e3e7ef;--muted:#98a2b4;--line:#2e3544;--accent:#9fb4f0;--accent-soft:#263055;color-scheme:dark}}html.in-dt:root[data-theme="dark"]{--bg:#12151c;--paper:#1a1f29;--ink:#e3e7ef;--muted:#98a2b4;--line:#2e3544;--accent:#9fb4f0;--accent-soft:#263055;color-scheme:dark}</style>
+<script>window.DT_APP="ipas"</script><script src="../../fb.js"></script>
+<link rel="stylesheet" href="../../apps/embed.css?v=84fc0e08">
+<style>
+:root {
+  --bg: #eef2f3; --paper: #ffffff; --ink: #18232b; --muted: #5d6b73; --line: #d5dde0;
+  --accent: #0d6d77; --accent-soft: #dcefef;
+  --ok: #2e7d4f; --ok-soft: #e1f2e7; --bad: #b3263e; --bad-soft: #f8e1e5; --imp: #a86a12; --imp-soft: #f8ecd6;
+  --font-body: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11181c; --paper: #182227; --ink: #e3eaec; --muted: #9aa9b0; --line: #2c3a41; --accent: #5cc0c8; --accent-soft: #163a3e;
+  --ok: #6fcf97; --ok-soft: #173426; --bad: #f08a9b; --bad-soft: #3a1c23; --imp: #e8b45f; --imp-soft: #3a2c14; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #11181c; --paper: #182227; --ink: #e3eaec; --muted: #9aa9b0; --line: #2c3a41; --accent: #5cc0c8; --accent-soft: #163a3e;
+  --ok: #6fcf97; --ok-soft: #173426; --bad: #f08a9b; --bad-soft: #3a1c23; --imp: #e8b45f; --imp-soft: #3a2c14; color-scheme: dark }
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.6 var(--font-body) }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 0 max(16px, env(safe-area-inset-left, 0px)) 48px }
+header.top { padding-block: 20px 10px; display: grid; gap: 4px }
+h1 { font-size: 1.5rem; margin: 0 }
+.sub { color: var(--muted); font-size: .88rem; margin: 0 }
+html.in-dt header.top { display: none }
+.sync { font-size: .8rem; color: var(--muted); display: inline-flex; gap: 6px; align-items: center }
+.sync i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted) }
+.sync.on i { background: var(--ok) }
+nav.tabs { position: sticky; top: 0; z-index: 5; background: var(--bg); display: flex; gap: 6px; padding-block: 8px; border-bottom: 1px solid var(--line); overflow-x: auto; align-items: center }
+nav.tabs a { text-decoration: none; color: var(--muted); padding: 6px 14px; border-radius: 999px; font-weight: 500; white-space: nowrap }
+nav.tabs a[aria-current="page"] { background: var(--accent); color: var(--paper) }
+html.in-dt nav.tabs a.dt-back { color: var(--accent) }
+html:not(.in-dt) nav.tabs a.dt-back { display: none }
+.stats { margin-left: auto; display: flex; gap: 10px; font-size: .8rem; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums }
+.k-ok { color: var(--ok) } .k-bad { color: var(--bad) } .k-imp { color: var(--imp) }
+a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+button { font-family: inherit }
+
+/* 依年度 */
+.yearview { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 20px; padding-top: 16px }
+.rail { position: sticky; top: 60px; align-self: start; max-height: calc(100vh - 76px); overflow-y: auto; display: grid; gap: 4px }
+.rail .yr { display: grid; grid-template-columns: 54px 1fr 1fr; gap: 4px; align-items: center }
+.rail .yr b { font: 600 .82rem var(--font-mono) }
+.rail button { border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 6px; padding: 4px 0; cursor: pointer; font-size: .8rem; display: grid; line-height: 1.25 }
+.rail button small { color: var(--muted); font-size: .7rem; font-variant-numeric: tabular-nums }
+.rail button.cur { background: var(--accent); border-color: var(--accent); color: var(--paper) }
+.rail button.cur small { color: inherit; opacity: .85 }
+.rail .lg { font-size: .74rem; color: var(--muted); margin-top: 6px }
+.phead { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin-bottom: 12px }
+.phead h2 { margin: 0; font-size: 1.25rem }
+.phead .grow { flex: 1 }
+.btn { border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 8px; padding: 5px 12px; font-size: .85rem; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--paper); font-weight: 600 }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden }
+.seg button { border: 0; background: var(--paper); color: var(--muted); font-size: .82rem; padding: 5px 12px; cursor: pointer }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600 }
+.score { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin-bottom: 14px; display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline }
+.score .big { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums }
+.muted { color: var(--muted) } .small { font-size: .82rem }
+
+/* 題目卡 */
+.qs { display: grid; gap: 10px }
+.q { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; scroll-margin-top: 64px }
+.q.hl { box-shadow: 0 0 0 3px var(--accent) }
+.qtop { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap }
+.qno { font: 600 .82rem var(--font-mono); color: var(--muted) }
+.qno a { color: inherit }
+.qtop .grow { flex: 1 }
+.star { border: 1px solid var(--line); background: var(--paper); color: var(--muted); border-radius: 999px; font-size: .76rem; padding: 1px 10px; cursor: pointer }
+.star[aria-pressed="true"] { background: var(--imp-soft); color: var(--imp); border-color: var(--imp) }
+.redo { background: none; border: 0; color: var(--accent); font-size: .78rem; cursor: pointer; padding: 0 }
+.stem { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere }
+.figs { display: grid; gap: 4px; max-width: 760px }
+.figs img { width: 100%; height: auto; display: block; border: 1px solid var(--line); border-radius: 6px; background: #fff }
+.opts { display: grid; gap: 6px }
+.opt { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 8px; align-items: start; text-align: left; border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 8px; padding: 7px 10px; cursor: pointer; font-size: .92rem; line-height: 1.5 }
+.opt:hover:not(:disabled) { border-color: var(--accent) }
+.opt:disabled { cursor: default }
+.opt .L { font: 600 .85rem var(--font-mono); color: var(--muted); padding-top: 1px }
+.opt .t { overflow-wrap: anywhere }
+.opt .tag { font-size: .74rem; font-weight: 600; white-space: nowrap }
+.opt.pick { border-color: var(--accent); background: var(--accent-soft) }
+.opt.right { border-color: var(--ok); background: var(--ok-soft) }
+.opt.right .L, .opt.right .tag { color: var(--ok) }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft) }
+.opt.wrong .L, .opt.wrong .tag { color: var(--bad) }
+.res { font-size: .84rem; font-weight: 600 }
+.res.ok { color: var(--ok) } .res.bad { color: var(--bad) }
+.empty { color: var(--muted); padding: 24px 4px }
+
+/* 隨機練習、錯題本、搜尋 */
+.panel { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-top: 16px; display: grid; gap: 12px }
+.row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center }
+.row > span:first-child { min-width: 4.5em; color: var(--muted); font-size: .85rem }
+.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding-top: 16px; margin-bottom: 12px }
+.bar input[type="search"] { flex: 1 1 240px; font: .92rem var(--font-body); color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px }
+.prog { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden }
+.prog i { display: block; height: 100%; background: var(--accent) }
+mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
+.credit { margin-top: 28px; padding-top: 10px; border-top: 1px solid var(--line); font-size: .76rem; color: var(--muted) }
+
+@media (max-width: 760px) {
+  .yearview { grid-template-columns: 1fr; gap: 12px }
+  .rail { position: static; max-height: none; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) }
+  .rail .lg { grid-column: 1 / -1 }
+  .stats { display: none }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>iPAS 資訊安全工程師・初級考古題</h1>
+    <p class="sub">I11 資訊安全管理概論＋I12 資訊安全技術概論・109–113 年＋官方樣題・每份 50 題單選</p>
+    <span class="sync" id="sync"><i></i><span id="synctext">作答紀錄先存在這個瀏覽器</span></span>
+  </header>
+  <nav class="tabs" aria-label="檢視">
+    <a href="#" class="dt-back" onclick="parent.postMessage({dt:'nav',type:'examBanks'},location.origin);return false;">← 選擇考古題</a>
+    <a href="#year" data-v="year">依年度</a>
+    <a href="#practice" data-v="practice">隨機練習</a>
+    <a href="#wrong" data-v="wrong">錯題本</a>
+    <a href="#search" data-v="search">搜尋</a>
+    <span class="stats" id="stats"></span>
+  </nav>
+  <main id="main"><p class="empty">載入題目中…</p></main>
+  <p class="credit">題目與答案來自 iPAS 經濟部產業人才能力鑑定公告的初級試題（有疑義題的場次用釋義後的版本）。有圖或表的題目附上原卷截圖；每一份都可以打開原卷 PDF 對照。</p>
+</div>
+<script>
+(function () {
+  "use strict";
+  const SUBJ = { I11: "資訊安全管理概論", I12: "資訊安全技術概論" };
+  const LET = ["A", "B", "C", "D"];
+  const main = document.getElementById("main");
+  let PAPERS = [], BY = {}, curPaper = null;
+
+  // ---------- 作答紀錄：{ "<paper id>": { q: { "<題號>": { c: 選的答案, s: "ok"|"bad", m: 1 重要, w: 答錯次數 } } } }
+  const LS = "ipas-pq-v1";
+  let state = {};
+  try { state = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch (e) { state = {}; }
+  let dbCol = null;
+  const dirty = {}, pending = {}, chains = {};
+  const saveLocal = () => { try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {} };
+  const rec = (pid, n) => ((state[pid] || {}).q || {})[n] || null;
+  function setRec(pid, n, patch) {
+    const ps = state[pid] = state[pid] || { q: {} };
+    ps.q = ps.q || {};
+    const cur = Object.assign({}, ps.q[n] || {}, patch);
+    Object.keys(cur).forEach(k => { if (cur[k] === null || cur[k] === undefined || cur[k] === 0 || cur[k] === "") delete cur[k]; });
+    if (Object.keys(cur).length) ps.q[n] = cur; else delete ps.q[n];
+    changed(pid);
+  }
+  function changed(pid) {
+    saveLocal(); renderStats();
+    if (!dbCol) return;
+    dirty[pid] = (dirty[pid] || 0) + 1;
+    const mark = dirty[pid];
+    clearTimeout(pending[pid]);
+    pending[pid] = setTimeout(() => {
+      const body = JSON.parse(JSON.stringify(state[pid] || { q: {} }));
+      chains[pid] = (chains[pid] || Promise.resolve()).then(() => dbCol && dbCol.doc(pid).set(body)).then(() => {
+        if (dirty[pid] === mark) dirty[pid] = 0;
+      }).catch(err => {
+        dirty[pid] = 0;
+        if (err && (err.code === "invalid_argument" || err.code === "revoked" || err.code === "not_granted")) { dbCol = null; setSync(false, "無法存到帳號，先存在這個瀏覽器"); }
+      });
+    }, 600);
+  }
+  function setSync(on, text) {
+    document.getElementById("sync").classList.toggle("on", on);
+    document.getElementById("synctext").textContent = text;
+  }
+  // 作答：第一次答錯就收進錯題本；在錯題本裡答對就移出（答錯次數留著）
+  function answer(pid, n, c) {
+    const q = BY[pid].qs[n - 1], r = rec(pid, n) || {}, ok = c === q.a;
+    setRec(pid, n, { c, s: ok ? "ok" : "bad", w: (r.w || 0) + (ok ? 0 : 1) });
+  }
+
+  // ---------- helpers
+  function el(tag, attrs, kids) {
+    const n = document.createElement(tag);
+    if (attrs) for (const k in attrs) {
+      const v = attrs[k];
+      if (v === null || v === undefined || v === false) continue;
+      if (k === "text") n.textContent = v;
+      else if (k === "class") n.className = v;
+      else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+      else n.setAttribute(k, v === true ? "" : v);
+    }
+    (kids || []).forEach(c => c != null && c !== false && n.appendChild(typeof c === "string" ? document.createTextNode(c) : c));
+    return n;
+  }
+  const shortName = p => (p.y ? p.y + "-" + p.r : "樣題") + "・" + p.s;
+  function hlText(text, q) {
+    if (!q) return [text];
+    const out = [], low = text.toLowerCase(), ql = q.toLowerCase();
+    let i = 0, j;
+    while ((j = low.indexOf(ql, i)) >= 0) { if (j > i) out.push(text.slice(i, j)); out.push(el("mark", { text: text.slice(j, j + q.length) })); i = j + q.length; }
+    if (i < text.length) out.push(text.slice(i));
+    return out;
+  }
+  function paperStat(pid) {
+    const qs = (state[pid] || {}).q || {}, c = { done: 0, ok: 0, bad: 0, imp: 0 };
+    Object.values(qs).forEach(r => { if (r.c) { c.done++; if (r.s === "ok") c.ok++; } if (r.s === "bad") c.bad++; if (r.m) c.imp++; });
+    return c;
+  }
+  function renderStats() {
+    const t = { done: 0, ok: 0, bad: 0, imp: 0 };
+    PAPERS.forEach(p => { const c = paperStat(p.id); for (const k in t) t[k] += c[k]; });
+    const all = PAPERS.reduce((s, p) => s + p.qs.length, 0);
+    const box = document.getElementById("stats");
+    box.textContent = "";
+    box.append(el("span", { text: "已做 " + t.done + " / " + all }), el("span", { class: "k-ok", text: "答對 " + t.ok }), el("span", { class: "k-bad", text: "錯題 " + t.bad }), el("span", { class: "k-imp", text: "重要 " + t.imp }));
+  }
+
+  // ---------- 題目卡
+  // opts.mock：模擬考作答中（只標選了哪個，不對答案）；opts.onMock(c)；opts.q 搜尋字；opts.after() 作答後要做的事
+  function qcard(pid, n, opts) {
+    opts = opts || {};
+    const p = BY[pid], q = p.qs[n - 1], r = rec(pid, n) || {};
+    const chosen = opts.mock ? opts.mockPick : r.c, reveal = !opts.mock && !!r.c;
+    const box = el("article", { class: "q", id: "q-" + pid + "-" + n });
+    const star = el("button", { type: "button", class: "star", "aria-pressed": String(!!r.m), text: r.m ? "★ 重要" : "☆ 重要", title: "標成重要題，錯題本可以只看重要" });
+    star.addEventListener("click", () => { const on = !(rec(pid, n) || {}).m; setRec(pid, n, { m: on ? 1 : 0 }); star.setAttribute("aria-pressed", String(on)); star.textContent = on ? "★ 重要" : "☆ 重要"; });
+    const top = el("div", { class: "qtop" }, [
+      el("span", { class: "qno" }, [opts.showPaper ? el("a", { href: "#year/" + pid + "/" + n, text: shortName(p) + " 第 " + n + " 題" }) : "第 " + n + " 題"]),
+      reveal && r.w ? el("span", { class: "muted small", text: "答錯過 " + r.w + " 次" }) : null,
+      el("span", { class: "grow" }),
+      reveal ? el("button", { type: "button", class: "redo", text: "再做一次", onclick: () => { setRec(pid, n, { c: null }); box.replaceWith(qcard(pid, n, opts)); } }) : null,
+      star,
+    ]);
+    box.append(top);
+    if (q.img && q.img.length) {
+      box.append(el("div", { class: "figs" }, q.img.map(f => el("img", { src: "img/" + f, alt: "第 " + n + " 題原卷截圖：" + q.q, loading: "lazy" }))));
+    } else {
+      box.append(el("p", { class: "stem" }, hlText(q.q, opts.q)));
+    }
+    const list = el("div", { class: "opts", role: "group", "aria-label": "選項" });
+    q.o.forEach((t, i) => {
+      const L = LET[i];
+      let cls = "opt", tag = "";
+      if (reveal) {
+        if (L === q.a) { cls += " right"; tag = L === chosen ? "✓ 你的答案" : "✓ 正確答案"; }
+        else if (L === chosen) { cls += " wrong"; tag = "✗ 你的答案"; }
+      } else if (opts.mock && L === chosen) cls += " pick";
+      const b = el("button", { type: "button", class: cls, disabled: reveal, "aria-pressed": opts.mock ? String(L === chosen) : null },
+        [el("span", { class: "L", text: "(" + L + ")" }), el("span", { class: "t" }, hlText(t, opts.q)), el("span", { class: "tag", text: tag })]);
+      b.addEventListener("click", () => {
+        if (opts.mock) { opts.onMock(L); box.replaceWith(qcard(pid, n, Object.assign({}, opts, { mockPick: L }))); return; }
+        answer(pid, n, L);
+        box.replaceWith(qcard(pid, n, opts));
+        if (opts.after) opts.after(L === q.a);
+      });
+      list.append(b);
+    });
+    box.append(list);
+    if (reveal) box.append(el("div", { class: "res " + (chosen === q.a ? "ok" : "bad"), text: chosen === q.a ? "答對了" : "答錯了，正確答案是 (" + q.a + ")" + (opts.wrongBook ? "" : "，已收進錯題本") }));
+    return box;
+  }
+
+  // ---------- 依年度
+  let mockMode = false, mock = null;   // mock：{ pid, picks: { 題號: 答案 } }
+  function renderYear(focus) {
+    if (!curPaper || !BY[curPaper]) curPaper = (PAPERS.filter(p => p.y && p.s === "I11").pop() || PAPERS[0]).id;   // 預設最新一次的管理
+    const p = BY[curPaper];
+    const rail = el("nav", { class: "rail", "aria-label": "選擇場次" });
+    const rounds = [];
+    PAPERS.forEach(x => { const k = x.y ? x.y + "-" + x.r : "樣題"; if (!rounds.includes(k)) rounds.push(k); });
+    rounds.slice().sort((a, b) => (a === "樣題") - (b === "樣題") || (a < b ? 1 : -1)).forEach(k => {
+      const row = el("div", { class: "yr" }, [el("b", { text: k })]);
+      ["I11", "I12"].forEach(s => {
+        const x = PAPERS.find(y => (y.y ? y.y + "-" + y.r : "樣題") === k && y.s === s);
+        if (!x) { row.append(el("span")); return; }
+        const st = paperStat(x.id);
+        row.append(el("button", { type: "button", class: x.id === curPaper ? "cur" : "", "aria-current": x.id === curPaper ? "true" : null, title: x.name, onclick: () => go("year/" + x.id) },
+          [s === "I11" ? "管理" : "技術", el("small", { text: st.done ? st.ok + "/" + st.done + " 對" : "未作答" })]));
+      });
+      rail.append(row);
+    });
+    rail.append(el("p", { class: "lg", text: "管理＝I11 資訊安全管理概論；技術＝I12 資訊安全技術概論。數字是答對／已作答。" }));
+
+    const body = el("section", { "aria-label": p.name });
+    const st = paperStat(p.id);
+    const inMock = mockMode && mock && mock.pid === p.id;
+    const head = el("div", { class: "phead" }, [
+      el("h2", { text: p.name }),
+      el("span", { class: "grow" }),
+      el("div", { class: "seg", role: "group", "aria-label": "作答方式" }, [
+        el("button", { type: "button", "aria-pressed": String(!mockMode), text: "練習", title: "每題選完馬上對答案", onclick: () => { mockMode = false; mock = null; renderYear(); } }),
+        el("button", { type: "button", "aria-pressed": String(mockMode), text: "模擬考", title: "50 題做完交卷才看分數和答案", onclick: () => { mockMode = true; mock = { pid: p.id, picks: {} }; renderYear(); } }),
+      ]),
+      el("a", { class: "btn", href: p.pdf, target: "_blank", rel: "noopener", text: "原卷 PDF" }),
+    ]);
+    body.append(head);
+    if (inMock) {
+      const n = Object.keys(mock.picks).length;
+      const sub = el("button", { type: "button", class: "btn primary", text: "交卷", onclick: () => {
+        const left = p.qs.length - Object.keys(mock.picks).length;
+        if (left && !confirm("還有 " + left + " 題沒作答，確定交卷？（沒作答的不算分，也不會記錄）")) return;
+        let ok = 0;
+        Object.entries(mock.picks).forEach(([k, c]) => { answer(p.id, +k, c); if (c === p.qs[k - 1].a) ok++; });
+        const total = p.qs.length;
+        mockMode = false; mock = null;
+        renderYear();
+        main.prepend(el("div", { class: "score" }, [el("span", { class: "big", text: Math.round(ok * 100 / total) + " 分" }), el("span", { text: "答對 " + ok + " / " + total + " 題" }), el("span", { class: "muted small", text: "答錯的已收進錯題本，下面每題都標出正確答案。" })]));
+        window.scrollTo(0, 0);
+      } });
+      body.append(el("div", { class: "score" }, [el("span", { id: "mockn", text: "模擬考作答中：已選 " + n + " / " + p.qs.length + " 題" }), el("span", { class: "muted small", text: "每題 2 分，交卷後才會對答案並記錄。" }), el("span", { class: "grow" }), sub]));
+    } else if (st.done) {
+      body.append(el("div", { class: "score" }, [
+        el("span", { class: "big", text: Math.round(st.ok * 2) + " 分" }),
+        el("span", { text: "已作答 " + st.done + " / " + p.qs.length + "・答對 " + st.ok + "・答錯 " + (st.done - st.ok) }),
+        el("span", { class: "grow" }),
+        el("button", { type: "button", class: "btn", text: "整份重做", onclick: () => {
+          if (!confirm("清掉這份的作答重新做一次？（錯題本、答錯次數和重要標記會留著）")) return;
+          Object.keys((state[p.id] || {}).q || {}).forEach(k => setRec(p.id, k, { c: null }));
+          renderYear();
+        } }),
+      ]));
+    }
+    const qs = el("div", { class: "qs" });
+    p.qs.forEach((_, i) => qs.append(qcard(p.id, i + 1, inMock ? { mock: true, mockPick: mock.picks[i + 1], onMock: c => { mock.picks[i + 1] = c; const m = document.getElementById("mockn"); if (m) m.textContent = "模擬考作答中：已選 " + Object.keys(mock.picks).length + " / " + p.qs.length + " 題"; } } : { after: () => renderRailOnly() })));
+    body.append(qs);
+    const view = el("div", { class: "yearview" }, [rail, body]);
+    main.textContent = ""; main.append(view);
+    if (focus) {
+      const t = document.getElementById("q-" + p.id + "-" + focus);
+      if (t) { t.classList.add("hl"); t.scrollIntoView({ block: "start" }); setTimeout(() => t.classList.remove("hl"), 2500); }
+    }
+  }
+  function renderRailOnly() {
+    document.querySelectorAll(".rail button").forEach(b => {
+      const x = PAPERS.find(p => p.name === b.title); if (!x) return;
+      const st = paperStat(x.id), sm = b.querySelector("small"); if (sm) sm.textContent = st.done ? st.ok + "/" + st.done + " 對" : "未作答";
+    });
+  }
+
+  // ---------- 隨機練習
+  const pr = { subj: "all", src: "all", count: 20, run: null };
+  function pool() {
+    const out = [];
+    PAPERS.forEach(p => {
+      if (pr.subj !== "all" && p.s !== pr.subj) return;
+      p.qs.forEach((_, i) => {
+        const r = rec(p.id, i + 1) || {};
+        if (pr.src === "new" && r.c) return;
+        if (pr.src === "bad" && !r.w) return;
+        if (pr.src === "imp" && !r.m) return;
+        out.push([p.id, i + 1]);
+      });
+    });
+    return out;
+  }
+  function renderPractice() {
+    main.textContent = "";
+    if (pr.run) return renderRun();
+    const segRow = (label, key, items) => el("div", { class: "row" }, [el("span", { text: label }), el("div", { class: "seg", role: "group", "aria-label": label },
+      items.map(([v, t]) => el("button", { type: "button", "aria-pressed": String(pr[key] === v), text: t, onclick: () => { pr[key] = v; renderPractice(); } })))]);
+    const n = pool().length;
+    main.append(el("section", { class: "panel" }, [
+      el("strong", { text: "從全部考古題隨機抽題，一次一題" }),
+      segRow("科目", "subj", [["all", "兩科都要"], ["I11", "I11 管理"], ["I12", "I12 技術"]]),
+      segRow("範圍", "src", [["all", "全部"], ["new", "沒做過的"], ["bad", "答錯過的"], ["imp", "重要"]]),
+      segRow("題數", "count", [[10, "10 題"], [20, "20 題"], [50, "50 題"]]),
+      el("div", { class: "row" }, [
+        el("button", { type: "button", class: "btn primary", disabled: !n, text: "開始", onclick: () => {
+          const all = pool();
+          for (let i = all.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [all[i], all[j]] = [all[j], all[i]]; }
+          pr.run = { list: all.slice(0, pr.count), i: 0, ok: 0, done: 0 };
+          pr.run.list.forEach(([pid, k]) => setRec(pid, k, { c: null }));
+          renderPractice();
+        } }),
+        el("span", { class: "muted small", text: n ? "符合的題目有 " + n + " 題" : "沒有符合的題目" }),
+      ]),
+    ]));
+  }
+  function renderRun() {
+    const R = pr.run;
+    main.textContent = "";
+    if (R.i >= R.list.length) {
+      main.append(el("section", { class: "panel" }, [
+        el("div", { class: "score", style: "margin:0" }, [el("span", { class: "big", text: R.ok + " / " + R.list.length }), el("span", { text: "答對率 " + Math.round(R.ok * 100 / R.list.length) + "%" })]),
+        el("div", { class: "row" }, [el("button", { type: "button", class: "btn primary", text: "再來一輪", onclick: () => { pr.run = null; renderPractice(); } }), el("a", { class: "btn", href: "#wrong", text: "看錯題本" })]),
+      ]));
+      return;
+    }
+    const [pid, n] = R.list[R.i];
+    const next = el("button", { type: "button", class: "btn primary", hidden: true, text: R.i + 1 < R.list.length ? "下一題 →" : "看結果", onclick: () => { R.i++; renderRun(); window.scrollTo(0, 0); } });
+    main.append(
+      el("div", { class: "bar" }, [el("strong", { text: "第 " + (R.i + 1) + " / " + R.list.length + " 題" }), el("span", { class: "muted small", text: "答對 " + R.ok }), el("span", { style: "flex:1" }), el("button", { type: "button", class: "btn", text: "結束", onclick: () => { pr.run = null; renderPractice(); } })]),
+      el("div", { class: "prog", style: "margin-bottom:12px" }, [el("i", { style: "width:" + (R.i * 100 / R.list.length) + "%" })]),
+      qcard(pid, n, { showPaper: true, after: ok => { R.done++; if (ok) R.ok++; next.hidden = false; next.focus(); } }),
+      el("div", { class: "row", style: "margin-top:12px" }, [next]),
+    );
+  }
+
+  // ---------- 錯題本
+  const wb = { subj: "all", only: "bad" };
+  function renderWrong() {
+    main.textContent = "";
+    const items = [];
+    PAPERS.forEach(p => {
+      if (wb.subj !== "all" && p.s !== wb.subj) return;
+      p.qs.forEach((_, i) => {
+        const r = rec(p.id, i + 1) || {};
+        if (wb.only === "bad" ? r.s === "bad" : wb.only === "imp" ? r.m : r.w) items.push([p.id, i + 1]);
+      });
+    });
+    const seg = (key, list) => el("div", { class: "seg", role: "group" }, list.map(([v, t]) => el("button", { type: "button", "aria-pressed": String(wb[key] === v), text: t, onclick: () => { wb[key] = v; renderWrong(); } })));
+    main.append(el("div", { class: "bar" }, [
+      seg("only", [["bad", "還沒訂正"], ["ever", "答錯過"], ["imp", "重要"]]),
+      seg("subj", [["all", "兩科"], ["I11", "I11 管理"], ["I12", "I12 技術"]]),
+      el("span", { class: "muted small", text: items.length + " 題" }),
+    ]));
+    main.append(el("p", { class: "muted small", style: "margin:0 0 10px", text: wb.only === "bad" ? "最近一次答錯的題目。按「再做一次」重答，答對就算訂正，下次打開錯題本就不會再出現。" : wb.only === "ever" ? "曾經答錯過的題目，含已經訂正的。" : "你標成重要的題目。" }));
+    if (!items.length) { main.append(el("p", { class: "empty", text: wb.only === "imp" ? "還沒有標重要的題目。" : "目前沒有錯題。" })); return; }
+    const qs = el("div", { class: "qs" });
+    items.forEach(([pid, n]) => qs.append(qcard(pid, n, { showPaper: true, wrongBook: true })));
+    main.append(qs);
+  }
+
+  // ---------- 搜尋
+  let sq = "";
+  function renderSearch() {
+    main.textContent = "";
+    const input = el("input", { type: "search", value: sq, placeholder: "搜尋題目或選項，例如：ISO 27001、XSS、RPO", "aria-label": "搜尋題目" });
+    const out = el("div", { class: "qs" }), info = el("span", { class: "muted small" });
+    const run = () => {
+      sq = input.value.trim(); out.textContent = "";
+      if (sq.length < 2) { info.textContent = "輸入至少 2 個字"; return; }
+      const low = sq.toLowerCase(), hits = [];
+      PAPERS.forEach(p => p.qs.forEach((q, i) => { if ((q.q + "\n" + q.o.join("\n")).toLowerCase().includes(low)) hits.push([p.id, i + 1]); }));
+      info.textContent = hits.length + " 題" + (hits.length > 60 ? "（先列前 60 題）" : "");
+      hits.slice(0, 60).forEach(([pid, n]) => out.append(qcard(pid, n, { showPaper: true, q: sq })));
+    };
+    let t; input.addEventListener("input", () => { clearTimeout(t); t = setTimeout(run, 250); });
+    main.append(el("div", { class: "bar" }, [input, info]), out);
+    run(); input.focus();
+  }
+
+  // ---------- routing
+  function go(h) { if (location.hash === "#" + h) route(); else location.hash = h; }
+  function route() {
+    const h = (location.hash || "#year").slice(1);
+    let view = "year", focus = null;
+    if (h === "practice" || h === "wrong" || h === "search") view = h;
+    else {
+      const m = /^year\/([^/]+)(?:\/(\d+))?$/.exec(h);
+      if (m && BY[m[1]]) { if (curPaper !== m[1]) { mockMode = false; mock = null; } curPaper = m[1]; focus = m[2] ? +m[2] : null; }
+    }
+    document.querySelectorAll("nav.tabs a[data-v]").forEach(a => a.setAttribute("aria-current", a.dataset.v === view ? "page" : "false"));
+    if (view === "practice") renderPractice(); else if (view === "wrong") renderWrong(); else if (view === "search") renderSearch();
+    else { renderYear(focus); if (!focus) window.scrollTo(0, 0); }
+  }
+  window.addEventListener("hashchange", route);
+
+  fetch("data.json", { cache: "no-cache" }).then(r => r.json()).then(d => {
+    PAPERS = d.papers; PAPERS.forEach(p => { BY[p.id] = p; });
+    renderStats(); route(); sync();
+  }).catch(() => { main.innerHTML = '<p class="empty">題目載入失敗，請重新整理。</p>'; });
+
+  // ---------- 帳號同步（只有自己看得到）
+  async function sync() {
+    if (!window.claude || !window.claude.use) return;
+    try {
+      const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+      if (!db || !user) return;
+      const uid = await user.id();
+      if (!uid) return;
+      dbCol = db.collection("data/users/" + uid);
+      let first = true;
+      const timer = setTimeout(() => setSync(false, "暫時連不到帳號，先存在這個瀏覽器"), 10000);
+      dbCol.onSnapshot(snap => {
+        if (!snap.metadata.fromCache) clearTimeout(timer);
+        let touched = false;
+        snap.docs.forEach(d => {
+          if (!d.exists || dirty[d.id] || !BY[d.id]) return;
+          const body = d.data();
+          if (!body || JSON.stringify(body) === JSON.stringify(state[d.id] || null)) return;
+          state[d.id] = JSON.parse(JSON.stringify(body));
+          touched = true;
+        });
+        if (first) {
+          first = false;
+          Object.keys(state).forEach(pid => { if (BY[pid] && !snap.docs.some(d => d.id === pid)) changed(pid); });
+        }
+        setSync(true, "作答紀錄已存到你的帳號，換裝置也看得到");
+        // 正在做隨機練習或模擬考時不重畫，免得題目跳掉
+        if (touched) { saveLocal(); renderStats(); if (!pr.run && !mockMode && location.hash.slice(1) !== "search") route(); }
+      }, () => { clearTimeout(timer); dbCol = null; setSync(false, "無法存到帳號，先存在這個瀏覽器"); });
+    } catch (e) { /* 留在這個瀏覽器 */ }
+  }
+})();
+</script>
+<script src="../../apps/embed.js?v=84fc0e08"></script>
+</body>
+</html>
