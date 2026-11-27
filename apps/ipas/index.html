@@ -95,6 +95,37 @@ button { font-family: inherit }
 .res.ok { color: var(--ok) } .res.bad { color: var(--bad) }
 .empty { color: var(--muted); padding: 24px 4px }
 
+/* 錯題解析 */
+.xp-open { justify-self: start; background: none; border: 1px dashed var(--line); color: var(--accent); border-radius: 8px; font-size: .8rem; padding: 3px 10px; cursor: pointer }
+.xp { border-top: 1px dashed var(--line); padding-top: 8px; display: grid; gap: 8px }
+.xp-h { display: flex; align-items: center; gap: 8px; font-size: .82rem; font-weight: 600; color: var(--accent) }
+.xp-h .grow { flex: 1 }
+.xp-h small { color: var(--muted); font-weight: 400 }
+.xp label { display: grid; gap: 3px; font-size: .78rem; color: var(--muted) }
+.xp textarea { width: 100%; min-height: 40px; resize: vertical; font: .88rem/1.55 var(--font-body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px }
+.why { display: flex; flex-wrap: wrap; gap: 4px; align-items: center }
+.why > span { font-size: .78rem; color: var(--muted); margin-right: 2px }
+.why button { border: 1px solid var(--line); background: var(--paper); color: var(--muted); border-radius: 999px; font-size: .76rem; padding: 1px 10px; cursor: pointer }
+.why button[aria-pressed="true"] { background: var(--bad-soft); color: var(--bad); border-color: var(--bad) }
+.has-xp { font-size: .74rem; color: var(--accent); border: 1px solid var(--accent-soft); background: var(--accent-soft); border-radius: 999px; padding: 0 8px }
+
+/* 解析本：可以列印或存成 PDF */
+.nb { display: grid; gap: 10px }
+.nb-item { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 6px; break-inside: avoid }
+.nb-item h3 { margin: 0; font: 600 .82rem var(--font-mono); color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline }
+.nb-item h3 a { color: inherit }
+.nb-item .stem { font-size: .92rem }
+.nb-ans { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: .84rem }
+.nb-ans .r { color: var(--ok); font-weight: 600 } .nb-ans .w { color: var(--bad); font-weight: 600 }
+.nb-f { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); gap: 2px 10px; font-size: .88rem; margin: 0 }
+.nb-f dt { color: var(--muted); font-size: .8rem; padding-top: 2px }
+.nb-f dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere }
+@media print {
+  nav.tabs, header.top, .credit, .bar, .nb-tip { display: none !important }
+  body { background: #fff; color: #000; font-size: 12px }
+  .nb-item { border-color: #bbb }
+}
+
 /* 隨機練習、錯題本、搜尋 */
 .panel { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-top: 16px; display: grid; gap: 12px }
 .row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center }
@@ -126,6 +157,7 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
     <a href="#year" data-v="year">依年度</a>
     <a href="#practice" data-v="practice">隨機練習</a>
     <a href="#wrong" data-v="wrong">錯題本</a>
+    <a href="#notes" data-v="notes">解析本</a>
     <a href="#search" data-v="search">搜尋</a>
     <span class="stats" id="stats"></span>
   </nav>
@@ -142,7 +174,8 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
   const main = document.getElementById("main");
   let PAPERS = [], BY = {}, curPaper = null;
 
-  // ---------- 作答紀錄：{ "<paper id>": { q: { "<題號>": { c: 選的答案, s: "ok"|"bad", m: 1 重要, w: 答錯次數 } } } }
+  // ---------- 作答紀錄：{ "<paper id>": { q: { "<題號>": { c: 選的答案, s: "ok"|"bad", m: 1 重要, w: 答錯次數, x: 解析 } } } }
+  //   解析 x：{ why: ["觀念不清", …] 錯在哪, a: 正確觀念（為什麼答案是這個）, o: 其他選項為什麼不對, k: 記憶點 }
   const LS = "ipas-pq-v1";
   let state = {};
   try { state = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch (e) { state = {}; }
@@ -236,6 +269,7 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
     const top = el("div", { class: "qtop" }, [
       el("span", { class: "qno" }, [opts.showPaper ? el("a", { href: "#year/" + pid + "/" + n, text: shortName(p) + " 第 " + n + " 題" }) : "第 " + n + " 題"]),
       reveal && r.w ? el("span", { class: "muted small", text: "答錯過 " + r.w + " 次" }) : null,
+      !reveal && xpHas(r.x) ? el("span", { class: "has-xp", text: "有解析" }) : null,
       el("span", { class: "grow" }),
       reveal ? el("button", { type: "button", class: "redo", text: "再做一次", onclick: () => { setRec(pid, n, { c: null }); box.replaceWith(qcard(pid, n, opts)); } }) : null,
       star,
@@ -269,7 +303,91 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
     if (multi && !reveal && !opts.mock) box.append(el("div", { class: "row" }, [el("button", { type: "button", class: "btn primary", disabled: !sel, text: "送出（複選）",
       onclick: () => { answer(pid, n, sel); box.replaceWith(qcard(pid, n, Object.assign({}, opts, { sel: "" }))); if (opts.after) opts.after(sel === q.a); } })]));
     if (reveal) box.append(el("div", { class: "res " + (chosen === q.a ? "ok" : "bad"), text: chosen === q.a ? "答對了" : "答錯了，正確答案是 (" + q.a + ")" + (opts.wrongBook ? "" : "，已收進錯題本") }));
+    if (reveal) box.append(xpBox(pid, n));
     return box;
+  }
+
+  // ---------- 錯題解析：作答後可以寫「錯在哪、正確觀念、其他選項、記憶點」，自動存檔
+  const WHY = ["觀念不清", "沒讀到", "粗心看錯", "選項混淆", "用猜的"];
+  const xpOpen = new Set();
+  const xpOf = (pid, n) => (rec(pid, n) || {}).x || null;
+  const xpHas = x => !!x && !!((x.why && x.why.length) || x.a || x.o || x.k);
+  function setXp(pid, n, patch) {
+    const x = Object.assign({}, xpOf(pid, n) || {}, patch);
+    Object.keys(x).forEach(k => { if (!x[k] || (Array.isArray(x[k]) && !x[k].length)) delete x[k]; });
+    setRec(pid, n, { x: xpHas(x) ? x : null });
+  }
+  function xpBox(pid, n) {
+    const key = pid + "/" + n, x = xpOf(pid, n) || {};
+    if (!xpHas(x) && !xpOpen.has(key)) {
+      const b = el("button", { type: "button", class: "xp-open", text: "✎ 寫解析" });
+      b.addEventListener("click", () => { xpOpen.add(key); const nb = xpBox(pid, n); b.replaceWith(nb); const t = nb.querySelector("textarea"); if (t) t.focus(); });
+      return b;
+    }
+    const q = BY[pid].qs[n - 1], saved = el("small", { text: xpHas(x) ? "已存" : "" });
+    const flash = () => { saved.textContent = "已存"; };
+    const why = el("div", { class: "why", role: "group", "aria-label": "錯在哪" }, [el("span", { text: "錯在哪" })].concat(WHY.map(w => {
+      const on = (x.why || []).includes(w);
+      const b = el("button", { type: "button", "aria-pressed": String(on), text: w });
+      b.addEventListener("click", () => {
+        const cur = (xpOf(pid, n) || {}).why || [], has = cur.includes(w);
+        setXp(pid, n, { why: has ? cur.filter(v => v !== w) : cur.concat(w) });
+        b.setAttribute("aria-pressed", String(!has)); flash();
+      });
+      return b;
+    })));
+    const field = (k, label, ph, rows) => {
+      const ta = el("textarea", { rows: String(rows || 2), placeholder: ph });
+      ta.value = x[k] || "";
+      let t = null;
+      const save = () => { clearTimeout(t); t = null; setXp(pid, n, { [k]: ta.value.trim() }); flash(); };
+      ta.addEventListener("input", () => { saved.textContent = "存檔中…"; clearTimeout(t); t = setTimeout(save, 400); });
+      ta.addEventListener("blur", () => { if (t) save(); });
+      return el("label", null, [label, ta]);
+    };
+    return el("div", { class: "xp" }, [
+      el("div", { class: "xp-h" }, ["錯題解析", el("span", { class: "grow" }), saved]),
+      why,
+      field("a", "正確觀念：為什麼答案是 (" + q.a + ")", "這題考什麼觀念、正確答案的關鍵字", 3),
+      field("o", "其他選項為什麼不對", "(A) …　(C) …　(D) …", 2),
+      field("k", "記憶點", "一句話記住，下次看到就想得起來", 1),
+    ]);
+  }
+
+  // ---------- 解析本：把寫過解析的題目整理在一起，可以列印或存成 PDF
+  const nb = { subj: "all" };
+  function renderNotes() {
+    main.textContent = "";
+    const items = [];
+    PAPERS.forEach(p => {
+      if (nb.subj !== "all" && p.s !== nb.subj) return;
+      p.qs.forEach((_, i) => { if (xpHas(xpOf(p.id, i + 1))) items.push([p.id, i + 1]); });
+    });
+    main.append(el("div", { class: "bar" }, [
+      el("div", { class: "seg", role: "group", "aria-label": "科目" }, SUBJ_SEG.map(([v, t]) => el("button", { type: "button", "aria-pressed": String(nb.subj === v), text: t, onclick: () => { nb.subj = v; renderNotes(); } }))),
+      el("span", { class: "muted small", text: items.length + " 題" }),
+      el("span", { style: "flex:1" }),
+      el("button", { type: "button", class: "btn", disabled: !items.length, text: "列印／存成 PDF", onclick: () => window.print() }),
+    ]));
+    main.append(el("p", { class: "muted small nb-tip", style: "margin:0 0 10px", text: "寫過解析的題目都整理在這裡。在題目下方按「✎ 寫解析」就能新增；點題號回到那一題修改。" }));
+    if (!items.length) { main.append(el("p", { class: "empty", text: "還沒有寫過解析。做完題目後，在題目下方按「✎ 寫解析」。" })); return; }
+    const list = el("div", { class: "nb" });
+    items.forEach(([pid, n]) => {
+      const p = BY[pid], q = p.qs[n - 1], r = rec(pid, n) || {}, x = r.x;
+      const opt = L => { const i = LET.indexOf(L); return i >= 0 && q.o[i] != null ? "(" + L + ") " + q.o[i] : "(" + L + ")"; };
+      const rows = [];
+      if (x.why && x.why.length) rows.push(["錯在哪", x.why.join("、")]);
+      if (x.a) rows.push(["正確觀念", x.a]);
+      if (x.o) rows.push(["其他選項", x.o]);
+      if (x.k) rows.push(["記憶點", x.k]);
+      list.append(el("article", { class: "nb-item" }, [
+        el("h3", null, [el("a", { href: "#year/" + pid + "/" + n, text: shortName(p) + " 第 " + n + " 題" }), q.u ? el("span", { text: "章節 " + q.u }) : null, r.w ? el("span", { text: "答錯過 " + r.w + " 次" }) : null]),
+        el("p", { class: "stem", text: q.q }),
+        el("div", { class: "nb-ans" }, [el("span", { class: "r", text: "正確：" + q.a.split("").map(opt).join("、") }), r.c && r.c !== q.a ? el("span", { class: "w", text: "我選：" + r.c.split("").map(opt).join("、") }) : null]),
+        el("dl", { class: "nb-f" }, [].concat(...rows.map(([k, v]) => [el("dt", { text: k }), el("dd", { text: v })]))),
+      ]));
+    });
+    main.append(list);
   }
 
   // ---------- 依年度
@@ -457,13 +575,13 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
   function route() {
     const h = (location.hash || "#year").slice(1);
     let view = "year", focus = null;
-    if (h === "practice" || h === "wrong" || h === "search") view = h;
+    if (h === "practice" || h === "wrong" || h === "search" || h === "notes") view = h;
     else {
       const m = /^year\/([^/]+)(?:\/(\d+))?$/.exec(h);
       if (m && BY[m[1]]) { if (curPaper !== m[1]) { mockMode = false; mock = null; } curPaper = m[1]; focus = m[2] ? +m[2] : null; }
     }
     document.querySelectorAll("nav.tabs a[data-v]").forEach(a => a.setAttribute("aria-current", a.dataset.v === view ? "page" : "false"));
-    if (view === "practice") renderPractice(); else if (view === "wrong") renderWrong(); else if (view === "search") renderSearch();
+    if (view === "practice") renderPractice(); else if (view === "wrong") renderWrong(); else if (view === "search") renderSearch(); else if (view === "notes") renderNotes();
     else { renderYear(focus); if (!focus) window.scrollTo(0, 0); }
   }
   window.addEventListener("hashchange", route);
@@ -500,7 +618,7 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
         }
         setSync(true, "作答紀錄已存到你的帳號，換裝置也看得到");
         // 正在做隨機練習或模擬考時不重畫，免得題目跳掉
-        if (touched) { saveLocal(); renderStats(); if (!pr.run && !mockMode && location.hash.slice(1) !== "search") route(); }
+        if (touched) { saveLocal(); renderStats(); const a = document.activeElement; if (!pr.run && !mockMode && location.hash.slice(1) !== "search" && !(a && a.tagName === "TEXTAREA")) route(); }
       }, () => { clearTimeout(timer); dbCol = null; setSync(false, "無法存到帳號，先存在這個瀏覽器"); });
     } catch (e) { /* 留在這個瀏覽器 */ }
   }

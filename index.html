@@ -119,7 +119,11 @@ h3.sec { margin: 0; font: 700 1.18rem/1.3 var(--font-display) }
 .row.has-qs { flex-wrap: wrap }
 .row.has-qs > .row-main { flex: 1 1 0 }
 .row-qs { flex: 0 0 calc(100% - 20px); display: flex; flex-wrap: wrap; gap: 2px 4px; margin: -2px 0 0 20px }
-.row-qs .btn.sm { padding: 1px 8px; font-size: .8rem }
+.row-qs .btn.sm { padding: 1px 8px; font-size: .8rem; gap: 3px }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap }
+.row-qs .q-ok, .row-qs .q-read { color: var(--ok); background: var(--ok-soft) }
+.row-qs .q-bad { color: var(--bad); background: var(--bad-soft) }
+.row-qs .q-x { font-size: .72rem; opacity: .8 }
 .ms-dot { width: 18px; text-align: center; color: var(--ac, var(--accent)); flex: none; font-weight: 700 }
 .dgroup { padding: 9px 14px 3px; font-size: .78rem; color: var(--muted); font-weight: 500; letter-spacing: .04em; border-top: 1px solid var(--line) }
 .rows > .dgroup:first-child { border-top: 0 }
@@ -566,7 +570,7 @@ table.pm td.c-key { text-align: center }
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
   // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
-  const BUILD = "20261124m";
+  const BUILD = "20261127a";
   const TYPES = {
     today: { label: "今天", desc: "一份清單看完今天：任務、里程碑、考試、工作台的課程與讀書、固定時段。", view: vToday },
     // 總覽的月曆、甘特圖、重要日期共用同一個工作台頁面（frame），只是打開不同的畫面（hash）
@@ -1124,7 +1128,9 @@ table.pm td.c-key { text-align: center }
       + (it.moved ? '<span class="chip warn">延後過 ' + esc(it.moved) + " 次</span>" : "");
     const note = it.detail && it.tag === "讀" ? '<span class="row-note">' + esc(it.qs ? String(it.detail).split(/\n/).join("／") : String(it.detail).split(/\n/)[0]) + "</span>" : "";
     const nm = it.qs && it.qs.length ? cfg().mods.find(x => x.type === (it.src === "exam" && SUBJ[subOf(it)] ? SUBJ[subOf(it)].app : "nsysuApp") && !x.hidden) : null;
-    const qa = nm ? it.qs.map(q => '<a class="btn ghost sm" href="#m-' + esc(nm.id) + "/" + esc(q[1]) + '" title="打開考古題這一題">' + esc(q[0]) + "</a>").join("") : "";
+    const qa = nm ? it.qs.map(q => { const st = pqStat(nm.type, q[1]), lb = PQ_LB[st.s] || "";
+      return '<a class="btn ghost sm' + (st.s ? " q-" + st.s : "") + '" href="#m-' + esc(nm.id) + "/" + esc(q[1]) + '" title="' + (lb ? lb + "・" : "") + (st.x ? "有解析・" : "") + '打開考古題這一題">'
+        + (st.s ? '<span aria-hidden="true">' + (st.s === "bad" ? "✗" : "✓") + "</span>" : "") + esc(q[0]) + (st.x ? '<span class="q-x" aria-hidden="true">✎</span>' : "") + (lb ? '<span class="sr">（' + lb + "）</span>" : "") + "</a>"; }).join("") : "";
     const acts = (to && !qa ? '<a class="btn ghost sm" href="#m-' + esc(to.id) + '">打開' + esc(to.name) + "</a>" : "") + (o.acts || "");
     return '<div class="row' + (it.done ? " is-done" : "") + (qa ? " has-qs" : "") + '"><input type="checkbox" id="wb-' + id + k + '" data-act="wbdone" data-id="' + id + '"' + chk(it.done) + ' aria-label="完成：' + esc(it.title) + '">'
       + '<label class="row-main" for="wb-' + id + k + '"><span class="row-title">' + (it.tag === "★" ? "◆ " : "") + esc(it.title) + "</span>" + note + (meta ? '<span class="row-meta">' + meta + "</span>" : "") + "</label>"
@@ -1276,6 +1282,23 @@ table.pm td.c-key { text-align: center }
     }));
     c.done = c.ok + c.bad + c.read;
     return c;
+  }
+  // 今天頁的考古題題號：讀考古題 App 存在這個瀏覽器的作答紀錄，標出做過沒、對錯、有沒有寫解析
+  const PQ_LB = { ok: "做過・答對", bad: "做過・答錯", read: "讀過" };
+  function pqStat(type, ref) {
+    ref = String(ref || "");
+    if (type === "ipasApp") {
+      const m = /^year\/([^/]+)\/(\d+)$/.exec(ref), s = m && readLS("ipas-pq-v1"), r = s && s[m[1]] && s[m[1]].q && s[m[1]].q[m[2]];
+      return r ? { s: r.c ? (r.s === "bad" ? "bad" : "ok") : "", x: !!r.x } : {};
+    }
+    if (type === "nsysuApp") {
+      const m = /^y(cs|mis)(\d{2,3})-p\d+-(.+)$/.exec(ref), s = m && readLS("nsysu-pq-v1"), ps = s && s[m[1] + m[2]], qs = ps && ps.q;
+      if (!qs) return {};
+      const id = m[3].replace(/\s/g, ""), k = Object.keys(qs).find(x => x.replace(/\s/g, "") === id), r = k ? qs[k] : null;
+      const st = r && (r.s === "idk" ? "bad" : r.s);
+      return r ? { s: st === "ok" || st === "bad" || st === "read" ? st : "", x: !!r.a } : {};
+    }
+    return {};
   }
   // iPAS 考古題：每題記選了哪個答案（c）、對錯（s）、重要（m）
   function ipasProgress() {
