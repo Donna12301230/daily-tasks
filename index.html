@@ -570,7 +570,7 @@ table.pm td.c-key { text-align: center }
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
   // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
-  const BUILD = "20261128c";
+  const BUILD = "20261128d";
   const TYPES = {
     today: { label: "今天", desc: "一份清單看完今天：任務、里程碑、考試、工作台的課程與讀書、固定時段。", view: vToday },
     // 總覽的月曆、甘特圖、重要日期共用同一個工作台頁面（frame），只是打開不同的畫面（hash）
@@ -594,7 +594,7 @@ table.pm td.c-key { text-align: center }
     examBanks: { label: "考古題", desc: "選一套考古題進去練習：目前有中山資管、iPAS 資安初級、iPAS 資安中級，之後可以加多益等。", view: vExamBanks },
     nsysuApp: { label: "中山資管考古題", desc: "資管碩士班甲組・計算機概論＋管理資訊系統・94–115 學年度：依年度、依章節、錯題本。", src: "apps/nsysu/index.html", group: "examBanks" },
     ipasApp: { label: "iPAS 資安初級考古題", desc: "資訊安全工程師・初級 I11 管理＋I12 技術（109–113、115 年＋樣題，1100 題單選；113-2、114 年還沒有）：依年度、模擬考、隨機練習、錯題本、解析本、搜尋。", src: "apps/ipas/index.html", group: "examBanks" },
-    ipas2App: { label: "iPAS 資安中級考古題", desc: "資訊安全工程師・中級 I21 規劃實務＋I22 防護實務（115 年，80 題，含複選、題組）：依年度、模擬考、隨機練習、錯題本、解析本、搜尋。", src: "apps/ipas/index.html?lv=2", group: "examBanks" },
+    ipas2App: { label: "iPAS 資安中級考古題", desc: "資訊安全工程師・中級 I21 規劃實務＋I22 防護實務：官方 115 年 80 題（含複選、題組），加上 108–114 年參考題 415 題（從網路整理一題一題收進來，答案標示來源）：依年度、模擬考、隨機練習、錯題本、解析本、搜尋、參考資源。", src: "apps/ipas/index.html?lv=2", group: "examBanks" },
     // group：預設收進同一區的這種模組頁裡（不佔分頁），可在「擴充」改成獨立分頁
     osNotesApp: { label: "作業系統筆記", desc: "空大作業系統的白話筆記、考試重點、小測驗和互動示範。", src: "apps/os-notes/index.html", group: "notes" },
     genaiApp: { label: "生成式 AI 講義", desc: "一講一頁的課程講義、名詞對照和自我檢核。", src: "apps/genai/index.html", group: "notes" },

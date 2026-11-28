@@ -95,6 +95,35 @@ button { font-family: inherit }
 .res.ok { color: var(--ok) } .res.bad { color: var(--bad) }
 .empty { color: var(--muted); padding: 24px 4px }
 
+/* 中級參考題：網路整理的歷屆題（答案標示來源） */
+.ctx { border: 1px solid var(--line); border-radius: 8px; background: var(--bg); font-size: .88rem }
+.ctx summary { cursor: pointer; padding: 5px 10px; color: var(--muted); font-size: .8rem }
+.ctx p { margin: 0; padding: 0 10px 8px; white-space: pre-wrap; overflow-wrap: anywhere }
+.fignote, .refnote { font-size: .8rem; color: var(--muted); margin: 0 }
+.fignote::before { content: "▣ "; }
+.refbadge { font-size: .72rem; border: 1px solid var(--line); border-radius: 999px; padding: 0 8px; color: var(--muted) }
+.refans { border-top: 1px dashed var(--line); padding-top: 8px; display: grid; gap: 4px; font-size: .88rem }
+.refans .who { font-size: .76rem; font-weight: 600; color: var(--accent) }
+.refans .who.claude { color: var(--imp) }
+.refans .srcs { font-size: .76rem; color: var(--muted) }
+.refans .srcs a { color: inherit }
+.refans .rich p { margin: 0 }
+.refbanner { background: var(--imp-soft); border: 1px solid var(--imp); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-size: .86rem; display: grid; gap: 4px }
+.yr b small { font-weight: 400; color: var(--imp); margin-left: 4px }
+.srclist { display: grid; gap: 12px }
+.srccard { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 6px }
+.srccard h3 { margin: 0; font-size: 1rem }
+.srccard .meta { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: .78rem }
+.srccard .meta span { border: 1px solid var(--line); border-radius: 999px; padding: 0 8px; color: var(--muted) }
+.srccard .meta span.off { border-color: var(--ok); color: var(--ok) }
+.srccard p { margin: 0; font-size: .86rem; color: var(--muted) }
+.srcq { display: grid; gap: 4px; font-size: .84rem }
+.srcq div { display: flex; flex-wrap: wrap; gap: 4px; align-items: baseline }
+.srcq b { min-width: 6.5em; font-weight: 600 }
+.srcq a { font: .78rem var(--font-mono); border: 1px solid var(--line); border-radius: 6px; padding: 0 5px; color: var(--ink); text-decoration: none }
+.srcq a.ok { border-color: var(--ok); color: var(--ok) } .srcq a.bad { border-color: var(--bad); color: var(--bad) }
+.srcq a.na { color: var(--muted); border-style: dashed }
+
 /* 錯題解析 */
 .xp-open { justify-self: start; background: none; border: 1px dashed var(--line); color: var(--accent); border-radius: 8px; font-size: .8rem; padding: 3px 10px; cursor: pointer }
 .xp { border-top: 1px dashed var(--line); padding-top: 8px; display: grid; gap: 10px }
@@ -185,6 +214,7 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
     <a href="#wrong" data-v="wrong">錯題本</a>
     <a href="#notes" data-v="notes">解析本</a>
     <a href="#search" data-v="search">搜尋</a>
+    <a href="#refs" data-v="refs" id="tabRefs" hidden>參考資源</a>
     <span class="stats" id="stats"></span>
   </nav>
   <main id="main"><p class="empty">載入題目中…</p></main>
@@ -193,18 +223,25 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
 <script>
 (function () {
   "use strict";
-  const SUBJ = { I11: "資訊安全管理概論", I12: "資訊安全技術概論", I21: "資訊安全規劃實務", I22: "資訊安全防護實務" };
+  const SUBJ = { I11: "資訊安全管理概論", I12: "資訊安全技術概論", I21: "資訊安全規劃實務", I22: "資訊安全防護實務", I2x: "科目未標示（參考題）" };
   // 初級、中級分成兩套：網址加 ?lv=2 是中級（I21、I22），不然是初級（I11、I12）；作答紀錄同一份，各套只看自己那一級的考卷
   const LV = new URLSearchParams(location.search).get("lv") === "2" ? 2 : 1;
   const LVS = LV === 2 ? ["I21", "I22"] : ["I11", "I12"];
-  const SHORT = { I11: "管理", I12: "技術", I21: "規劃", I22: "防護" };
+  const SHORT = { I11: "管理", I12: "技術", I21: "規劃", I22: "防護", I2x: "未標科目" };
   const SUBJ_SEG = [["all", "全部"]].concat(LVS.map(s => [s, s + " " + SHORT[s]]));
   if (LV === 2) {
     document.title = "iPAS 資安中級考古題";
     document.getElementById("h1").textContent = "iPAS 資訊安全工程師・中級考古題";
-    document.getElementById("hsub").textContent = "中級 I21 規劃實務＋I22 防護實務（115 年，每份 40 題，含複選、題組；之後補其他年度）";
+    document.getElementById("hsub").textContent = "中級 I21 規劃實務＋I22 防護實務：官方 115 年各 40 題（含複選、題組），另有 108–114 年參考題 415 題（網路整理，答案多數為 Claude 解答）";
     document.getElementById("lvname").textContent = "中級";
+    document.getElementById("tabRefs").hidden = false;
   }
+  // 中級參考題（ref.json）：網路整理的 108–114 年歷屆題，答案標示來源（官方／筆記／Claude 解答），缺附圖的題目沒有答案
+  let REF = null;
+  const AO = { official: "官方答案（筆記作者引用）", salt: "HeyMrSalt 筆記標的答案", claude: "Claude 解答（非官方，可能有錯）", none: "缺附圖，無法判斷答案" };
+  const canAns = q => !!q.a;
+  const isOk = (q, c) => !!c && (c === q.a || (q.alt || []).includes(c));
+  const qLabel = (p, n) => "第 " + ((p.qs[n - 1] || {}).no || n) + " 題";
   const LET = ["A", "B", "C", "D"];
   const main = document.getElementById("main");
   let PAPERS = [], BY = {}, curPaper = null;
@@ -253,7 +290,7 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
   }
   // 作答：第一次答錯就收進錯題本；在錯題本裡答對就移出（答錯次數留著）
   function answer(pid, n, c) {
-    const q = BY[pid].qs[n - 1], r = rec(pid, n) || {}, ok = c === q.a;
+    const q = BY[pid].qs[n - 1], r = rec(pid, n) || {}, ok = isOk(q, c);
     setRec(pid, n, { c, s: ok ? "ok" : "bad", w: (r.w || 0) + (ok ? 0 : 1) });
   }
 
@@ -271,7 +308,7 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
     (kids || []).forEach(c => c != null && c !== false && n.appendChild(typeof c === "string" ? document.createTextNode(c) : c));
     return n;
   }
-  const shortName = p => (p.y ? p.y + "-" + p.r : "樣題") + "・" + p.s;
+  const shortName = p => (p.y ? p.y + "-" + p.r : "樣題") + "・" + (p.ref ? SHORT[p.s] + "參考" : p.s);
   function hlText(text, q) {
     if (!q) return [text];
     const out = [], low = text.toLowerCase(), ql = q.toLowerCase();
@@ -288,7 +325,7 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
   function renderStats() {
     const t = { done: 0, ok: 0, bad: 0, imp: 0 };
     PAPERS.forEach(p => { const c = paperStat(p.id); for (const k in t) t[k] += c[k]; });
-    const all = PAPERS.reduce((s, p) => s + p.qs.length, 0);
+    const all = PAPERS.reduce((s, p) => s + p.qs.filter(canAns).length, 0);
     const box = document.getElementById("stats");
     box.textContent = "";
     box.append(el("span", { text: "已做 " + t.done + " / " + all }), el("span", { class: "k-ok", text: "答對 " + t.ok }), el("span", { class: "k-bad", text: "錯題 " + t.bad }), el("span", { class: "k-imp", text: "重要 " + t.imp }));
@@ -307,7 +344,8 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
     const star = el("button", { type: "button", class: "star", "aria-pressed": String(!!r.m), text: r.m ? "★ 重要" : "☆ 重要", title: "標成重要題，錯題本可以只看重要" });
     star.addEventListener("click", () => { const on = !(rec(pid, n) || {}).m; setRec(pid, n, { m: on ? 1 : 0 }); star.setAttribute("aria-pressed", String(on)); star.textContent = on ? "★ 重要" : "☆ 重要"; });
     const top = el("div", { class: "qtop" }, [
-      el("span", { class: "qno" }, [opts.showPaper ? el("a", { href: "#year/" + pid + "/" + n, text: shortName(p) + " 第 " + n + " 題" }) : "第 " + n + " 題"]),
+      el("span", { class: "qno" }, [opts.showPaper ? el("a", { href: "#year/" + pid + "/" + n, text: shortName(p) + " " + qLabel(p, n) }) : qLabel(p, n)]),
+      p.ref ? el("span", { class: "refbadge", text: q.a.length > 1 ? "參考題・複選" : "參考題" }) : null,
       reveal && r.w ? el("span", { class: "muted small", text: "答錯過 " + r.w + " 次" }) : null,
       !reveal && xpHas(r.x) ? el("span", { class: "has-xp", text: "有解析" }) : null,
       el("span", { class: "grow" }),
@@ -315,10 +353,17 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
       star,
     ]);
     box.append(top);
+    if (q.ctx) box.append(el("details", { class: "ctx", open: !opts.showPaper }, [el("summary", { text: "題組情境" }), el("p", null, hlText(q.ctx, opts.q))]));
     if (q.img && q.img.length) {
       box.append(el("div", { class: "figs" }, q.img.map(f => el("img", { src: "img/" + f, alt: "第 " + n + " 題原卷截圖：" + q.q, loading: "lazy" }))));
     } else {
       box.append(el("p", { class: "stem" }, hlText(q.q, opts.q)));
+    }
+    if (q.fig) box.append(el("p", { class: "fignote", text: "原題有附圖，參考資料沒有附上，有些題目可能看不出答案" }));
+    if (p.ref && !canAns(q)) {   // 缺附圖、沒有答案：只列題目和選項，不能作答
+      box.append(el("div", { class: "opts" }, q.o.map((t, i) => el("div", { class: "opt", style: "cursor:default" }, [el("span", { class: "L", text: "(" + LET[i] + ")" }), el("span", { class: "t" }, hlText(t, opts.q)), el("span")]))));
+      box.append(refAns(q));
+      return box;
     }
     const list = el("div", { class: "opts", role: "group", "aria-label": "選項" });
     q.o.forEach((t, i) => {
@@ -335,16 +380,33 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
         if (multi) { box.replaceWith(qcard(pid, n, Object.assign({}, opts, { sel: sortL(has(sel, L) ? sel.replace(L, "") : sel + L) }))); return; }
         answer(pid, n, L);
         box.replaceWith(qcard(pid, n, opts));
-        if (opts.after) opts.after(L === q.a);
+        if (opts.after) opts.after(isOk(q, L));
       });
       list.append(b);
     });
     box.append(list);
     if (multi && !reveal && !opts.mock) box.append(el("div", { class: "row" }, [el("button", { type: "button", class: "btn primary", disabled: !sel, text: "送出（複選）",
-      onclick: () => { answer(pid, n, sel); box.replaceWith(qcard(pid, n, Object.assign({}, opts, { sel: "" }))); if (opts.after) opts.after(sel === q.a); } })]));
-    if (reveal) box.append(el("div", { class: "res " + (chosen === q.a ? "ok" : "bad"), text: chosen === q.a ? "答對了" : "答錯了，正確答案是 (" + q.a + ")" + (opts.wrongBook ? "" : "，已收進錯題本") }));
+      onclick: () => { answer(pid, n, sel); box.replaceWith(qcard(pid, n, Object.assign({}, opts, { sel: "" }))); if (opts.after) opts.after(isOk(q, sel)); } })]));
+    if (reveal) box.append(el("div", { class: "res " + (isOk(q, chosen) ? "ok" : "bad"), text: isOk(q, chosen) ? "答對了" : "答錯了，正確答案是 (" + q.a + ")" + (q.alt ? "（" + q.alt.join("、") + " 也給分）" : "") + (opts.wrongBook ? "" : "，已收進錯題本") }));
+    if (reveal && p.ref) box.append(refAns(q));
     if (reveal) box.append(xpBox(pid, n));
     return box;
+  }
+
+  // 參考題的答案來源、解析和出處（每份資料一個連結）
+  function refAns(q) {
+    const S = (REF && REF.sources) || {}, parts = [];
+    (q.src || []).forEach((k, i) => {
+      const s = S[k] || { name: k }, url = k === "salt" && q.salt ? s.url + "#" + q.salt : s.url, nm = s.name.replace(/（.*$/, "");
+      if (i) parts.push("、");
+      parts.push(url ? el("a", { href: url, target: "_blank", rel: "noopener", text: nm }) : el("span", { text: nm }));
+    });
+    return el("div", { class: "refans" }, [
+      el("span", { class: "who" + (q.ao === "claude" ? " claude" : ""), text: AO[q.ao || "claude"] }),
+      q.x ? rich(q.x) : null,
+      q.note ? el("p", { class: "refnote", text: "註：" + q.note }) : null,
+      el("div", { class: "srcs" }, ["出自："].concat(parts)),
+    ]);
   }
 
   // ---------- 錯題解析（格式照「錯題解析.pdf」）：正確答案 → 題目解析（關鍵字＋觀念）→ 各選項比較表 → 記憶口訣 → 易混淆點／解題小技巧
@@ -477,13 +539,14 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
   // ---------- 依年度
   let mockMode = false, mock = null;   // mock：{ pid, picks: { 題號: 答案 } }
   function renderYear(focus) {
-    if (!curPaper || !BY[curPaper]) curPaper = (PAPERS.filter(p => p.y && p.s === LVS[0]).pop() || PAPERS[0]).id;   // 預設最新一次的第一科（初級管理、中級規劃）
+    if (!curPaper || !BY[curPaper]) curPaper = (PAPERS.filter(p => p.y && p.s === LVS[0] && !p.ref).pop() || PAPERS[0]).id;   // 預設最新一次的第一科（初級管理、中級規劃）
     const p = BY[curPaper];
     const rail = el("nav", { class: "rail", "aria-label": "選擇場次" });
     const rounds = [];
     PAPERS.forEach(x => { const k = x.y ? x.y + "-" + x.r : "樣題"; if (!rounds.includes(k)) rounds.push(k); });
     rounds.slice().sort((a, b) => (a === "樣題") - (b === "樣題") || (a < b ? 1 : -1)).forEach(k => {
-      const row = el("div", { class: "yr" }, [el("b", { text: k })]);
+      const isRef = !PAPERS.some(y => !y.ref && (y.y ? y.y + "-" + y.r : "樣題") === k);
+      const row = el("div", { class: "yr" }, [el("b", null, [k, isRef ? el("small", { text: "參考" }) : null])]);
       Object.keys(SUBJ).filter(s => PAPERS.some(y => (y.y ? y.y + "-" + y.r : "樣題") === k && y.s === s)).forEach(s => {
         const x = PAPERS.find(y => (y.y ? y.y + "-" + y.r : "樣題") === k && y.s === s);
         if (!x) { row.append(el("span")); return; }
@@ -505,27 +568,32 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
         el("button", { type: "button", "aria-pressed": String(!mockMode), text: "練習", title: "每題選完馬上對答案", onclick: () => { mockMode = false; mock = null; renderYear(); } }),
         el("button", { type: "button", "aria-pressed": String(mockMode), text: "模擬考", title: "整份做完交卷才看分數和答案", onclick: () => { mockMode = true; mock = { pid: p.id, picks: {} }; renderYear(); } }),
       ]),
-      el("a", { class: "btn", href: p.pdf, target: "_blank", rel: "noopener", text: "原卷 PDF" }),
+      p.pdf ? el("a", { class: "btn", href: p.pdf, target: "_blank", rel: "noopener", text: "原卷 PDF" }) : null,
     ]);
     body.append(head);
+    if (p.ref) body.append(el("div", { class: "refbanner" }, [
+      el("b", { text: "參考題：不是官方公布的試卷" }),
+      el("span", { text: "題目是官方原題，從網路上的整理（表單、筆記）一題一題收進來。官方沒有公布這些年度的試卷，所以答案多數是 Claude 解答：作答後會標出答案來源和理由，可能有錯，請搭配課本判斷。缺附圖的題目只能看題目。" }),
+      el("a", { href: "#refs", text: "看每份參考資料收了哪些題 →" }),
+    ]));
     if (inMock) {
       const n = Object.keys(mock.picks).length;
       const sub = el("button", { type: "button", class: "btn primary", text: "交卷", onclick: () => {
-        const left = p.qs.length - Object.keys(mock.picks).length;
+        const left = p.qs.filter(canAns).length - Object.keys(mock.picks).length;
         if (left && !confirm("還有 " + left + " 題沒作答，確定交卷？（沒作答的不算分，也不會記錄）")) return;
         let ok = 0;
-        Object.entries(mock.picks).forEach(([k, c]) => { answer(p.id, +k, c); if (c === p.qs[k - 1].a) ok++; });
-        const total = p.qs.length;
+        Object.entries(mock.picks).forEach(([k, c]) => { answer(p.id, +k, c); if (isOk(p.qs[k - 1], c)) ok++; });
+        const total = p.qs.filter(canAns).length;
         mockMode = false; mock = null;
         renderYear();
         main.prepend(el("div", { class: "score" }, [el("span", { class: "big", text: Math.round(ok * 100 / total) + " 分" }), el("span", { text: "答對 " + ok + " / " + total + " 題" }), el("span", { class: "muted small", text: "答錯的已收進錯題本，下面每題都標出正確答案。" })]));
         window.scrollTo(0, 0);
       } });
-      body.append(el("div", { class: "score" }, [el("span", { id: "mockn", text: "模擬考作答中：已選 " + n + " / " + p.qs.length + " 題" }), el("span", { class: "muted small", text: "每題 2 分，交卷後才會對答案並記錄。" }), el("span", { class: "grow" }), sub]));
+      body.append(el("div", { class: "score" }, [el("span", { id: "mockn", text: "模擬考作答中：已選 " + n + " / " + p.qs.filter(canAns).length + " 題" }), el("span", { class: "muted small", text: (p.ref ? "以 100 分換算，" : "每題 " + +(100 / p.qs.length).toFixed(1) + " 分，") + "交卷後才會對答案並記錄。" }), el("span", { class: "grow" }), sub]));
     } else if (st.done) {
       body.append(el("div", { class: "score" }, [
-        el("span", { class: "big", text: Math.round(st.ok * 2) + " 分" }),
-        el("span", { text: "已作答 " + st.done + " / " + p.qs.length + "・答對 " + st.ok + "・答錯 " + (st.done - st.ok) }),
+        el("span", { class: "big", text: Math.round(st.ok * 100 / p.qs.filter(canAns).length) + " 分" }),
+        el("span", { text: "已作答 " + st.done + " / " + p.qs.filter(canAns).length + "・答對 " + st.ok + "・答錯 " + (st.done - st.ok) }),
         el("span", { class: "grow" }),
         el("button", { type: "button", class: "btn", text: "整份重做", onclick: () => {
           if (!confirm("清掉這份的作答重新做一次？（錯題本、答錯次數和重要標記會留著）")) return;
@@ -535,7 +603,7 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
       ]));
     }
     const qs = el("div", { class: "qs" });
-    p.qs.forEach((_, i) => qs.append(qcard(p.id, i + 1, inMock ? { mock: true, mockPick: mock.picks[i + 1], onMock: c => { if (c) mock.picks[i + 1] = c; else delete mock.picks[i + 1]; const m = document.getElementById("mockn"); if (m) m.textContent = "模擬考作答中：已選 " + Object.keys(mock.picks).length + " / " + p.qs.length + " 題"; } } : { after: () => renderRailOnly() })));
+    p.qs.forEach((_, i) => qs.append(qcard(p.id, i + 1, inMock ? { mock: true, mockPick: mock.picks[i + 1], onMock: c => { if (c) mock.picks[i + 1] = c; else delete mock.picks[i + 1]; const m = document.getElementById("mockn"); if (m) m.textContent = "模擬考作答中：已選 " + Object.keys(mock.picks).length + " / " + p.qs.filter(canAns).length + " 題"; } } : { after: () => renderRailOnly() })));
     body.append(qs);
     const view = el("div", { class: "yearview" }, [rail, body]);
     main.textContent = ""; main.append(view);
@@ -552,12 +620,14 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
   }
 
   // ---------- 隨機練習
-  const pr = { subj: "all", src: "all", count: 20, run: null };
+  const pr = { subj: "all", src: "all", kind: "all", count: 20, run: null };
   function pool() {
     const out = [];
     PAPERS.forEach(p => {
       if (pr.subj !== "all" && p.s !== pr.subj) return;
-      p.qs.forEach((_, i) => {
+      if ((pr.kind === "off" && p.ref) || (pr.kind === "ref" && !p.ref)) return;
+      p.qs.forEach((q, i) => {
+        if (!canAns(q)) return;
         const r = rec(p.id, i + 1) || {};
         if (pr.src === "new" && r.c) return;
         if (pr.src === "bad" && !r.w) return;
@@ -577,6 +647,7 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
       el("strong", { text: "從全部考古題隨機抽題，一次一題" }),
       segRow("科目", "subj", SUBJ_SEG),
       segRow("範圍", "src", [["all", "全部"], ["new", "沒做過的"], ["bad", "答錯過的"], ["imp", "重要"]]),
+      REF ? segRow("題目", "kind", [["all", "全部"], ["off", "官方試卷"], ["ref", "參考題"]]) : null,
       segRow("題數", "count", [[10, "10 題"], [20, "20 題"], [50, "50 題"]]),
       el("div", { class: "row" }, [
         el("button", { type: "button", class: "btn primary", disabled: !n, text: "開始", onclick: () => {
@@ -654,24 +725,58 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
     run(); input.focus();
   }
 
+  // ---------- 參考資源：每份資料一張卡片，列出它收了哪些題（點題號跳到那一題）
+  function renderRefs() {
+    main.textContent = "";
+    if (!REF) { main.append(el("p", { class: "empty", text: "參考資料載入失敗，請重新整理。" })); return; }
+    main.append(el("p", { class: "muted small", style: "margin:0 0 10px", text: "官方只公布最近一屆的中級試卷（115-2，已收在依年度）。其他年度的題目從下面這些網路資料一題一題收進來；同一題出現在好幾份資料時只收一次，作答後會標出它出自哪幾份。題號：綠色答對、紅色答錯、虛線是缺附圖沒有答案。" }));
+    const list = el("div", { class: "srclist" });
+    (REF.official || []).forEach(o => list.append(el("article", { class: "srccard" }, [
+      el("h3", null, [o.url ? el("a", { href: o.url, target: "_blank", rel: "noopener", text: o.name }) : o.name]),
+      el("div", { class: "meta" }, [el("span", { class: "off", text: o.kind }), el("span", { text: o.ans })]),
+      el("p", { text: o.note }),
+    ])));
+    Object.keys(REF.sources).forEach(k => {
+      const s = REF.sources[k], rows = {};
+      PAPERS.filter(p => p.ref).forEach(p => p.qs.forEach((q, i) => { if ((q.src || []).includes(k)) (rows[p.id] = rows[p.id] || []).push(i + 1); }));
+      const total = Object.values(rows).reduce((a, b) => a + b.length, 0);
+      list.append(el("article", { class: "srccard" }, [
+        el("h3", null, [s.url ? el("a", { href: s.url, target: "_blank", rel: "noopener", text: s.name }) : s.name]),
+        el("div", { class: "meta" }, [el("span", { text: s.kind }), el("span", { text: s.ans }), el("span", { text: total + " 題" }), s.by ? el("span", { text: s.by }) : null]),
+        el("p", { text: s.note }),
+        el("div", { class: "srcq" }, Object.keys(rows).map(pid => {
+          const p = BY[pid];
+          return el("div", null, [el("b", { text: p.y + "-" + p.r + " " + SHORT[p.s] })].concat(rows[pid].map(n => {
+            const q = p.qs[n - 1], r = rec(pid, n) || {};
+            return el("a", { href: "#year/" + pid + "/" + n, class: !canAns(q) ? "na" : r.c ? (isOk(q, r.c) ? "ok" : "bad") : "", title: (canAns(q) ? AO[q.ao] : "缺附圖，沒有答案") + (r.c ? "・做過" : ""), text: String(q.no) });
+          })));
+        })),
+      ]));
+    });
+    main.append(list);
+  }
+
   // ---------- routing
   function go(h) { if (location.hash === "#" + h) route(); else location.hash = h; }
   function route() {
     const h = (location.hash || "#year").slice(1);
     let view = "year", focus = null;
-    if (h === "practice" || h === "wrong" || h === "search" || h === "notes") view = h;
+    if (h === "practice" || h === "wrong" || h === "search" || h === "notes" || (h === "refs" && LV === 2)) view = h;
     else {
       const m = /^year\/([^/]+)(?:\/(\d+))?$/.exec(h);
       if (m && BY[m[1]]) { if (curPaper !== m[1]) { mockMode = false; mock = null; } curPaper = m[1]; focus = m[2] ? +m[2] : null; }
     }
     document.querySelectorAll("nav.tabs a[data-v]").forEach(a => a.setAttribute("aria-current", a.dataset.v === view ? "page" : "false"));
-    if (view === "practice") renderPractice(); else if (view === "wrong") renderWrong(); else if (view === "search") renderSearch(); else if (view === "notes") renderNotes();
+    if (view === "practice") renderPractice(); else if (view === "wrong") renderWrong(); else if (view === "search") renderSearch(); else if (view === "notes") renderNotes(); else if (view === "refs") renderRefs();
     else { renderYear(focus); if (!focus) window.scrollTo(0, 0); }
   }
   window.addEventListener("hashchange", route);
 
   fetch("data.json", { cache: "no-cache" }).then(r => r.json()).then(d => {
-    PAPERS = d.papers.filter(p => LVS.includes(p.s)); PAPERS.forEach(p => { BY[p.id] = p; });
+    PAPERS = d.papers.filter(p => LVS.includes(p.s));
+    return LV === 2 ? fetch("ref.json", { cache: "no-cache" }).then(r => r.json()).then(R => { REF = R; PAPERS = PAPERS.concat(R.papers); }, () => {}) : null;
+  }).then(() => {
+    PAPERS.forEach(p => { BY[p.id] = p; });
     renderStats(); route(); sync();
   }).catch(() => { main.innerHTML = '<p class="empty">題目載入失敗，請重新整理。</p>'; });
 
