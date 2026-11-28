@@ -426,7 +426,8 @@ table.g tr.grp td.nm { box-shadow: inset 4px 0 0 var(--gc, transparent) }
     const fwd = it => { const r = it.src === "exam" ? examRestOf(subOf(it)) : isRest; let x = it.date, k = 0; while (k < n) { x = addDays(x, 1); if (!r(x)) k++; } return x; };
     list.forEach(it => { (byDoc[it.bucket] = byDoc[it.bucket] || {})[it.id] = { date: fwd(it), moved: (it.moved || 0) + 1, orig: it.orig || it.date }; });
     Object.keys(byDoc).forEach(doc => write(doc, { items: byDoc[doc] }));
-    toast((LINE_NAME[track] || track) + "：" + list.length + " 項進度往後挪 " + n + " 天（跳過週日與假日" + (list[0].src === "exam" ? "、空大考試週" : "") + "）");
+    const pausedS = list.some(it => it.src === "exam" && ["cs", "mis"].includes(subOf(it)));   // 中山那兩條線也跳過 iPAS 衝刺期
+    toast((LINE_NAME[track] || track) + "：" + list.length + " 項進度往後挪 " + n + " 天（跳過週日與假日" + (list[0].src === "exam" ? "、空大考試週" + (pausedS ? "、iPAS 衝刺期" : "") : "") + "）");
   }
   function addItem(date, tag, title, track) {
     title = (title || "").trim(); if (!title) return;

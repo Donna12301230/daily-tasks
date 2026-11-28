@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""iPAS 資安初級考古題：替每一題標章節（寫進 apps/ipas/data.json 每題的 c，章節清單放在 data.json 的 ch）。
+"""iPAS 資安考古題（初級、中級）：替每一題標章節（寫進 apps/ipas/data.json 每題的 c，章節清單放在 data.json 的 ch）。
 初級章節、順序照官方學習指引和《iPAS 初級資安工程師攻略》管理概論篇、技術概論篇的評鑑主題；用關鍵字判斷，題目、選項都看，題目的分數加倍。
 判斷不出來的題目沿用同一份卷子前一題的章節（原卷大致照主題排）。
 用法：python tools/ipas_chapters.py   （之後再跑 python tools/exam_plan.py 更新每日進度）"""
