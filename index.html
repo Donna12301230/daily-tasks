@@ -570,7 +570,7 @@ table.pm td.c-key { text-align: center }
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
   // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
-  const BUILD = "20261128c";
+  const BUILD = "20261128d";
   const TYPES = {
     today: { label: "今天", desc: "一份清單看完今天：任務、里程碑、考試、工作台的課程與讀書、固定時段。", view: vToday },
     // 總覽的月曆、甘特圖、重要日期共用同一個工作台頁面（frame），只是打開不同的畫面（hash）
@@ -2680,7 +2680,7 @@ table.pm td.c-key { text-align: center }
      週日、假日、空大期中／期末考那一週不排；iPAS 衝刺期中山暫停；延後時同一科後面的整組往後挪。 */
   const EXAM_VER = 6;   // 題目有變（例如計概加進 C 語言）靠 EXAM_REV 觸發重排   // 3：事項編號改成「科目＋日期」並清掉重複；4：同一天題目一樣、或同一筆在兩個月份的也算重複；5：整份重寫月份文件（之前寫入被拒絕但排程紀錄已寫成功的，要重排一次）
   // EXAM_REV:BEGIN
-  const EXAM_REV = {"cs": "5e3f19e4", "mis": "c98212b2", "ipm": "ee5b0c9a", "ipt": "848e482e", "ipr": "0f9c2c26", "ipd": "c0a64217", "toeic7": "e8a4c7bf", "toeic8": "d5e3dd28"};
+  const EXAM_REV = {"cs": "95b59371", "mis": "1670b0f7", "ipm": "ee5b0c9a", "ipt": "848e482e", "ipr": "0f9c2c26", "ipd": "c0a64217", "toeic7": "e8a4c7bf", "toeic8": "d5e3dd28"};
   // EXAM_REV:END
   const firstExam = (re, not) => arr("exams").filter(e => isDate(e.date) && re.test(e.name || "") && !(not && not.test(e.name || ""))).sort(byDate);
   const nsysuExam = () => { const t0 = today(), xs = arr("exams").filter(e => isDate(e.date) && e.date > t0);
@@ -2777,14 +2777,44 @@ table.pm td.c-key { text-align: center }
         detail: [...new Map(g.map(p => [p.x.u, p.x.u + " " + p.x.t + (p.read ? "" : "（考古題）")])).values()].join("\n"), units: rd.map(x => x.u),
         qs: refs.length ? refs.map(q => ({ 0: q[0], 1: q[1] })) : null };
     }
+    if (examMockG(g)) {   // 模擬考整卷（點了打開整份）、隔天的檢討（沒有題號，用 key 認得做過沒）
+      const rev = g[0][3] === "rev";
+      return { date: d, orig: d, tag: "讀", track: S0.track, src: "exam", sub: s, done: false, deleted: false, added: t0,
+        title: "模擬考・" + g[0][0], detail: g[0][2], key: rev ? g[0][4] : null, qs: rev ? null : [{ 0: g[0][0], 1: g[0][1] }] };
+    }
     return { date: d, orig: d, tag: "讀", track: S0.track, src: "exam", sub: s, done: false, deleted: false, added: t0,
       title: one ? S0.title + g[0][0] : ip ? S0.title + g.length + " 題｜" + g[0][2] : S0.title + g.map(q => q[0]).join("、"),
       detail: one ? g[0][2] : ip ? g.map(q => q[0]).join("、") : g.map(q => q[0] + "　" + q[2]).join("\n"),
       qs: one ? null : g.map(q => ({ 0: q[0], 1: q[1] })) };   // Firestore 不收陣列裡的陣列，所以每題存成 {0: 題號, 1: 考古題的位置}，讀的時候照樣用 q[0]、q[1]
   }
   // 從 start 起把 groups 排進可讀書的日子，回傳 [排了幾天, 幾天 3 題, 最後一天]
+  // 中山近三年的整卷（tools/exam_plan.py 的 mock()）接在計概、MIS 那條線最後：章節進度排到期限（考前一個月），
+  // 整卷排在期限之後到考前 3 天，可讀書的日子平均分給每一份，檢討排在下一個可讀書日。計概、MIS 同一年會排在同一天。
+  const examMockG = g => g[0] && (g[0][3] === "mock" || g[0][3] === "rev");
+  function examLayMock(rest, groups, start, end) {
+    const days = []; for (let d = start; d <= end; d = addDays(d, 1)) if (!rest(d)) days.push(d);
+    const out = [], after = d => addDays(d || start, 1);
+    let i = 0, k = 0;
+    if (groups.length && groups[0][0][3] === "rev") { out.push([groups[0], days[0] || start]); i = 1; k = 1; }   // 上次沒做完的檢討先排
+    const n = groups.slice(i).filter(g => g[0][3] !== "rev").length, D = Math.max(0, days.length - k);
+    let m = 0, next = k;
+    for (; i < groups.length; i++) {
+      const g = groups[i], prev = out.length ? out[out.length - 1][1] : "";
+      if (g[0][3] === "rev") { out.push([g, days[next] || after(prev)]); next++; continue; }
+      const idx = Math.max(next, k + (D >= 2 * n ? Math.floor(m * D / n) : 2 * m));
+      out.push([g, days[idx] || after(prev)]); next = idx + 1; m++;
+    }
+    return out;
+  }
   function examLay(W, s, groups, start, end, put, t0, tag) {
-    const rest = examRestS(W, s), list = examPack(s, groups, examDays(rest, start, end));
+    const rest = examRestS(W, s), mock = groups.filter(examMockG);
+    let mockOut = [];
+    if (mock.length) {
+      const ms = addDays(end, 1) > start ? addDays(end, 1) : start;
+      mockOut = examLayMock(rest, mock, ms, addDays(SUBJ[s].date(), -3));
+      groups = groups.filter(g => !examMockG(g));
+    }
+    const list = examPack(s, groups, examDays(rest, start, end));
     let d = start, i = 0, n3 = 0, last = "";
     const used = new Set();
     for (const g of list) {
@@ -2802,9 +2832,11 @@ table.pm td.c-key { text-align: center }
       if (at > last) last = at;
       i++;
     }
-    return [i, n3, last];
+    let ml = "";
+    mockOut.forEach(([g, at]) => { put("m-" + at.slice(0, 7), "exam-" + s + "-" + at, Object.assign({ moved: null, units: null, qs: null, key: null }, examItem(s, g, at, t0))); if (at > ml) ml = at; });
+    return [i, n3, last, mockOut.filter(x => x[0][0][3] === "mock").length, ml];   // [章節天數, 幾天 3 題, 章節做完那天, 幾份整卷, 最後一份整卷／檢討那天]
   }
-  const examMsg = (s, r, end) => SUBJ[s].name + " " + r[0] + " 天" + (r[1] ? "（" + r[1] + " 天 3 題）" : "") + "，" + md(r[2]) + " 做完" + (r[2] > end ? "，超過期限 " + md(end) : "");
+  const examMsg = (s, r, end) => SUBJ[s].name + (r[0] ? " " + r[0] + " 天" + (r[1] ? "（" + r[1] + " 天 3 題）" : "") + "，" + md(r[2]) + " 做完" + (r[2] > end ? "，超過期限 " + md(end) : "") : "") + (r[3] ? "，再排 " + r[3] + " 份整卷到 " + md(r[4]) : "");
   async function loadExamPlan() {
     const html = await (await fetch("apps/workbench/index.html?v=" + BUILD)).text();
     const m = /const EXAM_PLAN = (\{.*?\});\n/.exec(html);
@@ -2841,11 +2873,11 @@ table.pm td.c-key { text-align: center }
           if (ks.some(k => byKey[k])) put(it.bucket, it.id, { deleted: true, replacedBy: "dup" });
           else { ks.forEach(k => { byKey[k] = 1; }); keep.push(it); }
         });
-        const seen = new Set(); keep.forEach(it => (it.qs || [{ 1: it.title }]).forEach(q => seen.add(q[1] || it.title)));
+        const seen = new Set(); keep.forEach(it => (it.qs || [{ 1: it.key || it.title }]).forEach(q => seen.add(q[1] || it.title)));
         const seenU = new Set(); keep.forEach(it => (it.units || []).forEach(u => seenU.add(u)));
         const left = SUBJ[s].pack === "book"
           ? plan[s].map(x => Object.assign({}, x, { read: !seenU.has(x.u), q: x.q.filter(q => !seen.has(q[1])) })).filter(x => x.read || x.q.length)
-          : plan[s].map(g => g.filter(q => !seen.has(q[1] || (SUBJ[s].title + q[0])))).filter(g => g.length);
+          : plan[s].map(g => g.filter(q => !seen.has(q[1] || q[4] || (SUBJ[s].title + q[0])))).filter(g => g.length);
         redo.forEach(it => put(it.bucket, it.id, { deleted: true, replacedBy: "replan" }));
         const end = examEndOf(s);
         if (left.length) msg.push(examMsg(s, examLay(W, s, left, examStartOf(s), end, put, t0, tag), end));

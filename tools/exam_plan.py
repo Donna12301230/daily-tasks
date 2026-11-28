@@ -4,6 +4,8 @@
 補充和它們的看題／做題換成「一天 1–2 題」的考古題（見 examPlan()）。
 順序：依章節（照考古題網站「依章節」的順序），同一章裡新的年度在前、同一年照原卷題號；同一天不跨章節。選擇題一天 2 題，問答／填充／申論一天 1 題。
 計概的 C 語言章節（含二元樹）也照章節排進來。
+近三年（MOCK_FROM 學年度起，之後新增的年度也算）不拆進章節進度，整份留到考前一個月當模擬考，
+接在計概、MIS 各自那條線的最後（見 mock()）。
 用法：python tools/exam_plan.py"""
 import json
 import os
@@ -25,12 +27,16 @@ def topic(c):
     return n.replace("新議題：", "")
 
 
+# 近三年的考卷留著考前限時整份寫，不拆進章節進度
+MOCK_FROM = 113
+
+
 def groups(s):
     # 依章節（照考古題網站「依章節」的順序），同一章裡新的年度在前、同一年照原卷題號；同一天不跨章節
     order = {k["c"]: i for i, k in enumerate(D[s])}
     qs = []
     for p in D["papers"]:
-        if p["s"] != s:
+        if p["s"] != s or p["y"] >= MOCK_FROM:
             continue
         for n, q in enumerate(p["qs"]):
             qs.append((order.get(q["c"], 999), -p["y"], n, p, q))
@@ -106,7 +112,19 @@ def toeic(v):
     return out
 
 
-plan = {"cs": groups("cs"), "mis": groups("mis"), "ipm": book("I11"), "ipt": book("I12"), "ipr": ipas("I21"), "ipd": ipas("I22"), "toeic7": toeic(7), "toeic8": toeic(8)}
+# 模擬考：MOCK_FROM 學年度起每一年一份整卷（舊的年度在前，最新的一份最接近考試），接在計概、MIS 各自那條線的章節進度後面，
+# 每份後面接一天檢討。整卷那一筆 [標籤, "ycs115", 說明, "mock"]，點了打開整份；檢討那一筆 [標題, "", 說明, "rev", 認得做過沒的 key]。
+# 平台把章節進度排到考前一個月，模擬考排在之後到考前 3 天，計概和 MIS 的同一年排同一天（照正式考試）。
+def mock(s):
+    out = []
+    nm = "計概" if s == "cs" else "MIS"
+    for p in sorted((p for p in D["papers"] if p["s"] == s and p["y"] >= MOCK_FROM), key=lambda p: p["y"]):
+        out.append([["%s %d 整卷" % (nm, p["y"]), "y%s%d" % (s, p["y"]), "照正式考試限時、不看筆記，寫完再對答案（%d 題）" % len(p["qs"]), "mock"]])
+        out.append([["檢討 %s %d 錯題" % (nm, p["y"]), "", "把錯的題目整理進錯題本，回頭補那一章的觀念", "rev", "rev-%s%d" % (s, p["y"])]])
+    return out
+
+
+plan = {"cs": groups("cs") + mock("cs"), "mis": groups("mis") + mock("mis"), "ipm": book("I11"), "ipt": book("I12"), "ipr": ipas("I21"), "ipd": ipas("I22"), "toeic7": toeic(7), "toeic8": toeic(8)}
 js = "const EXAM_PLAN = " + json.dumps(plan, ensure_ascii=False, separators=(",", ":")) + ";"
 path = os.path.join(ROOT, "apps/workbench/index.html")
 html = open(path, encoding="utf-8").read()
@@ -123,6 +141,7 @@ ih2, n2 = re.subn(r"  // EXAM_REV:BEGIN\n.*?\n  // EXAM_REV:END", lambda m: "  /
 if not n2:
     raise SystemExit("平台裡找不到 EXAM_REV 標記")
 open(ipath, "w", encoding="utf-8").write(ih2)
+print("模擬考 %d 份（含在計概、MIS 那兩條線的最後）" % sum(1 for k in ("cs", "mis") for g in plan[k] if g[0][3] == "mock"))
 print("計概 %d 天、MIS %d 天、中級規劃 %d 題、中級防護 %d 題、多益 Vol.7 %d 天、Vol.8 %d 天" % tuple(len(plan[k]) for k in ("cs", "mis", "ipr", "ipd", "toeic7", "toeic8")))
 for k in ("ipm", "ipt"):
     print("iPAS %s：%d 小節、%d 頁、%d 題" % ("管理" if k == "ipm" else "技術", len(plan[k]), sum(x["n"] for x in plan[k]), sum(len(x["q"]) for x in plan[k])))
