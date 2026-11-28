@@ -50,6 +50,8 @@ git add -A && git commit -m "同步內建網站" && git push
 
 工作台（`apps/workbench/`）直接在這個 repo 裡維護。
 
+中山資管考古題原本網站沒有的解析，補寫在 `tools/nsysu_notes/`（一份考卷一個檔，例如 `cs-094.json`，格式見 `tools/nsysu_notes.py` 開頭）。`build.py` 同步時會自動把它們併進去，所以重新同步不會蓋掉；只改了解析檔時執行 `python tools/nsysu_notes.py` 就好。原本網站已經有解析的題目以原本的為準。補寫的選擇題答案是自己解的（考卷沒有公布答案）。
+
 ## iPAS 資安考古題（初級、中級）
 
 `apps/ipas/` 直接在這個 repo 裡維護（初級、中級共用同一個頁面：平台的「iPAS 資安初級考古題」打開 `index.html`，「iPAS 資安中級考古題」打開 `index.html?lv=2`）：原卷 PDF 放在 `apps/ipas/pdf/`（檔名「場次_I11…」「場次_I12…」（初級）或「場次_I21…」「場次_I22…」（中級）。官網只放最近一屆，之後拿到中級其他年度的 PDF 照同樣檔名放進來就好），題目資料 `data.json` 和有圖表題目的截圖 `img/` 由程式從 PDF 產生。之後有新的場次（例如 113-2、114 年），把 PDF 放進 `apps/ipas/pdf/` 再執行：

@@ -13,6 +13,7 @@ import shutil
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 PARENT = os.path.dirname(ROOT)
 SOURCES = {
     "vocab": os.path.join(PARENT, "vocab-trainer"),
@@ -188,6 +189,9 @@ def build(app):
                         html = html.replace(a, b, 1)
                     else:
                         print(f"  {app}: 找不到要修改的地方，請檢查 PATCHES：{a[:40]}…")
+                if app == "nsysu":
+                    import nsysu_notes   # 補寫的解析（tools/nsysu_notes/）
+                    html = nsysu_notes.apply(html)
             open(p, "w", encoding="utf-8", newline="\n").write(inject(html, app, depth))
             n += 1
     size = sum(os.path.getsize(os.path.join(dp, f)) for dp, _, fs in os.walk(dst) for f in fs)
