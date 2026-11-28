@@ -134,6 +134,19 @@
         "Stable Diffusion",
         "U-Net"
       ]
+    },
+    {
+      "id": "12",
+      "title": "為什麼聊天機器人也會畫圖？",
+      "subtitle": "多模態 AI 與創作工作流",
+      "video": "2EQ5cZBtO2E",
+      "summary": "聊天機器人把圖像當成一種語言：VQ-VAE 把圖切成 token，模型預測下一個圖像 token 再畫出來；作業用專案固定風格。",
+      "tags": [
+        "Tokenizer",
+        "VQ-VAE",
+        "VQ-GAN",
+        "Skill"
+      ]
     }
   ],
   "channel": "https://www.youtube.com/@ive-iveai/streams"
