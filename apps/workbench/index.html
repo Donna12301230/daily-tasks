@@ -406,7 +406,7 @@ table.g tr.grp td.nm { box-shadow: inset 4px 0 0 var(--gc, transparent) }
   const LINE_NAME = { "碩班": "碩班（C 語言等）", "多益": "多益（單字等）", "iPAS": "iPAS（其他）", "多益官方題": "多益官方題（Vol.7、Vol.8）" };
   const SUB_LINE = { cs: "計概考古題", mis: "MIS 考古題", ipm: "iPAS 管理", ipt: "iPAS 技術", ipr: "iPAS 中級規劃", ipd: "iPAS 中級防護", toeic7: "多益官方題", toeic8: "多益官方題" };
   const subOf = it => it.sub || (/^MIS/.test(it.title || "") ? "mis" : "cs");
-  const qApp = it => (/^ip/.test(subOf(it)) ? "ipasApp" : "nsysuApp");
+  const qApp = it => { const s = subOf(it); return s === "ipr" || s === "ipd" ? "ipas2App" : /^ip/.test(s) ? "ipasApp" : "nsysuApp"; };   // iPAS 中級是另一套
   const qBtn = (it, q, txt) => '<button class="btn ghost" data-act="qgo" data-app="' + qApp(it) + '" data-k="' + esc(q[1]) + '" title="打開考古題這一題">' + esc(txt || q[0]) + "</button>";
   const lineOf = it => it.src === "exam" ? SUB_LINE[subOf(it)] || "計概考古題"
     : oldBook(it) ? "舊課本" : it.track;   // 改成考古題之前的課本進度不算進 C 語言那條
@@ -1000,7 +1000,7 @@ table.g tr.grp td.nm { box-shadow: inset 4px 0 0 var(--gc, transparent) }
       ui.sline = ui.sline === b.dataset.k ? null : b.dataset.k; render();
       if (ui.sline) { const el = document.getElementById("allprog"); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); }
     }
-    else if (a === "qgo") { const app = b.dataset.app || "nsysuApp"; if (window.parent !== window) parent.postMessage({ dt: "nav", type: app, sub: b.dataset.k }, location.origin); else window.open("../" + (app === "ipasApp" ? "ipas" : "nsysu") + "/index.html#" + b.dataset.k, "_blank"); }
+    else if (a === "qgo") { const app = b.dataset.app || "nsysuApp"; if (window.parent !== window) parent.postMessage({ dt: "nav", type: app, sub: b.dataset.k }, location.origin); else window.open("../" + (app === "ipas2App" ? "ipas/index.html?lv=2" : app === "ipasApp" ? "ipas/index.html" : "nsysu/index.html") + "#" + b.dataset.k, "_blank"); }
     else if (a === "dopen") {
       const k = b.dataset.k || "";
       if (k.startsWith("day:")) location.hash = "day-" + k.slice(4);

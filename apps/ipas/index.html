@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>iPAS 資安考古題</title>
+<title>iPAS 資安初級考古題</title>
 <script>document.documentElement.dataset.dtApp="ipas";if(window.parent!==window)document.documentElement.classList.add("in-dt")</script>
 <style id="dt-theme">html.in-dt:root{--bg:#f3f5f9;--paper:#ffffff;--ink:#1c2333;--muted:#5b6678;--line:#d8dee8;--accent:#2b3f7a;--accent-soft:#e2e7f5}@media (prefers-color-scheme: dark){html.in-dt:root:not([data-theme="light"]){--bg:#12151c;--paper:#1a1f29;--ink:#e3e7ef;--muted:#98a2b4;--line:#2e3544;--accent:#9fb4f0;--accent-soft:#263055;color-scheme:dark}}html.in-dt:root[data-theme="dark"]{--bg:#12151c;--paper:#1a1f29;--ink:#e3e7ef;--muted:#98a2b4;--line:#2e3544;--accent:#9fb4f0;--accent-soft:#263055;color-scheme:dark}</style>
 <script>window.DT_APP="ipas"</script><script src="../../fb.js"></script>
@@ -174,8 +174,8 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
 <body>
 <div class="wrap">
   <header class="top">
-    <h1>iPAS 資訊安全工程師考古題</h1>
-    <p class="sub">初級 I11 管理＋I12 技術（109–113、115 年＋官方樣題，每份 50 題單選）・中級 I21 規劃實務＋I22 防護實務（115 年，每份 40 題，含複選、題組）</p>
+    <h1 id="h1">iPAS 資訊安全工程師・初級考古題</h1>
+    <p class="sub" id="hsub">初級 I11 管理＋I12 技術（109–113、115 年＋官方樣題，每份 50 題單選；113-2、114 年還沒有）</p>
     <span class="sync" id="sync"><i></i><span id="synctext">作答紀錄先存在這個瀏覽器</span></span>
   </header>
   <nav class="tabs" aria-label="檢視">
@@ -188,14 +188,23 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
     <span class="stats" id="stats"></span>
   </nav>
   <main id="main"><p class="empty">載入題目中…</p></main>
-  <p class="credit">題目與答案來自 iPAS 經濟部產業人才能力鑑定公告的初級、中級試題（有疑義題的場次用釋義後的版本）。有圖或表的題目附上原卷截圖；每一份都可以打開原卷 PDF 對照。</p>
+  <p class="credit">題目與答案來自 iPAS 經濟部產業人才能力鑑定公告的<span id="lvname">初級</span>試題（有疑義題的場次用釋義後的版本）。有圖或表的題目附上原卷截圖；每一份都可以打開原卷 PDF 對照。</p>
 </div>
 <script>
 (function () {
   "use strict";
   const SUBJ = { I11: "資訊安全管理概論", I12: "資訊安全技術概論", I21: "資訊安全規劃實務", I22: "資訊安全防護實務" };
-  const SHORT = { I11: "管理", I12: "技術", I21: "中級規劃", I22: "中級防護" };
-  const SUBJ_SEG = [["all", "全部"], ["I11", "I11 管理"], ["I12", "I12 技術"], ["I21", "I21 中級規劃"], ["I22", "I22 中級防護"]];
+  // 初級、中級分成兩套：網址加 ?lv=2 是中級（I21、I22），不然是初級（I11、I12）；作答紀錄同一份，各套只看自己那一級的考卷
+  const LV = new URLSearchParams(location.search).get("lv") === "2" ? 2 : 1;
+  const LVS = LV === 2 ? ["I21", "I22"] : ["I11", "I12"];
+  const SHORT = { I11: "管理", I12: "技術", I21: "規劃", I22: "防護" };
+  const SUBJ_SEG = [["all", "全部"]].concat(LVS.map(s => [s, s + " " + SHORT[s]]));
+  if (LV === 2) {
+    document.title = "iPAS 資安中級考古題";
+    document.getElementById("h1").textContent = "iPAS 資訊安全工程師・中級考古題";
+    document.getElementById("hsub").textContent = "中級 I21 規劃實務＋I22 防護實務（115 年，每份 40 題，含複選、題組；之後補其他年度）";
+    document.getElementById("lvname").textContent = "中級";
+  }
   const LET = ["A", "B", "C", "D"];
   const main = document.getElementById("main");
   let PAPERS = [], BY = {}, curPaper = null;
@@ -207,7 +216,12 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
   try { state = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch (e) { state = {}; }
   let dbCol = null;
   const dirty = {}, pending = {}, chains = {};
-  const saveLocal = () => { try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {} };
+  // 存回這個瀏覽器時只蓋自己這一級的考卷，另一級（可能開在另一個分頁）的紀錄照瀏覽器裡最新的
+  const saveLocal = () => { try {
+    let cur = {}; try { cur = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch (e) { cur = {}; }
+    Object.keys(BY).forEach(pid => { if (state[pid]) cur[pid] = state[pid]; else delete cur[pid]; });
+    localStorage.setItem(LS, JSON.stringify(cur));
+  } catch (e) {} };
   const rec = (pid, n) => ((state[pid] || {}).q || {})[n] || null;
   function setRec(pid, n, patch) {
     const ps = state[pid] = state[pid] || { q: {} };
@@ -463,7 +477,7 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
   // ---------- 依年度
   let mockMode = false, mock = null;   // mock：{ pid, picks: { 題號: 答案 } }
   function renderYear(focus) {
-    if (!curPaper || !BY[curPaper]) curPaper = (PAPERS.filter(p => p.y && p.s === "I11").pop() || PAPERS[0]).id;   // 預設最新一次的管理
+    if (!curPaper || !BY[curPaper]) curPaper = (PAPERS.filter(p => p.y && p.s === LVS[0]).pop() || PAPERS[0]).id;   // 預設最新一次的第一科（初級管理、中級規劃）
     const p = BY[curPaper];
     const rail = el("nav", { class: "rail", "aria-label": "選擇場次" });
     const rounds = [];
@@ -479,7 +493,7 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
       });
       rail.append(row);
     });
-    rail.append(el("p", { class: "lg", text: "初級：管理＝I11 資訊安全管理概論、技術＝I12 資訊安全技術概論；中級：規劃＝I21 資訊安全規劃實務、防護＝I22 資訊安全防護實務。數字是答對／已作答。" }));
+    rail.append(el("p", { class: "lg", text: LVS.map(s => SHORT[s] + "＝" + s + " " + SUBJ[s]).join("、") + "。數字是答對／已作答。" }));
 
     const body = el("section", { "aria-label": p.name });
     const st = paperStat(p.id);
@@ -657,7 +671,7 @@ mark { background: var(--imp-soft); color: inherit; border-radius: 2px }
   window.addEventListener("hashchange", route);
 
   fetch("data.json", { cache: "no-cache" }).then(r => r.json()).then(d => {
-    PAPERS = d.papers; PAPERS.forEach(p => { BY[p.id] = p; });
+    PAPERS = d.papers.filter(p => LVS.includes(p.s)); PAPERS.forEach(p => { BY[p.id] = p; });
     renderStats(); route(); sync();
   }).catch(() => { main.innerHTML = '<p class="empty">題目載入失敗，請重新整理。</p>'; });
 

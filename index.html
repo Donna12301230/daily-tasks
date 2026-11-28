@@ -570,7 +570,7 @@ table.pm td.c-key { text-align: center }
      互動用 data-act 交給下面的 CLICK / CHANGE 處理。
      類型自己的設定與小清單放在 mods/{模組id}，大量資料各自一個集合。 */
   // 內建網站的版本：改了 apps/ 底下的網站就把這個值換掉，瀏覽器才不會繼續用快取裡的舊版
-  const BUILD = "20261128b";
+  const BUILD = "20261128c";
   const TYPES = {
     today: { label: "今天", desc: "一份清單看完今天：任務、里程碑、考試、工作台的課程與讀書、固定時段。", view: vToday },
     // 總覽的月曆、甘特圖、重要日期共用同一個工作台頁面（frame），只是打開不同的畫面（hash）
@@ -591,9 +591,10 @@ table.pm td.c-key { text-align: center }
     workbenchApp: { label: "工作台", desc: "月曆、甘特圖、IG 發文、讀書進度與清單（原本的赫滋與羊工作台）。", src: "apps/workbench/index.html" },
     vocabApp: { label: "單字練習", desc: "先選單字庫，再做閃卡、不熟清單、每天 10 個今日複習、考試和發音；中山資管英文術語的題號點了會跳到考古題。", src: "apps/vocab/index.html", hash: "/banks" },
     // 考古題：平台的「選擇考古題」頁列出每一套（group: "examBanks" 的模組會收在它底下）
-    examBanks: { label: "考古題", desc: "選一套考古題進去練習：目前有中山資管、iPAS 資安（初級、中級），之後可以加多益等。", view: vExamBanks },
+    examBanks: { label: "考古題", desc: "選一套考古題進去練習：目前有中山資管、iPAS 資安初級、iPAS 資安中級，之後可以加多益等。", view: vExamBanks },
     nsysuApp: { label: "中山資管考古題", desc: "資管碩士班甲組・計算機概論＋管理資訊系統・94–115 學年度：依年度、依章節、錯題本。", src: "apps/nsysu/index.html", group: "examBanks" },
-    ipasApp: { label: "iPAS 資安考古題", desc: "資訊安全工程師・初級 I11 管理＋I12 技術（109–113、115 年＋樣題，1100 題單選；113-2、114 年還沒有）、中級 I21 規劃＋I22 防護（115 年，含複選、題組）：依年度、模擬考、隨機練習、錯題本、搜尋。", src: "apps/ipas/index.html", group: "examBanks" },
+    ipasApp: { label: "iPAS 資安初級考古題", desc: "資訊安全工程師・初級 I11 管理＋I12 技術（109–113、115 年＋樣題，1100 題單選；113-2、114 年還沒有）：依年度、模擬考、隨機練習、錯題本、解析本、搜尋。", src: "apps/ipas/index.html", group: "examBanks" },
+    ipas2App: { label: "iPAS 資安中級考古題", desc: "資訊安全工程師・中級 I21 規劃實務＋I22 防護實務（115 年，80 題，含複選、題組）：依年度、模擬考、隨機練習、錯題本、解析本、搜尋。", src: "apps/ipas/index.html?lv=2", group: "examBanks" },
     // group：預設收進同一區的這種模組頁裡（不佔分頁），可在「擴充」改成獨立分頁
     osNotesApp: { label: "作業系統筆記", desc: "空大作業系統的白話筆記、考試重點、小測驗和互動示範。", src: "apps/os-notes/index.html", group: "notes" },
     genaiApp: { label: "生成式 AI 講義", desc: "一講一頁的課程講義、名詞對照和自我檢核。", src: "apps/genai/index.html", group: "notes" },
@@ -617,7 +618,8 @@ table.pm td.c-key { text-align: center }
       { id: "genai", area: "learn", type: "genaiApp", name: "生成式 AI" },
       { id: "pq", area: "learn", type: "examBanks", name: "考古題" },
       { id: "nsysu", area: "learn", type: "nsysuApp", name: "中山資管考古題" },
-      { id: "ipas", area: "learn", type: "ipasApp", name: "iPAS 資安考古題" },
+      { id: "ipas", area: "learn", type: "ipasApp", name: "iPAS 資安初級考古題" },
+      { id: "ipas2", area: "learn", type: "ipas2App", name: "iPAS 資安中級考古題" },
       // 已經併進別頁的舊模組：資料還在，只是不放在選單（可在「擴充」打開）
       { id: "proj-board", area: "work", type: "projectBoard", name: "專案管理", hidden: true },
       { id: "exams", area: "learn", type: "exams", name: "考試", hidden: true },
@@ -842,18 +844,24 @@ table.pm td.c-key { text-align: center }
     (old.mods || []).forEach(m => { if (!known.has(m.id)) next.mods.push(m); });
     setCfg(next);
   }
-  // 新增的考古題（iPAS 資安）：已經有自己版面的人只補這一個模組，放在中山資管後面；加過一次就不再加（刪掉了不會跑回來）
+  // 新增的考古題（iPAS 資安初級）：已經有自己版面的人只補這一個模組，放在中山資管後面；加過一次就不再加（刪掉了不會跑回來）
   function addIpas() {
-    // 舊名「iPAS 資安初級考古題」：裡面已經有中級，改成「iPAS 資安考古題」（自己改過名字的不動）
-    if (!cfgUpgrading && live && canWrite && db && S.cfg && Array.isArray(S.cfg.mods) && S.cfg.mods.some(m => m.type === "ipasApp" && m.name === "iPAS 資安初級考古題")) {
-      const next = clone(S.cfg); next.mods.forEach(m => { if (m.type === "ipasApp" && m.name === "iPAS 資安初級考古題") m.name = "iPAS 資安考古題"; }); setCfg(next); return;
-    }
     if (cfgUpgrading || !live || !canWrite || !db || !S.cfg || !Array.isArray(S.cfg.mods) || S.cfg.ipasAdded || S.cfg.mods.some(m => m.type === "ipasApp")) return;
     const next = clone(S.cfg), i = next.mods.findIndex(m => m.type === "nsysuApp"), nsysu = next.mods[i];
-    const mod = { id: "ipas", area: nsysu ? nsysu.area : "learn", type: "ipasApp", name: "iPAS 資安考古題" };
+    const mod = { id: "ipas", area: nsysu ? nsysu.area : "learn", type: "ipasApp", name: "iPAS 資安初級考古題" };
     if (next.mods.some(m => m.id === "ipas")) mod.id = "ipas-" + Date.now().toString(36);
     next.mods.splice(i < 0 ? next.mods.length : i + 1, 0, mod);
     next.ipasAdded = 1;
+    setCfg(next);
+  }
+  // iPAS 中級分出來自成一套（原本跟初級放在同一個模組）：放在初級後面；加過一次就不再加（刪掉了不會跑回來）
+  function addIpas2() {
+    if (cfgUpgrading || !live || !canWrite || !db || !S.cfg || !Array.isArray(S.cfg.mods) || S.cfg.ipas2Added || S.cfg.mods.some(m => m.type === "ipas2App")) return;
+    const next = clone(S.cfg), i = next.mods.findIndex(m => m.type === "ipasApp"), j = i >= 0 ? i : next.mods.findIndex(m => m.type === "nsysuApp"), prev = next.mods[j];
+    const mod = { id: "ipas2", area: prev ? prev.area : "learn", type: "ipas2App", name: "iPAS 資安中級考古題" };
+    if (next.mods.some(m => m.id === mod.id)) mod.id = "ipas2-" + Date.now().toString(36);
+    next.mods.splice(j < 0 ? next.mods.length : j + 1, 0, mod);
+    next.ipas2Added = 1;
     setCfg(next);
   }
   // 新增的「讀書進度」（學習區，放在目標後面）：加過一次就不再加
@@ -901,7 +909,7 @@ table.pm td.c-key { text-align: center }
     });
     wbWrite("tasks", { igLinked: 1, tasks: links });
   }
-  function afterLive() { upgradeCfg(); addIpas(); addStudyProg(); mergeExamPrep(); fillProjCats(); makeIgProjects(); linkTwins(); }
+  function afterLive() { upgradeCfg(); addIpas(); addIpas2(); addStudyProg(); mergeExamPrep(); fillProjCats(); makeIgProjects(); linkTwins(); }
   function mergeExamPrep() {
     if (!live || !canWrite || !db) return;
     arr("exams").filter(e => !prepSeen.has(e.id) && e.prepMerged === undefined && (e.goal === undefined || (e.prep || []).length)).forEach(e => {
@@ -1291,7 +1299,7 @@ table.pm td.c-key { text-align: center }
   const PQ_LB = { ok: "做過・答對", bad: "做過・答錯", read: "讀過" };
   function pqStat(type, ref) {
     ref = String(ref || "");
-    if (type === "ipasApp") {
+    if (type === "ipasApp" || type === "ipas2App") {
       const m = /^year\/([^/]+)\/(\d+)$/.exec(ref), s = m && readLS("ipas-pq-v1"), r = s && s[m[1]] && s[m[1]].q && s[m[1]].q[m[2]];
       return r ? { s: r.c ? (r.s === "bad" ? "bad" : "ok") : "", x: !!r.x } : {};
     }
@@ -1304,11 +1312,12 @@ table.pm td.c-key { text-align: center }
     }
     return {};
   }
-  // iPAS 考古題：每題記選了哪個答案（c）、對錯（s）、重要（m）
-  function ipasProgress() {
+  // iPAS 考古題：每題記選了哪個答案（c）、對錯（s）、重要（m）；初級、中級同一份紀錄，照考卷編號（…-I1x／…-I2x）分開算
+  const IPAS_LV = { ipasApp: /-I1\d$/, ipas2App: /-I2\d$/ };
+  function ipasProgress(type) {
     const s = readLS("ipas-pq-v1"); if (!s) return null;
-    const c = { done: 0, ok: 0, bad: 0, imp: 0 };
-    Object.values(s).forEach(p => Object.values((p && p.q) || {}).forEach(q => {
+    const c = { done: 0, ok: 0, bad: 0, imp: 0 }, re = IPAS_LV[type || "ipasApp"];
+    Object.keys(s).filter(pid => re.test(pid)).map(pid => s[pid]).forEach(p => Object.values((p && p.q) || {}).forEach(q => {
       if (!q) return;
       if (q.c) { c.done++; if (q.s === "ok") c.ok++; }
       if (q.s === "bad") c.bad++;
@@ -1332,11 +1341,13 @@ table.pm td.c-key { text-align: center }
       h += '<section class="panel" style="--ac:' + acolByArea(em.area) + '"><div class="ph"><h3>考古題</h3><span class="sum"><a href="#m-' + esc(em.id) + '">練習</a></span></div><div class="pb">'
         + '<div class="btnrow"><span class="chip ok">O ' + q.ok + '</span><span class="chip bad">X ' + q.bad + '</span><span class="chip">已讀過 ' + q.read + '</span><span class="chip warn">重要 ' + q.imp + "</span></div></div></section>";
     }
-    const im = cfg().mods.find(x => x.type === "ipasApp" && !x.hidden), iq = im ? ipasProgress() : null;
+    [["ipasApp", "iPAS 初級考古題"], ["ipas2App", "iPAS 中級考古題"]].forEach(([ty, hd]) => {
+    const im = cfg().mods.find(x => x.type === ty && !x.hidden), iq = im ? ipasProgress(ty) : null;
     if (im && iq && (iq.done || iq.imp || iq.bad)) {
-      h += '<section class="panel" style="--ac:' + acolByArea(im.area) + '"><div class="ph"><h3>iPAS 考古題</h3><span class="sum"><a href="#m-' + esc(im.id) + '">練習</a></span></div><div class="pb">'
+      h += '<section class="panel" style="--ac:' + acolByArea(im.area) + '"><div class="ph"><h3>' + hd + '</h3><span class="sum"><a href="#m-' + esc(im.id) + '">練習</a></span></div><div class="pb">'
         + '<div class="btnrow"><span class="chip">已做 ' + iq.done + '</span><span class="chip ok">答對 ' + iq.ok + '</span><span class="chip bad">錯題本 ' + iq.bad + '</span><span class="chip warn">重要 ' + iq.imp + "</span></div></div></section>";
     }
+    });
     return h;
   }
   function addTargets() {
@@ -1780,8 +1791,8 @@ table.pm td.c-key { text-align: center }
   function vExamBanks(m) {
     const kids = cfg().mods.filter(x => !x.hidden && parentOf(x) === m.id);
     const stat = x => {
-      if (x.type === "ipasApp") {
-        const q = ipasProgress();
+      if (x.type === "ipasApp" || x.type === "ipas2App") {
+        const q = ipasProgress(x.type);
         if (!q || !(q.done || q.imp || q.bad)) return "還沒有作答紀錄";
         return "已做 " + q.done + " 題（答對 " + q.ok + "）・錯題本 " + q.bad + " 題" + (q.imp ? "・重要 " + q.imp + " 題" : "");
       }
@@ -2057,11 +2068,11 @@ table.pm td.c-key { text-align: center }
     let f = frames.find(x => x.dataset.frame === key);
     if (!f) {
       f = document.createElement("iframe");
-      f.className = "appframe"; f.dataset.frame = key; f.src = T.src + "?v=" + BUILD + (want ? "#" + want : "");
+      f.className = "appframe"; f.dataset.frame = key; f.src = T.src + (T.src.includes("?") ? "&" : "?") + "v=" + BUILD + (want ? "#" + want : "");
       apphost.appendChild(f);
     } else if (want && changed) {
       // 只在切換頁面時換畫面，資料更新重畫時不會把使用者在網站裡的位置拉回來
-      try { if (f.contentWindow.location.hash !== "#" + want) f.contentWindow.location.hash = want; } catch (e) { f.src = T.src + "?v=" + BUILD + "#" + want; }
+      try { if (f.contentWindow.location.hash !== "#" + want) f.contentWindow.location.hash = want; } catch (e) { f.src = T.src + (T.src.includes("?") ? "&" : "?") + "v=" + BUILD + "#" + want; }
     }
     f.title = m.name;
     if (sub) { history.replaceState(null, "", "#m-" + m.id); lastHash = location.hash; }
@@ -2691,8 +2702,8 @@ table.pm td.c-key { text-align: center }
     mis: { name: "MIS 考古題", line: "MIS 考古題", title: "MIS 考古題 ", track: "碩班", app: "nsysuApp", pack: "max3", date: () => examDate(nsysuExam, "2028-02-01"), pause: ipasSprint },
     ipm: { name: "iPAS 管理", line: "iPAS 管理", title: "iPAS 管理 ", track: "iPAS", app: "ipasApp", pack: "book", date: () => examDate(ipasExam, IPAS_DEF) },
     ipt: { name: "iPAS 技術", line: "iPAS 技術", title: "iPAS 技術 ", track: "iPAS", app: "ipasApp", pack: "book", date: () => examDate(ipasExam, IPAS_DEF) },
-    ipr: { name: "iPAS 中級規劃", line: "iPAS 中級規劃", title: "iPAS 中級規劃 ", track: "iPAS", app: "ipasApp", pack: "even", date: () => examDate(ipas2Exam, IPAS2_DEF), after: () => examDate(ipasExam, IPAS_DEF) },
-    ipd: { name: "iPAS 中級防護", line: "iPAS 中級防護", title: "iPAS 中級防護 ", track: "iPAS", app: "ipasApp", pack: "even", date: () => examDate(ipas2Exam, IPAS2_DEF), after: () => examDate(ipasExam, IPAS_DEF) },
+    ipr: { name: "iPAS 中級規劃", line: "iPAS 中級規劃", title: "iPAS 中級規劃 ", track: "iPAS", app: "ipas2App", pack: "even", date: () => examDate(ipas2Exam, IPAS2_DEF), after: () => examDate(ipasExam, IPAS_DEF) },
+    ipd: { name: "iPAS 中級防護", line: "iPAS 中級防護", title: "iPAS 中級防護 ", track: "iPAS", app: "ipas2App", pack: "even", date: () => examDate(ipas2Exam, IPAS2_DEF), after: () => examDate(ipasExam, IPAS_DEF) },
     toeic7: { name: "多益 Vol.7", line: "多益官方題", title: "多益 ", track: "多益", app: "", pack: "one", date: () => examDate(() => toeicExam(1), "2027-07-11"), after: () => examDate(ipasExam, IPAS_DEF) },
     toeic8: { name: "多益 Vol.8", line: "多益官方題", title: "多益 ", track: "多益", app: "", pack: "one", date: () => examDate(() => toeicExam(2), "2027-09-12"), after: () => examDate(() => toeicExam(1), "2027-07-11") },
   };
